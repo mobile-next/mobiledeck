@@ -32,6 +32,16 @@ jobs:
       run: |
         make
         ls -l *.vsix
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mobiledeck
+        path: |
+          *.vsix
+        retention-days: 14
+        overwrite: true
+
     
 #     - name: Upload VSIX artifact
 #       uses: actions/upload-artifact@v4
