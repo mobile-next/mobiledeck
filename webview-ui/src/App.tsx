@@ -54,22 +54,22 @@ function App() {
   const onNewDevices = (devices: DeviceDescriptor[]) => {
     setLocalDevices(devices);
     setIsRefreshing(false);
-  }
+  };
 
   const requestScreenshot = (deviceId: string) => {
     vscode.postMessage({ command: 'requestScreenshot', deviceId: deviceId }, '*');
-  }
+  };
 
   const onNewScreenshot = (deviceId: string, screenshot: string) => {
     setScreenshot(screenshot);
     setTimeout(() => {
       requestScreenshot(deviceId);
     }, 50);
-  }
+  };
 
   const requestDevices = () => {
     vscode.postMessage({ command: 'requestDevices' }, '*');
-  }
+  };
 
   const refreshDeviceList = () => {
     setIsRefreshing(true);
@@ -77,7 +77,7 @@ function App() {
   };
 
   const handleConnectToHost = () => {
-    if (!remoteHostIp.trim()) return;
+    if (!remoteHostIp.trim()) {return;}
     const newHost = remoteHostIp.trim();
 
     // Update recent hosts
@@ -94,17 +94,17 @@ function App() {
   const selectDevice = (device: DeviceDescriptor) => {
     setSelectedDevice(device.deviceId);
     requestScreenshot(device.deviceId);
-  }
+  };
 
   const handleTap = (x: number, y: number) => {
     console.log("gilm: tap at " + x + ", " + y);
     vscode.postMessage({ command: 'tap', x, y, deviceId: selectedDevice }, '*');
-  }
+  };
 
   const handleKeyDown = (key: string) => {
     console.log("gilm: key down", key);
     vscode.postMessage({ command: 'keyDown', key, deviceId: selectedDevice }, '*');
-  }
+  };
 
   const handleMessage = (event: any) => {
     const message = event.data;
@@ -119,11 +119,11 @@ function App() {
         onNewScreenshot(message.payload.deviceId, message.payload.screenshot);
         break;
     }
-  }
+  };
 
   const onHome = () => {
     vscode.postMessage({ command: 'pressButton', deviceId: selectedDevice, key: 'home' }, '*');
-  }
+  };
 
   useEffect(() => {
     const messageHandler = (event: any) => handleMessage(event);
@@ -132,7 +132,7 @@ function App() {
 
     return () => {
       window.removeEventListener('message', messageHandler);
-    }
+    };
   }, []);
 
   return (
