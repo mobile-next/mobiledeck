@@ -13,7 +13,7 @@ import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon
 import { DeviceDescriptor } from "./models";
 
 export interface HeaderProps {
-	selectedDevice: string;
+	selectedDevice: DeviceDescriptor | undefined;
 	isRefreshing: boolean;
 	isRemoteConnection: boolean;
 	localDevices: DeviceDescriptor[];
@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
 							className="h-8 px-2 text-xs hover:bg-[#2a2a2a] focus:outline-none flex items-center"
 						>
 							{isRemoteConnection ? <Wifi className="h-3 w-3 mr-1.5 text-blue-400" /> : <Smartphone className="h-3 w-3 mr-1.5" />}
-							<span className="mr-1 truncate max-w-[100px]">{selectedDevice.replace("Remote: ", "")}</span>
+							<span className="mr-1 truncate max-w-[100px]">{selectedDevice?.deviceName}</span>
 							<ChevronDown className="h-3 w-3" />
 						</Button>
 					</DropdownMenuTrigger>

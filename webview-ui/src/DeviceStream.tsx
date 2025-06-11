@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { Wifi } from "lucide-react";
+import { DeviceDescriptor } from "./models";
 
 export interface DeviceStreamProps {
 	isRefreshing: boolean;
 	isRemoteConnection: boolean;
-	selectedDevice: string;
+	selectedDevice: DeviceDescriptor | null;
 	screenshot: string;
 	onTap: (x: number, y: number) => void;
 	onKeyDown: (key: string) => void;
@@ -32,7 +33,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 							{isRefreshing ? (
 								<div className="animate-pulse text-center">
 									<Wifi className="h-6 w-6 mx-auto mb-2 text-blue-400 animate-ping" />
-									Connecting to <br /> {selectedDevice.replace("Remote: ", "")}...
+									Connecting to <br /> {selectedDevice?.deviceName}...
 								</div>
 							) : (
 								<>

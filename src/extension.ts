@@ -119,7 +119,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				break;
 
 			case 'keyDown':
-				execSync(`${this.mobilectlPath} io text --device ${message.deviceId} \"${message.key}\"`);
+				execSync(`${this.mobilectlPath} io text --device ${message.deviceId} ${message.key}`);
 				this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
 				break;
 

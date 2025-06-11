@@ -20,7 +20,7 @@ try {
 interface StatusBarProps {
   isRefreshing: boolean;
   isRemoteConnection: boolean;
-  selectedDevice: string;
+  selectedDevice: DeviceDescriptor | null;
 }
 
 // New: StatusBar Component
@@ -31,14 +31,14 @@ const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   return (
     <div className="px-2 py-1 text-[10px] text-gray-500 border-t border-[#333333] flex justify-between">
-      <span>{isRemoteConnection ? `Host: ${selectedDevice.replace("Remote: ", "")}` : "USB: Connected"}</span>
+      <span>"USB: Connected"</span>
       <span>FPS: {isRefreshing ? "..." : "60"}</span>
     </div>
   );
 };
 
 function App() {
-  const [selectedDevice, setSelectedDevice] = useState('Select device..');
+  const [selectedDevice, setSelectedDevice] = useState<DeviceDescriptor | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [remoteHostIp, setRemoteHostIp] = useState("");
@@ -77,7 +77,7 @@ function App() {
   };
 
   const handleConnectToHost = () => {
-    if (!remoteHostIp.trim()) {return;}
+    if (!remoteHostIp.trim()) { return; }
     const newHost = remoteHostIp.trim();
 
     // Update recent hosts
@@ -92,24 +92,31 @@ function App() {
   };
 
   const selectDevice = (device: DeviceDescriptor) => {
-    setSelectedDevice(device.deviceName);
+    setSelectedDevice(device);
     requestScreenshot(device.deviceId);
   };
 
   const handleTap = (x: number, y: number) => {
-    console.log("gilm: tap at " + x + ", " + y);
-    vscode.postMessage({ command: 'tap', x, y, deviceId: selectedDevice }, '*');
+    vscode.postMessage({ command: 'tap', x, y, deviceId: selectedDevice?.deviceId }, '*');
   };
 
   const handleKeyDown = (key: string) => {
-    console.log("gilm: key down", key);
-    vscode.postMessage({ command: 'keyDown', key, deviceId: selectedDevice }, '*');
+    if (key === 'Enter') {
+      key = "$'\n'";
+    } else if (key === 'Backspace') {
+      key = "$'\b'";
+    } else if (key === 'Delete') {
+      key = "$'\d'";
+    } else if (key === ' ') {
+      key = "$' '";
+    }
+
+    vscode.postMessage({ command: 'keyDown', key, deviceId: selectedDevice?.deviceId }, '*');
   };
 
   const handleMessage = (event: any) => {
     const message = event.data;
-    //console.log("gilm: message in javascript: " + JSON.stringify(message));
-
+    
     switch (message.command) {
       case 'onNewDevices':
         onNewDevices(message.payload.devices);
@@ -122,7 +129,7 @@ function App() {
   };
 
   const onHome = () => {
-    vscode.postMessage({ command: 'pressButton', deviceId: selectedDevice, key: 'home' }, '*');
+    vscode.postMessage({ command: 'pressButton', deviceId: selectedDevice?.deviceId, key: 'home' }, '*');
   };
 
   useEffect(() => {
@@ -139,7 +146,7 @@ function App() {
     <div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-hidden">
       {/* Header with controls */}
       <Header
-        selectedDevice={selectedDevice}
+        selectedDevice={selectedDevice?.deviceName}
         isRefreshing={isRefreshing}
         isRemoteConnection={isRemoteConnection}
         localDevices={localDevices}
