@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { ChildProcess, exec, execFile, execSync } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
 import path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -72,7 +72,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 		this.outputChannel.appendLine("mobilectl path: " + mobilectlPath);
 
-		const text = execSync(`${mobilectlPath} --version`).toString();
+		const text = execFileSync(mobilectlPath, ['--version']).toString();
 		this.outputChannel.appendLine("mobilectl version: " + text);
 
 		return mobilectlPath;
@@ -80,7 +80,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 	refreshDevices(webviewView: vscode.WebviewView) {
 		try {
-			const text = execSync(`${this.mobilectlPath} devices --json`).toString();
+			const text = execFileSync(this.mobilectlPath, ['devices', '--json']).toString();
 			this.outputChannel.appendLine("mobilectl returned devices " + text);
 			const devices = JSON.parse(text);
 			this.outputChannel.appendLine('Successfully got devices: ' + devices.map((d: any) => d.name).join(', '));
@@ -109,17 +109,17 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				break;
 
 			case 'pressButton':
-				execSync(`${this.mobilectlPath} io button --device ${message.deviceId} ${message.key}`);
+				execFileSync(this.mobilectlPath, ['io', 'button', '--device', message.deviceId, message.key]);
 				break;
 
 			case 'tap':
 				this.outputChannel.appendLine('Clicking ' + JSON.stringify(message));
-				execSync(`${this.mobilectlPath} io tap --device ${message.deviceId} ${message.x},${message.y}`);
+				execFileSync(this.mobilectlPath, ['io', 'tap', '--device', message.deviceId, `${message.x},${message.y}`]);
 				this.outputChannel.appendLine('Clicked on ' + JSON.stringify(message));
 				break;
 
 			case 'keyDown':
-				execSync(`${this.mobilectlPath} io text --device ${message.deviceId} ${message.key}`);
+				execFileSync(this.mobilectlPath, ['io', 'text', '--device', message.deviceId, message.key]);
 				this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
 				break;
 
