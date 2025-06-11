@@ -13,7 +13,7 @@ import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon
 import { DeviceDescriptor } from "./models";
 
 export interface HeaderProps {
-	selectedDevice: DeviceDescriptor | undefined;
+	selectedDevice: DeviceDescriptor | null;
 	isRefreshing: boolean;
 	isRemoteConnection: boolean;
 	localDevices: DeviceDescriptor[];

@@ -149,7 +149,7 @@ function App() {
     <div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-hidden">
       {/* Header with controls */}
       <Header
-        selectedDevice={selectedDevice?.deviceName}
+        selectedDevice={selectedDevice}
         isRefreshing={isRefreshing}
         isRemoteConnection={isRemoteConnection}
         localDevices={localDevices}
