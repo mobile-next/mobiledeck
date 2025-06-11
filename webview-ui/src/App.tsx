@@ -31,7 +31,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   return (
     <div className="px-2 py-1 text-[10px] text-gray-500 border-t border-[#333333] flex justify-between">
-      <span>"USB: Connected"</span>
+      <span>USB: Connected</span>
       <span>FPS: {isRefreshing ? "..." : "60"}</span>
     </div>
   );
@@ -102,13 +102,16 @@ function App() {
 
   const handleKeyDown = (key: string) => {
     if (key === 'Enter') {
-      key = "$'\n'";
+      key = "\n";
     } else if (key === 'Backspace') {
-      key = "$'\b'";
+      key = "\b";
     } else if (key === 'Delete') {
-      key = "$'\d'";
+      key = "\d";
     } else if (key === ' ') {
-      key = "$' '";
+      key = " ";
+    } else if (key === 'Shift') {
+      // do nothing
+      return;
     }
 
     vscode.postMessage({ command: 'keyDown', key, deviceId: selectedDevice?.deviceId }, '*');
