@@ -101,6 +101,59 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+	handleMessage(webviewView: vscode.WebviewView, message: any) {
+		this.outputChannel.appendLine('Received message: ' + JSON.stringify(message));
+		switch (message.command) {
+			case 'alert':
+				vscode.window.showErrorMessage(message.text);
+				break;
+
+			case 'pressButton':
+				execSync(`${this.mobilectlPath} io button --device ${message.deviceId} ${message.key}`);
+				break;
+
+			case 'tap':
+				this.outputChannel.appendLine('Clicking ' + JSON.stringify(message));
+				execSync(`${this.mobilectlPath} io tap --device ${message.deviceId} ${message.x},${message.y}`);
+				this.outputChannel.appendLine('Clicked on ' + JSON.stringify(message));
+				break;
+
+			case 'keyDown':
+				execSync(`${this.mobilectlPath} io text --device ${message.deviceId} \"${message.key}\"`);
+				this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
+				break;
+
+			case 'requestDevices':
+				this.refreshDevices(webviewView);
+				break;
+
+			case 'requestScreenshot':
+				execFile(this.mobilectlPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
+					maxBuffer: 1024 * 1024 * 10,
+					encoding: 'buffer'
+				}, (error: Error | null, stdout: Buffer, stderr: Buffer) => {
+					if (error) {
+						vscode.window.showErrorMessage(`Failed to take screenshot: ${error.message}`);
+						return;
+					}
+
+					this.outputChannel.appendLine('Received screenshot from mobilectl of size ' + stdout.length);
+					this.sendMessageToWebview(webviewView, {
+						command: 'onNewScreenshot',
+						payload: {
+							deviceId: message.deviceId,
+							screenshot: stdout.toString('base64'),
+						}
+					});
+				});
+				break;
+
+			default:
+				vscode.window.showErrorMessage('Unknown message: ' + JSON.stringify(message));
+				break;
+		}
+	}
+
 	resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		context: vscode.WebviewViewResolveContext,
@@ -116,61 +169,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 			]
 		};
 
-		webviewView.webview.onDidReceiveMessage(message => {
-			this.outputChannel.appendLine('Received message: ' + JSON.stringify(message));
-			switch (message.command) {
-				case 'alert':
-					vscode.window.showErrorMessage(message.text);
-					break;
-
-				case 'pressButton':
-					execSync(`${this.mobilectlPath} io button --device ${message.deviceId} ${message.key}`);
-					break;
-
-				case 'tap':
-					this.outputChannel.appendLine('Clicking ' + JSON.stringify(message));
-					execSync(`${this.mobilectlPath} io tap --device ${message.deviceId} ${message.x},${message.y}`);
-					this.outputChannel.appendLine('Clicked on ' + JSON.stringify(message));
-					break;
-
-				case 'keyDown':
-					execSync(`${this.mobilectlPath} io text --device ${message.deviceId} \"${message.key}\"`);
-					this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
-					break;
-
-				case 'requestDevices':
-					this.refreshDevices(webviewView);
-					break;
-
-				case 'requestScreenshot':
-					execFile(this.mobilectlPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
-						maxBuffer: 1024 * 1024 * 10,
-						encoding: 'buffer'
-					}, (error: Error | null, stdout: Buffer, stderr: Buffer) => {
-						if (error) {
-							vscode.window.showErrorMessage(`Failed to take screenshot: ${error.message}`);
-							return;
-						}
-
-						this.outputChannel.appendLine('Received screenshot from mobilectl of size ' + stdout.length);
-						this.sendMessageToWebview(webviewView, {
-							command: 'onNewScreenshot',
-							payload: {
-								deviceId: message.deviceId,
-								screenshot: stdout.toString('base64'),
-							}
-						});
-					});
-					break;
-
-				default:
-					vscode.window.showErrorMessage('Unknown message: ' + JSON.stringify(message));
-					break;
-			}
-		},
-			undefined,
-			this.context.subscriptions
-		);
+		webviewView.webview.onDidReceiveMessage(message => this.handleMessage(webviewView, message), undefined, this.context.subscriptions);
 
 		webviewView.webview.html = this.getHtml(webviewView);
 	}
@@ -183,11 +182,11 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		const htmlPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'index.html');
 		let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
 
-		const styleUri = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'styles.css'));
-		const scriptUri = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'bundle.js'));
-
-		htmlContent = htmlContent.replace('bundle.js', scriptUri.toString());
-		htmlContent = htmlContent.replace('styles.css', styleUri.toString());
+		const assets = ["styles.css", "bundle.js"];
+		for (const asset of assets) {
+			const uri = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', asset));
+			htmlContent = htmlContent.replace(asset, uri.toString());
+		}
 
 		return htmlContent;
 	}
