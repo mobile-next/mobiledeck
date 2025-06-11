@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { ChildProcess, exec, execFile, execSync } from 'child_process';
+import path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Mobiledeck extension is being activated');
@@ -30,8 +31,74 @@ export function deactivate() {
 }
 
 class MobiledeckViewProvider implements vscode.WebviewViewProvider {
+
+	private mobilectlPath: string;
+	private outputChannel: vscode.OutputChannel;
+
 	constructor(private readonly context: vscode.ExtensionContext) {
 		console.log('MobiledeckViewProvider constructor called');
+
+		this.outputChannel = vscode.window.createOutputChannel('Mobiledeck');
+		this.mobilectlPath = this.findMobilectlPath();
+	}
+
+	findMobilectlPath(): string {
+		const root = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilectl', 'bin').fsPath;
+
+		let mobilectlPath: string;
+
+		switch (process.platform) {
+			case 'darwin':
+				mobilectlPath = path.join(root, 'mobilectl-darwin');
+				break;
+
+			case 'linux':
+				switch (process.arch) {
+					case 'x64':
+						mobilectlPath = path.join(root, 'mobilectl-linux-x64');
+						break;
+					case 'arm64':
+						mobilectlPath = path.join(root, 'mobilectl-linux-arm64');
+						break;
+
+					default:
+						throw new Error('Unsupported architecture: ' + process.arch);
+				}
+				break;
+
+			default:
+				throw new Error('Unsupported platform: ' + process.platform);
+		}
+
+		this.outputChannel.appendLine("mobilectl path: " + mobilectlPath);
+
+		const text = execSync(`${mobilectlPath} --version`).toString();
+		this.outputChannel.appendLine("mobilectl version: " + text);
+
+		return mobilectlPath;
+	}
+
+	refreshDevices(webviewView: vscode.WebviewView) {
+		try {
+			const text = execSync(`${this.mobilectlPath} devices --json`).toString();
+			this.outputChannel.appendLine("mobilectl returned devices " + text);
+			const devices = JSON.parse(text);
+			this.outputChannel.appendLine('Successfully got devices: ' + devices.map((d: any) => d.name).join(', '));
+			this.sendMessageToWebview(webviewView, {
+				command: 'onNewDevices',
+				payload: {
+					devices: devices.map((d: any) => {
+						return {
+							deviceId: d.id,
+							deviceName: d.name,
+						};
+					})
+				}
+			});
+		} catch (error) {
+			this.outputChannel.appendLine('Failed to get devices: ' + error);
+			vscode.window.showErrorMessage(`Failed to connect to mobilectl: ${error}`);
+		}
 	}
 
 	resolveWebviewView(
@@ -40,21 +107,6 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		_token: vscode.CancellationToken
 	) {
 		console.log('resolveWebviewView called');
-		const mobilectlPath = '/Users/gilm/git/mobilectl/mobilectl';
-
-		const outputChannel = vscode.window.createOutputChannel('Mobiledeck');
-		outputChannel.appendLine("Verifying mobilectl installation");
-
-		let devices = [];
-		try {
-			const text = execSync(`${mobilectlPath} devices --json`).toString();
-			outputChannel.appendLine("mobilectl returned devices " + text);
-			devices = JSON.parse(text);
-			outputChannel.appendLine('Successfully got devices: ' + devices.map((d: any) => d.name).join(', '));
-		} catch (error) {
-			outputChannel.appendLine('Failed to get devices: ' + error);
-			vscode.window.showErrorMessage(`Failed to connect to mobilectl: ${error}`);
-		}
 
 		webviewView.webview.options = {
 			enableScripts: true,
@@ -65,43 +117,33 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		};
 
 		webviewView.webview.onDidReceiveMessage(message => {
-			outputChannel.appendLine('Received message: ' + JSON.stringify(message));
+			this.outputChannel.appendLine('Received message: ' + JSON.stringify(message));
 			switch (message.command) {
 				case 'alert':
 					vscode.window.showErrorMessage(message.text);
 					break;
 
 				case 'pressButton':
-					execSync(`${mobilectlPath} io button --device ${message.deviceId} ${message.key}`);
+					execSync(`${this.mobilectlPath} io button --device ${message.deviceId} ${message.key}`);
 					break;
 
 				case 'tap':
-					vscode.window.showInformationMessage('clicking ' + JSON.stringify(message));
-					execSync(`${mobilectlPath} io tap --device ${message.deviceId} ${message.x},${message.y}`);
-					vscode.window.showInformationMessage('clicked on ' + JSON.stringify(message));
+					this.outputChannel.appendLine('Clicking ' + JSON.stringify(message));
+					execSync(`${this.mobilectlPath} io tap --device ${message.deviceId} ${message.x},${message.y}`);
+					this.outputChannel.appendLine('Clicked on ' + JSON.stringify(message));
 					break;
 
 				case 'keyDown':
-					execSync(`${mobilectlPath} io text --device ${message.deviceId} \"${message.key}\"`);
-					vscode.window.showInformationMessage('pressed key on ' + JSON.stringify(message));
+					execSync(`${this.mobilectlPath} io text --device ${message.deviceId} \"${message.key}\"`);
+					this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
 					break;
 
 				case 'requestDevices':
-					this.sendMessageToWebview(webviewView, {
-						command: 'onNewDevices',
-						payload: {
-							devices: devices.map((d: any) => {
-								return {
-									deviceId: d.id,
-									deviceName: d.name,
-								};
-							})
-						}
-					});
+					this.refreshDevices(webviewView);
 					break;
 
 				case 'requestScreenshot':
-					execFile(mobilectlPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
+					execFile(this.mobilectlPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
 						maxBuffer: 1024 * 1024 * 10,
 						encoding: 'buffer'
 					}, (error: Error | null, stdout: Buffer, stderr: Buffer) => {
@@ -110,7 +152,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 							return;
 						}
 
-						outputChannel.appendLine('Received screenshot from mobilectl of size ' + stdout.length);
+						this.outputChannel.appendLine('Received screenshot from mobilectl of size ' + stdout.length);
 						this.sendMessageToWebview(webviewView, {
 							command: 'onNewScreenshot',
 							payload: {
