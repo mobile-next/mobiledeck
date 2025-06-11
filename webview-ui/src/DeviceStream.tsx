@@ -36,7 +36,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 								</div>
 							) : (
 								<>
-									{screenshot != "" && (
+									{screenshot !== "" && (
 										<>
 											{/* <div className="text-xs font-medium mb-2 break-all text-center">{selectedDevice.replace("Remote: ", "")}</div> */}
 											{/* <div className="text-[10px] opacity-80"> */}
