@@ -23,7 +23,7 @@
     "commands": [
       {
         "command": "mobiledeck.openPreview",
-        "title": "Open iOS Preview Panel"
+        "title": "Mobiledeck: View Device"
       }
     ],
     "viewsContainers": {
