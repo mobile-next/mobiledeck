@@ -92,7 +92,7 @@ function App() {
   };
 
   const selectDevice = (device: DeviceDescriptor) => {
-    setSelectedDevice(device.deviceId);
+    setSelectedDevice(device.deviceName);
     requestScreenshot(device.deviceId);
   };
 
