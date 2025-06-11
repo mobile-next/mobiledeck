@@ -28,7 +28,7 @@ jobs:
     - name: Lint
       run: |
         npm run lint || true
-        cd webview
+        cd webview-ui
         npm run lint || true
     
     - name: Build
