@@ -23,16 +23,11 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		<div className="relative flex-grow flex items-center justify-center bg-black overflow-hidden" tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
 				{/* Simulated device stream */}
-				<div className={`relative ${isRemoteConnection ? "w-[260px] h-[160px] rounded-lg" : "rounded-[36px]"} overflow-hidden border-4 border-[#1a1a1a] shadow-lg`}>
-					{!isRemoteConnection && (
-						<div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-16 h-5 bg-[#1a1a1a] rounded-b-lg z-10"></div>
-					)}
-
-					<div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 overflow-hidden">
-						<div className="flex flex-col items-center justify-center h-full text-white p-4">
+				<div className={`relative rounded-[36px] overflow-hidden`}>
+					<div className="w-full h-full overflow-hidden">
+						<div className="flex flex-col items-center justify-center h-full text-white">
 							{isRefreshing ? (
 								<div className="animate-pulse text-center">
-									<Wifi className="h-6 w-6 mx-auto mb-2 text-blue-400 animate-ping" />
 									Connecting to <br /> {selectedDevice?.deviceName}...
 								</div>
 							) : (
