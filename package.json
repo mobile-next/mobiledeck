@@ -71,6 +71,6 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilectl": "0.0.5"
+    "@mobilenext/mobilecli": "0.0.9"
   }
 }

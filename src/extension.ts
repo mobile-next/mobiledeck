@@ -32,33 +32,33 @@ export function deactivate() {
 
 class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
-	private mobilectlPath: string;
+	private mobilecliPath: string;
 	private outputChannel: vscode.OutputChannel;
 
 	constructor(private readonly context: vscode.ExtensionContext) {
 		console.log('MobiledeckViewProvider constructor called');
 
 		this.outputChannel = vscode.window.createOutputChannel('Mobiledeck');
-		this.mobilectlPath = this.findMobilectlPath();
+		this.mobilecliPath = this.findMobilecliPath();
 	}
 
-	findMobilectlPath(): string {
-		const root = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilectl', 'bin').fsPath;
+	findMobilecliPath(): string {
+		const root = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilecli', 'bin').fsPath;
 
-		let mobilectlPath: string;
+		let mobilecliPath: string;
 
 		switch (process.platform) {
 			case 'darwin':
-				mobilectlPath = path.join(root, 'mobilectl-darwin');
+				mobilecliPath = path.join(root, 'mobilecli-darwin');
 				break;
 
 			case 'linux':
 				switch (process.arch) {
 					case 'x64':
-						mobilectlPath = path.join(root, 'mobilectl-linux-x64');
+						mobilecliPath = path.join(root, 'mobilecli-linux-x64');
 						break;
 					case 'arm64':
-						mobilectlPath = path.join(root, 'mobilectl-linux-arm64');
+						mobilecliPath = path.join(root, 'mobilecli-linux-arm64');
 						break;
 
 					default:
@@ -70,18 +70,18 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				throw new Error('Unsupported platform: ' + process.platform);
 		}
 
-		this.outputChannel.appendLine("mobilectl path: " + mobilectlPath);
+		this.outputChannel.appendLine("mobilecli path: " + mobilecliPath);
 
-		const text = execFileSync(mobilectlPath, ['--version']).toString();
-		this.outputChannel.appendLine("mobilectl version: " + text);
+		const text = execFileSync(mobilecliPath, ['--version']).toString();
+		this.outputChannel.appendLine("mobilecli version: " + text);
 
-		return mobilectlPath;
+		return mobilecliPath;
 	}
 
 	refreshDevices(webviewView: vscode.WebviewView) {
 		try {
-			const text = execFileSync(this.mobilectlPath, ['devices', '--json']).toString();
-			this.outputChannel.appendLine("mobilectl returned devices " + text);
+			const text = execFileSync(this.mobilecliPath, ['devices', '--json']).toString();
+			this.outputChannel.appendLine("mobilecli returned devices " + text);
 			const devices = JSON.parse(text);
 			this.outputChannel.appendLine('Successfully got devices: ' + devices.map((d: any) => d.name).join(', '));
 			this.sendMessageToWebview(webviewView, {
@@ -97,7 +97,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 			});
 		} catch (error) {
 			this.outputChannel.appendLine('Failed to get devices: ' + error);
-			vscode.window.showErrorMessage(`Failed to connect to mobilectl: ${error}`);
+			vscode.window.showErrorMessage(`Failed to connect to mobilecli: ${error}`);
 		}
 	}
 
@@ -109,17 +109,17 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				break;
 
 			case 'pressButton':
-				execFileSync(this.mobilectlPath, ['io', 'button', '--device', message.deviceId, message.key]);
+				execFileSync(this.mobilecliPath, ['io', 'button', '--device', message.deviceId, message.key]);
 				break;
 
 			case 'tap':
 				this.outputChannel.appendLine('Clicking ' + JSON.stringify(message));
-				execFileSync(this.mobilectlPath, ['io', 'tap', '--device', message.deviceId, `${message.x},${message.y}`]);
+				execFileSync(this.mobilecliPath, ['io', 'tap', '--device', message.deviceId, `${message.x},${message.y}`]);
 				this.outputChannel.appendLine('Clicked on ' + JSON.stringify(message));
 				break;
 
 			case 'keyDown':
-				execFileSync(this.mobilectlPath, ['io', 'text', '--device', message.deviceId, message.key]);
+				execFileSync(this.mobilecliPath, ['io', 'text', '--device', message.deviceId, message.key]);
 				this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
 				break;
 
@@ -128,7 +128,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				break;
 
 			case 'requestScreenshot':
-				execFile(this.mobilectlPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
+				execFile(this.mobilecliPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
 					maxBuffer: 1024 * 1024 * 10,
 					encoding: 'buffer'
 				}, (error: Error | null, stdout: Buffer, stderr: Buffer) => {
@@ -137,7 +137,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 						return;
 					}
 
-					this.outputChannel.appendLine('Received screenshot from mobilectl of size ' + stdout.length);
+					this.outputChannel.appendLine('Received screenshot from mobilecli of size ' + stdout.length);
 					this.sendMessageToWebview(webviewView, {
 						command: 'onNewScreenshot',
 						payload: {
