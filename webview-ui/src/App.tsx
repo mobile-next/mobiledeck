@@ -98,7 +98,7 @@ function App() {
 			text = "\d";
 		} else if (text === ' ') {
 			text = " ";
-		} else if (text === 'Shift') {
+		} else if (text === 'Shift' || text === 'Meta') {
 			// do nothing
 			return;
 		}

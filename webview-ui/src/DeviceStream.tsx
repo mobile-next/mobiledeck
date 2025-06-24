@@ -18,7 +18,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onKeyDown,
 }) => {
 	return (
-		<div className="relative flex-grow flex items-center justify-center bg-black overflow-hidden" tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
+		<div className="relative flex-grow flex items-center justify-center bg-black overflow-hidden focus:outline-none" tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
 				{/* Simulated device stream */}
 				<div className={`relative rounded-[36px] overflow-hidden`}>
@@ -40,7 +40,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 												src={screenshot}
 												alt=""
 												className="w-full h-full object-contain"
-												style={{ height: '80vh' }}
+												style={{ maxHeight: 'calc(100vh - 8em)' }}
 												onClick={(e) => {
 													const rect = e.currentTarget.getBoundingClientRect();
 													const x = e.clientX - rect.left;
