@@ -1,5 +1,10 @@
-
 export interface DeviceDescriptor {
-	deviceId: string;
-	deviceName: string;
+	id: string;
+	name: string;
+	platform: string;
+	type: string;
+}
+
+export interface ListDevicesResponse {
+	devices: DeviceDescriptor[];
 }
