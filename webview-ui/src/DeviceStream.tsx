@@ -1,22 +1,32 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor } from "./models";
 
 export interface DeviceStreamProps {
 	isConnecting: boolean;
 	selectedDevice: DeviceDescriptor | null;
-	screenshot: string;
+	screenshotScale: number;
+	imageUrl: string;
 	onTap: (x: number, y: number) => void;
 	onKeyDown: (key: string) => void;
+}
+
+interface ClickAnimation {
+	id: number;
+	x: number;
+	y: number;
 }
 
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
 	selectedDevice,
-	screenshot,
+	screenshotScale,
+	imageUrl,
 	onTap,
 	onKeyDown,
 }) => {
+	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
+
 	return (
 		<div className="relative flex-grow flex items-center justify-center bg-black overflow-hidden focus:outline-none" tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
@@ -30,14 +40,14 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 								</div>
 							) : (
 								<>
-									{screenshot !== "" && (
-										<>
+									{imageUrl !== "" && (
+										<div className="relative">
 											{/* <div className="text-xs font-medium mb-2 break-all text-center">{selectedDevice.replace("Remote: ", "")}</div> */}
 											{/* <div className="text-[10px] opacity-80"> */}
 											{/* Live Streaming */}
 											{/* </div> */}
 											<img
-												src={screenshot}
+												src={imageUrl}
 												alt=""
 												className="w-full h-full object-contain"
 												style={{ maxHeight: 'calc(100vh - 8em)' }}
@@ -45,14 +55,33 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 													const rect = e.currentTarget.getBoundingClientRect();
 													const x = e.clientX - rect.left;
 													const y = e.clientY - rect.top;
-													const scale = 1.0;
-													const screenX = Math.floor((x / e.currentTarget.width) * e.currentTarget.naturalWidth / scale);
-													const screenY = Math.floor((y / e.currentTarget.height) * e.currentTarget.naturalHeight / scale);
+
+													const newClick: ClickAnimation = {
+														id: Date.now(),
+														x: x,
+														y: y,
+													};
+
+													setClicks(prevClicks => [...prevClicks, newClick]);
+
+													setTimeout(() => {
+														setClicks(prevClicks => prevClicks.filter(c => c.id !== newClick.id));
+													}, 400);
+
+													const screenX = Math.floor((x / e.currentTarget.width) * e.currentTarget.naturalWidth / screenshotScale);
+													const screenY = Math.floor((y / e.currentTarget.height) * e.currentTarget.naturalHeight / screenshotScale);
 													// convert to screenshot size
 													onTap(screenX, screenY);
 												}}
 											/>
-										</>
+											{clicks.map(click => (
+												<div
+													key={click.id}
+													className="click-animation"
+													style={{ left: `${click.x}px`, top: `${click.y}px` }}
+												/>
+											))}
+										</div>
 									)
 									}
 								</>
