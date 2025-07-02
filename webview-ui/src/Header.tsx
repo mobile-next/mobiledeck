@@ -15,7 +15,6 @@ import { DeviceDescriptor } from "./models";
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
 	isRefreshing: boolean;
-	isRemoteConnection: boolean;
 	localDevices: DeviceDescriptor[];
 	recentHosts: string[];
 	onSelectDevice: (device: DeviceDescriptor) => void;
@@ -26,7 +25,6 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
 	selectedDevice,
-	isRemoteConnection,
 	localDevices,
 	recentHosts,
 	onSelectDevice,
@@ -45,42 +43,30 @@ export const Header: React.FC<HeaderProps> = ({
 							variant="ghost"
 							className="h-8 px-2 text-xs hover:bg-[#2a2a2a] focus:outline-none flex items-center"
 						>
-							{isRemoteConnection ? <Wifi className="h-3 w-3 mr-1.5 text-blue-400" /> : <Smartphone className="h-3 w-3 mr-1.5" />}
-							<span className="mr-1 truncate max-w-[100px]">{selectedDevice?.deviceName}</span>
+							<Smartphone className="h-3 w-3 mr-1.5" />
+							<span className="mr-1 truncate max-w-[100px]">{selectedDevice?.name || "Select Device.."}</span>
 							<ChevronDown className="h-3 w-3" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[220px]">
-						{/*
-		  <DropdownMenuItem
-		    className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
-		    onClick={onShowConnectDialog}
-		  >
-		    <LinkIcon className="h-3.5 w-3.5 mr-2 text-blue-400" /> Connect to Remote Host...
-		  </DropdownMenuItem>
-		  <DropdownMenuSeparator className="bg-[#3c3c3c]" />
-		  */}
-						{localDevices.map((device) => (
+						{localDevices.length === 0 ? (
 							<DropdownMenuItem
-								key={device.deviceName}
-								onClick={() => onSelectDevice(device)}
-								className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
+								disabled
+								className="text-xs py-1.5 text-gray-500 flex items-center"
 							>
-								<Smartphone className="h-3.5 w-3.5 mr-2" /> {device.deviceName}
+								<Smartphone className="h-3.5 w-3.5 mr-2" /> No devices found
 							</DropdownMenuItem>
-						))}
-						{/*
-		  {recentHosts.length > 0 && <DropdownMenuSeparator className="bg-[#3c3c3c]" />}
-		  {recentHosts.map((host) => (
-		    <DropdownMenuItem
-		      key={host}
-		      onClick={() => onSelectDevice(`Remote: ${host}`)}
-		      className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
-		    >
-		      <Wifi className="h-3.5 w-3.5 mr-2 text-blue-400" /> {host}
-		    </DropdownMenuItem>
-		  ))}
-		  */}
+						) : (
+							localDevices.map((device) => (
+								<DropdownMenuItem
+									key={device.id}
+									onClick={() => onSelectDevice(device)}
+									className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
+								>
+									<Smartphone className="h-3.5 w-3.5 mr-2" /> {device.name}
+								</DropdownMenuItem>
+							))
+						)}
 					</DropdownMenuContent>
 				</DropdownMenu>
 
@@ -114,30 +100,9 @@ export const Header: React.FC<HeaderProps> = ({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[200px]">
-					{/*
-					<DropdownMenuItem
-						className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
-						onClick={onShowConnectDialog}
-					>
-						<LinkIcon className="h-3.5 w-3.5 mr-2 text-blue-400" /> Connect to Remote Host...
-					</DropdownMenuItem>
-					<DropdownMenuSeparator className="bg-[#3c3c3c]" />
-					<DropdownMenuItem className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d]">
-						Take Screenshot
-					</DropdownMenuItem>
-					<DropdownMenuItem className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d]">
-						Record Screen
-					</DropdownMenuItem>
-					*/}
 					<DropdownMenuItem className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d]">
 						Rotate Device
 					</DropdownMenuItem>
-					{/*
-					<DropdownMenuSeparator className="bg-[#3c3c3c]" />
-					<DropdownMenuItem className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d]">
-						Device Settings
-					</DropdownMenuItem>
-					*/}
 				</DropdownMenuContent>
 			</DropdownMenu>
 		</div>

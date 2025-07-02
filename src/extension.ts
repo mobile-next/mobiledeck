@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { execFile, execFileSync } from 'child_process';
 import path from 'path';
+import { spawn } from 'child_process';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Mobiledeck extension is being activated');
@@ -78,29 +79,6 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		return mobilecliPath;
 	}
 
-	refreshDevices(webviewView: vscode.WebviewView) {
-		try {
-			const text = execFileSync(this.mobilecliPath, ['devices', '--json']).toString();
-			this.outputChannel.appendLine("mobilecli returned devices " + text);
-			const devices = JSON.parse(text);
-			this.outputChannel.appendLine('Successfully got devices: ' + devices.map((d: any) => d.name).join(', '));
-			this.sendMessageToWebview(webviewView, {
-				command: 'onNewDevices',
-				payload: {
-					devices: devices.map((d: any) => {
-						return {
-							deviceId: d.id,
-							deviceName: d.name,
-						};
-					})
-				}
-			});
-		} catch (error) {
-			this.outputChannel.appendLine('Failed to get devices: ' + error);
-			vscode.window.showErrorMessage(`Failed to connect to mobilecli: ${error}`);
-		}
-	}
-
 	handleMessage(webviewView: vscode.WebviewView, message: any) {
 		this.outputChannel.appendLine('Received message: ' + JSON.stringify(message));
 		switch (message.command) {
@@ -108,44 +86,8 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				vscode.window.showErrorMessage(message.text);
 				break;
 
-			case 'pressButton':
-				execFileSync(this.mobilecliPath, ['io', 'button', '--device', message.deviceId, message.key]);
-				break;
-
-			case 'tap':
-				this.outputChannel.appendLine('Clicking ' + JSON.stringify(message));
-				execFileSync(this.mobilecliPath, ['io', 'tap', '--device', message.deviceId, `${message.x},${message.y}`]);
-				this.outputChannel.appendLine('Clicked on ' + JSON.stringify(message));
-				break;
-
-			case 'keyDown':
-				execFileSync(this.mobilecliPath, ['io', 'text', '--device', message.deviceId, message.key]);
-				this.outputChannel.appendLine('Pressed key on ' + JSON.stringify(message));
-				break;
-
-			case 'requestDevices':
-				this.refreshDevices(webviewView);
-				break;
-
-			case 'requestScreenshot':
-				execFile(this.mobilecliPath, ['screenshot', '--device', message.deviceId, '--output', '-', '--format', 'jpeg', '--quality', '80'], {
-					maxBuffer: 1024 * 1024 * 10,
-					encoding: 'buffer'
-				}, (error: Error | null, stdout: Buffer, stderr: Buffer) => {
-					if (error) {
-						vscode.window.showErrorMessage(`Failed to take screenshot: ${error.message}`);
-						return;
-					}
-
-					this.outputChannel.appendLine('Received screenshot from mobilecli of size ' + stdout.length);
-					this.sendMessageToWebview(webviewView, {
-						command: 'onNewScreenshot',
-						payload: {
-							deviceId: message.deviceId,
-							screenshot: stdout.toString('base64'),
-						}
-					});
-				});
+			case 'log':
+				this.outputChannel.appendLine(message.text);
 				break;
 
 			default:
