@@ -50,7 +50,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 												src={imageUrl}
 												alt=""
 												className="w-full h-full object-contain"
-												style={{ maxHeight: 'calc(100vh - 8em)' }}
+												style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
 												onClick={(e) => {
 													const rect = e.currentTarget.getBoundingClientRect();
 													const x = e.clientX - rect.left;

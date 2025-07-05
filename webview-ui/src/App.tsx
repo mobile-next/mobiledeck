@@ -4,6 +4,7 @@ import { ConnectDialog } from './ConnectDialog';
 import { DeviceStream } from './DeviceStream';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
+import { MjpegStream } from './MjpegStream';
 
 declare function acquireVsCodeApi(): any;
 
@@ -56,6 +57,7 @@ function App() {
 	const [streamActive, setStreamActive] = useState(false);
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
+	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
 
 	const jsonRpcClient = new JsonRpcClient('http://localhost:12000/rpc');
 
@@ -97,7 +99,15 @@ function App() {
 			setStreamActive(true);
 			setIsConnecting(false);
 
-			processMjpegStream(reader);
+			const stream = new MjpegStream(reader, (newImageUrl) => {
+				// Clean up previous URL
+				if (imageUrl) {
+					URL.revokeObjectURL(imageUrl);
+				}
+				setImageUrl(newImageUrl);
+			});
+			setMjpegStream(stream);
+			stream.start();
 
 		} catch (error) {
 			console.error('Error starting MJPEG stream:', error);
@@ -106,6 +116,10 @@ function App() {
 	};
 
 	const stopMjpegStream = () => {
+		if (mjpegStream) {
+			mjpegStream.stop();
+			setMjpegStream(null);
+		}
 		if (streamController) {
 			streamController.abort();
 			setStreamController(null);
@@ -118,116 +132,6 @@ function App() {
 		setImageUrl("");
 	};
 
-	const processMjpegStream = async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
-		const boundary = '--BoundaryString';
-		let buffer = new Uint8Array();
-		let inImage = false;
-		let imageData = new Uint8Array();
-		let contentLength = 0;
-		let bytesRead = 0;
-
-		console.log("mobiledeck: starting mjpeg stream");
-		try {
-			while (true) {
-				console.log("mobiledeck: reading mjpeg stream");
-				const { done, value } = await reader.read();
-
-				if (done) {
-					console.log('MJPEG stream ended');
-					break;
-				}
-
-				console.log("mobiledeck: read mjpeg stream of length", value.length);
-
-				const newBuffer = new Uint8Array(buffer.length + value.length);
-				newBuffer.set(buffer);
-				newBuffer.set(value, buffer.length);
-				buffer = newBuffer;
-
-				let processedData = false;
-				while (true) {
-					if (!inImage) {
-						const bufferString = new TextDecoder().decode(buffer);
-						const boundaryIndex = bufferString.indexOf(boundary);
-						if (boundaryIndex === -1) {
-							break;
-						}
-
-						const headerEndIndex = bufferString.indexOf('\r\n\r\n', boundaryIndex);
-						if (headerEndIndex === -1) {
-							break;
-						}
-
-						const headers = bufferString.substring(boundaryIndex + boundary.length, headerEndIndex);
-						const contentLengthMatch = headers.match(/Content-Length:\s*(\d+)/i);
-						if (contentLengthMatch) {
-							contentLength = parseInt(contentLengthMatch[1]);
-						}
-
-						const headerEndBytes = headerEndIndex + 4;
-						buffer = buffer.slice(headerEndBytes);
-						inImage = true;
-						imageData = new Uint8Array();
-						bytesRead = 0;
-						processedData = true;
-					}
-
-					if (inImage) {
-						const remainingBytes = contentLength - bytesRead;
-						const bytesToRead = Math.min(remainingBytes, buffer.length);
-
-						if (bytesToRead === 0) {
-							break;
-						}
-
-						const newImageData = new Uint8Array(imageData.length + bytesToRead);
-						newImageData.set(imageData);
-						newImageData.set(buffer.slice(0, bytesToRead), imageData.length);
-						imageData = newImageData;
-
-						bytesRead += bytesToRead;
-						buffer = buffer.slice(bytesToRead);
-						processedData = true;
-
-						if (bytesRead >= contentLength) {
-							displayMjpegImage(imageData);
-							inImage = false;
-							imageData = new Uint8Array();
-							bytesRead = 0;
-						}
-					}
-				}
-
-				if (processedData) {
-					await new Promise(resolve => setTimeout(resolve, 0));
-				}
-			}
-		} catch (error) {
-			if (error.name === 'AbortError') {
-				console.log('MJPEG stream aborted');
-			} else {
-				console.error('Error processing MJPEG stream:', error);
-			}
-		} finally {
-			stopMjpegStream();
-		}
-	};
-
-	const displayMjpegImage = (imageData: Uint8Array) => {
-		try {
-			const blob = new Blob([imageData], { type: 'image/jpeg' });
-			const newImageUrl = URL.createObjectURL(blob);
-
-			// Clean up previous URL
-			if (imageUrl) {
-				URL.revokeObjectURL(imageUrl);
-			}
-
-			setImageUrl(newImageUrl);
-		} catch (error) {
-			console.error('Error displaying MJPEG image:', error);
-		}
-	};
 
 	const requestDevices = async () => {
 		const result = await jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', {});
