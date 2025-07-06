@@ -1,8 +1,19 @@
+export enum DevicePlatform {
+	IOS = "ios",
+	ANDROID = "android",
+}
+
+export enum DeviceType {
+	REAL = "real",
+	EMULATOR = "emulator",
+	SIMULATOR = "simulator",
+}
+
 export interface DeviceDescriptor {
 	id: string;
 	name: string;
-	platform: string;
-	type: string;
+	platform: DevicePlatform;
+	type: DeviceType;
 }
 
 export interface ListDevicesResponse {

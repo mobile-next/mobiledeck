@@ -62,8 +62,8 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "husky": "<=9.1.7",
     "eslint": "^9.23.0",
+    "husky": "<=9.1.7",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.2",
     "vsce": "^2.15.0",
@@ -71,6 +71,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.9"
+    "@mobilenext/mobilecli": "0.0.9",
+    "react-icons": "^5.5.0"
   }
 }

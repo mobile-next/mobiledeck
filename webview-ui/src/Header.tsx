@@ -1,12 +1,15 @@
 import React, { useEffect } from "react";
 import { Button } from "./components/ui/button";
+import { IoLogoAndroid, IoLogoApple } from "react-icons/io";
 
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-	DropdownMenuSeparator
+	DropdownMenuSeparator,
+	DropdownMenuLabel,
+	DropdownMenuGroup
 } from "./components/ui/dropdown-menu";
 
 import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon } from "lucide-react";
@@ -49,24 +52,36 @@ export const Header: React.FC<HeaderProps> = ({
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[220px]">
-						{localDevices.length === 0 ? (
+						{localDevices.length === 0 &&
 							<DropdownMenuItem
 								disabled
 								className="text-xs py-1.5 text-gray-500 flex items-center"
 							>
 								<Smartphone className="h-3.5 w-3.5 mr-2" /> No devices found
 							</DropdownMenuItem>
-						) : (
-							localDevices.map((device) => (
+						}
+						{localDevices.length > 0 &&
+							<>
+							<DropdownMenuGroup>
+								<DropdownMenuLabel className="text-xs">Local Devices</DropdownMenuLabel>
+							</DropdownMenuGroup>
+							{localDevices.map((device) => (
 								<DropdownMenuItem
 									key={device.id}
 									onClick={() => onSelectDevice(device)}
 									className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
 								>
-									<Smartphone className="h-3.5 w-3.5 mr-2" /> {device.name}
+									{/* <Smartphone className="h-3.5 w-3.5 mr-2" /> {device.name} */}
+									<div className="h-3.5 w-3.5 mr-2">
+										{device.platform === "android" ? <IoLogoAndroid /> : <IoLogoApple />}
+									</div>
+									{device.name}
+									{device.type === "emulator" ? " (Emulator)" : ""}
+									{device.type === "simulator" ? " (Simulator)" : ""}
 								</DropdownMenuItem>
-							))
-						)}
+							))}
+							</>
+						}
 					</DropdownMenuContent>
 				</DropdownMenu>
 

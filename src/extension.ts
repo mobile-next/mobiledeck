@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { execFileSync } from 'child_process';
 import path from 'path';
+import { spawn } from 'child_process';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Mobiledeck extension is being activated');
