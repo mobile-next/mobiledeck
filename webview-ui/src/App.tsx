@@ -159,6 +159,14 @@ function App() {
 		setSelectedDevice(device);
 		startMjpegStream(device.id);
 		requestDeviceInfo(device.id).then();
+		
+		// Send message to extension to remember selected device
+		if (vscode) {
+			vscode.postMessage({
+				command: 'onDeviceSelected',
+				device: device
+			});
+		}
 	};
 
 	const handleTap = async (x: number, y: number) => {
@@ -186,6 +194,11 @@ function App() {
 		const message = event.data;
 
 		switch (message.command) {
+			case 'selectDevice':
+				if (message.device) {
+					selectDevice(message.device);
+				}
+				break;
 			default:
 				console.log('mobiledeck: unknown message', message);
 				break;
@@ -200,6 +213,13 @@ function App() {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
 		refreshDeviceList();
+
+		// Send initialization message to extension
+		if (vscode) {
+			vscode.postMessage({
+				command: 'onInitialized'
+			});
+		}
 
 		return () => {
 			window.removeEventListener('message', messageHandler);

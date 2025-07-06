@@ -35,6 +35,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 	private mobilecliPath: string;
 	private outputChannel: vscode.OutputChannel;
+	private lastSelectedDevice: any = null;
 
 	constructor(private readonly context: vscode.ExtensionContext) {
 		console.log('MobiledeckViewProvider constructor called');
@@ -88,6 +89,21 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 			case 'log':
 				this.outputChannel.appendLine(message.text);
+				break;
+
+			case 'onDeviceSelected':
+				this.lastSelectedDevice = message.device;
+				this.outputChannel.appendLine('Device selected: ' + JSON.stringify(message.device));
+				break;
+
+			case 'onInitialized':
+				this.outputChannel.appendLine('Webview initialized');
+				if (this.lastSelectedDevice) {
+					this.sendMessageToWebview(webviewView, {
+						command: 'selectDevice',
+						device: this.lastSelectedDevice
+					});
+				}
 				break;
 
 			default:
