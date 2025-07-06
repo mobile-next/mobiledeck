@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { execFile, execFileSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import path from 'path';
 import { spawn } from 'child_process';
 
