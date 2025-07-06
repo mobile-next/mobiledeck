@@ -139,7 +139,7 @@ function App() {
 	};
 
 	const requestDeviceInfo = async (deviceId: string) => {
-		const result = await jsonRpcClient.sendJsonRpcRequest<DeviceInfoResponse>('info', { deviceId: deviceId });
+		const result = await jsonRpcClient.sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
 		setScreenshotScale(result.device.screenSize.scale);
 	};
