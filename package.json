@@ -31,7 +31,7 @@
         {
           "id": "mobiledeckActivityBar",
           "title": "Mobiledeck",
-          "icon": "assets/ios.svg"
+          "icon": "assets/mobiledeck-icon.svg"
         }
       ]
     },
