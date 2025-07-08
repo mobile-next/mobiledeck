@@ -2,7 +2,7 @@
   "name": "mobiledeck",
   "displayName": "mobiledeck",
   "description": "",
-  "version": "0.0.1",
+  "version": "dev",
   "publisher": "mobile-next",
   "engines": {
     "vscode": "^1.85.0"
