@@ -120,14 +120,17 @@ function App() {
 			mjpegStream.stop();
 			setMjpegStream(null);
 		}
+
 		if (streamController) {
 			streamController.abort();
 			setStreamController(null);
 		}
+
 		if (streamReader) {
 			streamReader.cancel();
 			setStreamReader(null);
 		}
+
 		setStreamActive(false);
 		setImageUrl("");
 	};
@@ -159,7 +162,7 @@ function App() {
 		setSelectedDevice(device);
 		startMjpegStream(device.id);
 		requestDeviceInfo(device.id).then();
-		
+
 		// Send message to extension to remember selected device
 		if (vscode) {
 			vscode.postMessage({
