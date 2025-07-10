@@ -54,7 +54,6 @@ function App() {
 	const [localDevices, setLocalDevices] = useState<DeviceDescriptor[]>([]);
 	const [imageUrl, setImageUrl] = useState<string>("");
 	const [screenshotScale, setScreenshotScale] = useState(1.0);
-	const [streamActive, setStreamActive] = useState(false);
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
@@ -62,10 +61,6 @@ function App() {
 	const jsonRpcClient = new JsonRpcClient('http://localhost:12000/rpc');
 
 	const startMjpegStream = async (deviceId: string) => {
-		if (streamActive) {
-			return;
-		}
-
 		try {
 			setIsConnecting(true);
 			const response = await fetch('http://localhost:12000/rpc', {
@@ -96,7 +91,6 @@ function App() {
 			const reader = response.body.getReader();
 			setStreamController(controller);
 			setStreamReader(reader);
-			setStreamActive(true);
 			setIsConnecting(false);
 
 			const stream = new MjpegStream(reader, (newImageUrl) => {
@@ -131,10 +125,8 @@ function App() {
 			setStreamReader(null);
 		}
 
-		setStreamActive(false);
 		setImageUrl("");
 	};
-
 
 	const requestDevices = async () => {
 		const result = await jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', {});
@@ -159,11 +151,13 @@ function App() {
 	};
 
 	const selectDevice = (device: DeviceDescriptor) => {
+		stopMjpegStream();
+
 		setSelectedDevice(device);
 		startMjpegStream(device.id);
 		requestDeviceInfo(device.id).then();
 
-		// Send message to extension to remember selected device
+		// send message to extension to remember selected device
 		if (vscode) {
 			vscode.postMessage({
 				command: 'onDeviceSelected',
