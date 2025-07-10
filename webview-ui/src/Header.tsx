@@ -96,12 +96,13 @@ export const Header: React.FC<HeaderProps> = ({
 					<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
 				</Button>
 
-				{/* Refresh button */}
+				{/* Home button */}
 				<Button
 					variant="ghost"
 					size="icon"
 					className="h-8 w-8 hover:bg-[#2a2a2a]"
 					onClick={onHome}
+					disabled={!selectedDevice}
 				>
 					<House className={`h-3.5 w-3.5`} />
 				</Button>
