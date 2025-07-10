@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './Header';
 import { ConnectDialog } from './ConnectDialog';
 import { DeviceStream } from './DeviceStream';
-import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse } from './models';
+import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
 
@@ -53,8 +53,7 @@ function App() {
 
 	const [localDevices, setLocalDevices] = useState<DeviceDescriptor[]>([]);
 	const [imageUrl, setImageUrl] = useState<string>("");
-	const [screenshotScale, setScreenshotScale] = useState(1.0);
-	const [streamActive, setStreamActive] = useState(false);
+	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
@@ -62,10 +61,6 @@ function App() {
 	const jsonRpcClient = new JsonRpcClient('http://localhost:12000/rpc');
 
 	const startMjpegStream = async (deviceId: string) => {
-		if (streamActive) {
-			return;
-		}
-
 		try {
 			setIsConnecting(true);
 			const response = await fetch('http://localhost:12000/rpc', {
@@ -96,7 +91,6 @@ function App() {
 			const reader = response.body.getReader();
 			setStreamController(controller);
 			setStreamReader(reader);
-			setStreamActive(true);
 			setIsConnecting(false);
 
 			const stream = new MjpegStream(reader, (newImageUrl) => {
@@ -131,10 +125,8 @@ function App() {
 			setStreamReader(null);
 		}
 
-		setStreamActive(false);
 		setImageUrl("");
 	};
-
 
 	const requestDevices = async () => {
 		const result = await jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', {});
@@ -144,7 +136,7 @@ function App() {
 	const requestDeviceInfo = async (deviceId: string) => {
 		const result = await jsonRpcClient.sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
-		setScreenshotScale(result.device.screenSize.scale);
+		setScreenSize(result.device.screenSize);
 	};
 
 	const refreshDeviceList = async () => {
@@ -159,11 +151,13 @@ function App() {
 	};
 
 	const selectDevice = (device: DeviceDescriptor) => {
+		stopMjpegStream();
+
 		setSelectedDevice(device);
 		startMjpegStream(device.id);
 		requestDeviceInfo(device.id).then();
 
-		// Send message to extension to remember selected device
+		// send message to extension to remember selected device
 		if (vscode) {
 			vscode.postMessage({
 				command: 'onDeviceSelected',
@@ -252,7 +246,7 @@ function App() {
 				isConnecting={isConnecting}
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
-				screenshotScale={screenshotScale}
+				screenSize={screenSize}
 				onTap={handleTap}
 				onKeyDown={handleKeyDown}
 			/>

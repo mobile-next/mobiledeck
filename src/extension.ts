@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { execFileSync } from 'child_process';
+import { ChildProcess, execFileSync } from 'child_process';
 import path from 'path';
 import { spawn } from 'child_process';
 
@@ -35,16 +35,22 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 	private mobilecliPath: string;
 	private outputChannel: vscode.OutputChannel;
-	private lastSelectedDevice: any = null;
+	private lastSelectedDevice: string | null = null;
+	private mobilecliServerProcess: ChildProcess | null = null;
 
 	constructor(private readonly context: vscode.ExtensionContext) {
-		console.log('MobiledeckViewProvider constructor called');
-
 		this.outputChannel = vscode.window.createOutputChannel('Mobiledeck');
+		this.verbose("MobiledeckViewProvider constructor called");
+
 		this.mobilecliPath = this.findMobilecliPath();
 	}
 
-	findMobilecliPath(): string {
+	private verbose(message: string) {
+		const timestamp = new Date().toISOString();
+		this.outputChannel.appendLine(`[${timestamp}] ${message}`);
+	}
+
+	private findMobilecliPath(): string {
 		const root = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilecli', 'bin').fsPath;
 
 		let mobilecliPath: string;
@@ -52,6 +58,10 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		switch (process.platform) {
 			case 'darwin':
 				mobilecliPath = path.join(root, 'mobilecli-darwin');
+				break;
+
+			case 'win32':
+				mobilecliPath = path.join(root, 'mobilecli-windows-amd64.exe');
 				break;
 
 			case 'linux':
@@ -72,32 +82,87 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				throw new Error('Unsupported platform: ' + process.platform);
 		}
 
-		this.outputChannel.appendLine("mobilecli path: " + mobilecliPath);
+		this.verbose("mobilecli path: " + mobilecliPath);
 
-		const text = execFileSync(mobilecliPath, ['--version']).toString();
-		this.outputChannel.appendLine("mobilecli version: " + text);
+		const text = execFileSync(mobilecliPath, ['--version']).toString().trim();
+		this.verbose("mobilecli version: " + text);
 
 		return mobilecliPath;
 	}
 
+	private async checkMobilecliServerRunning(): Promise<boolean> {
+		try {
+			const response = await fetch('http://localhost:12000/', {
+				method: 'GET',
+				signal: AbortSignal.timeout(2000)
+			});
+
+			const data: any = await response.json();
+			return data.status === 'ok';
+		} catch (error: any) {
+			return false;
+		}
+	}
+
+	private async launchMobilecliServer(): Promise<void> {
+		const isRunning = await this.checkMobilecliServerRunning();
+
+		if (isRunning) {
+			this.verbose('mobilecli server is already running');
+			return;
+		}
+
+		if (this.mobilecliServerProcess) {
+			this.verbose('mobilecli server process already exists');
+			return;
+		}
+
+		this.verbose('Launching mobilecli server...');
+
+		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['server', 'start', '--cors', '--listen', 'localhost:12000'], {
+			detached: false,
+			stdio: 'pipe'
+		});
+
+		this.mobilecliServerProcess.stdout?.on('data', (data: Buffer) => {
+			this.verbose(`mobilecli server stdout: ${data.toString().trimEnd()}`);
+		});
+
+		this.mobilecliServerProcess.stderr?.on('data', (data: Buffer) => {
+			this.verbose(`mobilecli server stderr: ${data.toString().trimEnd()}`);
+		});
+
+		this.mobilecliServerProcess.on('close', (code: number) => {
+			this.verbose(`mobilecli server process exited with code ${code}`);
+			this.mobilecliServerProcess = null;
+		});
+
+		this.mobilecliServerProcess.on('error', (error: Error) => {
+			this.verbose(`mobilecli server error: ${error.message}`);
+			this.mobilecliServerProcess = null;
+		});
+	}
+
 	handleMessage(webviewView: vscode.WebviewView, message: any) {
-		this.outputChannel.appendLine('Received message: ' + JSON.stringify(message));
+		this.verbose('Received message: ' + JSON.stringify(message));
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.text);
 				break;
 
 			case 'log':
-				this.outputChannel.appendLine(message.text);
+				this.verbose(message.text);
 				break;
 
 			case 'onDeviceSelected':
 				this.lastSelectedDevice = message.device;
-				this.outputChannel.appendLine('Device selected: ' + JSON.stringify(message.device));
+				this.verbose('Device selected: ' + JSON.stringify(message.device));
 				break;
 
 			case 'onInitialized':
-				this.outputChannel.appendLine('Webview initialized');
+				this.verbose('Webview initialized');
+
+				// the moment the webview is all set, we set it to view the device last selected
 				if (this.lastSelectedDevice) {
 					this.sendMessageToWebview(webviewView, {
 						command: 'selectDevice',
@@ -130,6 +195,8 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.onDidReceiveMessage(message => this.handleMessage(webviewView, message), undefined, this.context.subscriptions);
 
 		webviewView.webview.html = this.getHtml(webviewView);
+
+		this.launchMobilecliServer();
 	}
 
 	private sendMessageToWebview(webviewView: vscode.WebviewView, message: any) {
