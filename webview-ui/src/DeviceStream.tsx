@@ -8,6 +8,7 @@ export interface DeviceStreamProps {
 	screenSize: ScreenSize;
 	imageUrl: string;
 	onTap: (x: number, y: number) => void;
+	onGesture: (points: Array<[number, number, number]>) => void;
 	onKeyDown: (key: string) => void;
 }
 
@@ -17,15 +18,126 @@ interface ClickAnimation {
 	y: number;
 }
 
+interface GesturePoint {
+	x: number;
+	y: number;
+	timestamp: number;
+}
+
+interface GestureState {
+	isGesturing: boolean;
+	startTime: number;
+	points: GesturePoint[];
+	path: Array<[number, number]>;
+}
+
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
 	selectedDevice,
 	screenSize,
 	imageUrl,
 	onTap,
+	onGesture,
 	onKeyDown,
 }) => {
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
+	const [gestureState, setGestureState] = useState<GestureState>({
+		isGesturing: false,
+		startTime: 0,
+		points: [],
+		path: []
+	});
+
+	const convertToScreenCoords = (clientX: number, clientY: number, imgElement: HTMLImageElement) => {
+		const rect = imgElement.getBoundingClientRect();
+		const x = clientX - rect.left;
+		const y = clientY - rect.top;
+		const screenX = Math.floor((x / imgElement.width) * screenSize.width);
+		const screenY = Math.floor((y / imgElement.height) * screenSize.height);
+		return { x, y, screenX, screenY };
+	};
+
+	const handleMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+		const coords = convertToScreenCoords(e.clientX, e.clientY, e.currentTarget);
+		const now = Date.now();
+
+		setGestureState({
+			isGesturing: false,
+			startTime: now,
+			points: [{ x: coords.screenX, y: coords.screenY, timestamp: now }],
+			path: [[coords.x, coords.y]]
+		});
+	};
+
+	const handleMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+		if (gestureState.points.length === 0) {
+			return;
+		}
+
+		const coords = convertToScreenCoords(e.clientX, e.clientY, e.currentTarget);
+		const now = Date.now();
+
+		// If we've been dragging for more than 100ms, start collecting gesture
+		if (!gestureState.isGesturing && (now - gestureState.startTime) > 100) {
+			setGestureState((prev: GestureState) => ({
+				...prev,
+				isGesturing: true
+			}));
+		}
+
+		if (gestureState.isGesturing || (now - gestureState.startTime) > 100) {
+			setGestureState((prev: GestureState) => ({
+				...prev,
+				isGesturing: true,
+				points: [...prev.points, { x: coords.screenX, y: coords.screenY, timestamp: now }],
+				path: [...prev.path, [coords.x, coords.y]]
+			}));
+		}
+	};
+
+	const handleMouseUp = (e: React.MouseEvent<HTMLImageElement>) => {
+		if (gestureState.points.length === 0) {
+			return;
+		}
+
+		const coords = convertToScreenCoords(e.clientX, e.clientY, e.currentTarget);
+		const now = Date.now();
+
+		if (gestureState.isGesturing) {
+			// Add final point and send gesture
+			const finalPoints = [...gestureState.points, { x: coords.screenX, y: coords.screenY, timestamp: now }];
+			const gestureData: Array<[number, number, number]> = finalPoints.map(point => [
+				point.x,
+				point.y,
+				point.timestamp - gestureState.startTime
+			]);
+
+			onGesture(gestureData);
+		} else {
+			// This was a quick tap, use existing tap logic
+			const newClick: ClickAnimation = {
+				id: Date.now(),
+				x: coords.x,
+				y: coords.y,
+			};
+
+			setClicks(prevClicks => [...prevClicks, newClick]);
+
+			setTimeout(() => {
+				setClicks(prevClicks => prevClicks.filter(c => c.id !== newClick.id));
+			}, 400);
+
+			onTap(coords.screenX, coords.screenY);
+		}
+
+		// Reset gesture state
+		setGestureState({
+			isGesturing: false,
+			startTime: 0,
+			points: [],
+			path: []
+		});
+	};
 
 	return (
 		<div className="relative flex-grow flex items-center justify-center bg-black overflow-hidden focus:outline-none" tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
@@ -49,30 +161,13 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 											<img
 												src={imageUrl}
 												alt=""
-												className="w-full h-full object-contain"
+												className="w-full h-full object-contain cursor-crosshair"
 												style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
-												onClick={(e) => {
-													const rect = e.currentTarget.getBoundingClientRect();
-													const x = e.clientX - rect.left;
-													const y = e.clientY - rect.top;
-
-													const newClick: ClickAnimation = {
-														id: Date.now(),
-														x,
-														y,
-													};
-
-													setClicks(prevClicks => [...prevClicks, newClick]);
-
-													setTimeout(() => {
-														setClicks(prevClicks => prevClicks.filter(c => c.id !== newClick.id));
-													}, 400);
-
-													const screenX = Math.floor((x / e.currentTarget.width) * screenSize.width);
-													const screenY = Math.floor((y / e.currentTarget.height) * screenSize.height);
-													// console.log("gilm: ", x, y, screenX, screenY, e.currentTarget.width, e.currentTarget.height, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight, screenSize.scale);
-													onTap(screenX, screenY);
-												}}
+												onMouseDown={handleMouseDown}
+												onMouseMove={handleMouseMove}
+												onMouseUp={handleMouseUp}
+												onMouseLeave={handleMouseUp}
+												draggable={false}
 											/>
 											{clicks.map(click => (
 												<div
@@ -81,6 +176,21 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 													style={{ left: `${click.x}px`, top: `${click.y}px` }}
 												/>
 											))}
+											{gestureState.isGesturing && gestureState.path.length > 1 && (
+												<svg
+													className="absolute inset-0 pointer-events-none"
+													style={{ width: '100%', height: '100%' }}
+												>
+													<polyline
+														fill="none"
+														stroke="#3b82f6"
+														strokeWidth="3"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														points={gestureState.path.map((point: [number, number]) => `${point[0]},${point[1]}`).join(' ')}
+													/>
+												</svg>
+											)}
 										</div>
 									)
 									}

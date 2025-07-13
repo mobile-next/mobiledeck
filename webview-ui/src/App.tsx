@@ -57,13 +57,21 @@ function App() {
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
+	const [serverPort, setServerPort] = useState<number>(12000);
 
-	const jsonRpcClient = new JsonRpcClient('http://localhost:12000/rpc');
+	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
+
+	// Update jsonRpcClient when serverPort changes
+	useEffect(() => {
+		jsonRpcClientRef.current = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+	}, [serverPort]);
+
+	const getJsonRpcClient = () => jsonRpcClientRef.current;
 
 	const startMjpegStream = async (deviceId: string) => {
 		try {
 			setIsConnecting(true);
-			const response = await fetch('http://localhost:12000/rpc', {
+			const response = await fetch(`http://localhost:${serverPort}/rpc`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -129,12 +137,12 @@ function App() {
 	};
 
 	const requestDevices = async () => {
-		const result = await jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', {});
+		const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
 		setLocalDevices(result.devices);
 	};
 
 	const requestDeviceInfo = async (deviceId: string) => {
-		const result = await jsonRpcClient.sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
+		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
 		setScreenSize(result.device.screenSize);
 	};
@@ -167,7 +175,32 @@ function App() {
 	};
 
 	const handleTap = async (x: number, y: number) => {
-		await jsonRpcClient.sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
+		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
+	};
+
+	const handleGesture = async (points: Array<[number, number, number]>) => {
+		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', { points, deviceId: selectedDevice?.id });
+	};
+
+	const pendingKeys = useRef("");
+	const isFlushingKeys = useRef(false);
+
+	const flushPendingKeys = async () => {
+		if (isFlushingKeys.current) {
+			return;
+		}
+
+		isFlushingKeys.current = true;
+		const keys = pendingKeys.current;
+		if (keys === "") {
+			// already flushed
+			return;
+		}
+
+		pendingKeys.current = "";
+		getJsonRpcClient().sendJsonRpcRequest('io_text', { text: keys, deviceId: selectedDevice?.id }).then(() => {
+			isFlushingKeys.current = false;
+		});
 	};
 
 	const handleKeyDown = async (text: string) => {
@@ -184,7 +217,9 @@ function App() {
 			return;
 		}
 
-		await jsonRpcClient.sendJsonRpcRequest('io_text', { text, deviceId: selectedDevice?.id }).then();
+		// await jsonRpcClient.sendJsonRpcRequest('io_text', { text, deviceId: selectedDevice?.id }).then();
+		pendingKeys.current += text;
+		setTimeout(() => flushPendingKeys(), 500);
 	};
 
 	const handleMessage = (event: MessageEvent) => {
@@ -196,6 +231,11 @@ function App() {
 					selectDevice(message.device);
 				}
 				break;
+			case 'setServerPort':
+				if (message.port) {
+					setServerPort(message.port);
+				}
+				break;
 			default:
 				console.log('mobiledeck: unknown message', message);
 				break;
@@ -203,7 +243,7 @@ function App() {
 	};
 
 	const onHome = () => {
-		jsonRpcClient.sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
 	};
 
 	useEffect(() => {
@@ -248,6 +288,7 @@ function App() {
 				imageUrl={imageUrl}
 				screenSize={screenSize}
 				onTap={handleTap}
+				onGesture={handleGesture}
 				onKeyDown={handleKeyDown}
 			/>
 
