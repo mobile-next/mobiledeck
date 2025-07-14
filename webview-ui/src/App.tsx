@@ -8,12 +8,7 @@ import { MjpegStream } from './MjpegStream';
 
 declare function acquireVsCodeApi(): any;
 
-let vscode: any = null;
-try {
-	vscode = acquireVsCodeApi();
-} catch (error) {
-	console.error("Failed to acquire VS Code API:", error);
-}
+const vscode = acquireVsCodeApi();
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -166,12 +161,10 @@ function App() {
 		requestDeviceInfo(device.id).then();
 
 		// send message to extension to remember selected device
-		if (vscode) {
-			vscode.postMessage({
-				command: 'onDeviceSelected',
-				device: device
-			});
-		}
+		vscode.postMessage({
+			command: 'onDeviceSelected',
+			device: device
+		});
 	};
 
 	const handleTap = async (x: number, y: number) => {
@@ -180,8 +173,8 @@ function App() {
 
 	const handleGesture = async (points: Array<[number, number, number]>) => {
 		// Convert points to new actions format
-		const actions: Array<{type: string, duration?: number, x?: number, y?: number, button?: number}> = [];
-		
+		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
+
 		if (points.length > 0) {
 			// First point - move to start position
 			actions.push({
@@ -190,13 +183,13 @@ function App() {
 				x: points[0][0],
 				y: points[0][1]
 			});
-			
+
 			// Pointer down
 			actions.push({
 				type: "pointerDown",
 				button: 0
 			});
-			
+
 			// Add pause if needed
 			if (points.length > 1) {
 				actions.push({
@@ -204,10 +197,10 @@ function App() {
 					duration: 50
 				});
 			}
-			
+
 			// Move through all intermediate points
 			for (let i = 1; i < points.length; i++) {
-				const duration = i < points.length - 1 ? points[i][2] - points[i-1][2] : 100;
+				const duration = i < points.length - 1 ? points[i][2] - points[i - 1][2] : 100;
 				actions.push({
 					type: "pointerMove",
 					duration: Math.max(duration, 0),
@@ -215,17 +208,17 @@ function App() {
 					y: points[i][1]
 				});
 			}
-			
+
 			// Pointer up
 			actions.push({
 				type: "pointerUp",
 				button: 0
 			});
 		}
-		
-		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', { 
-			deviceId: selectedDevice?.id, 
-			actions 
+
+		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', {
+			deviceId: selectedDevice?.id,
+			actions
 		});
 	};
 
@@ -294,16 +287,52 @@ function App() {
 		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
 	};
 
+	const getScreenshotFilename = (device: DeviceDescriptor) => {
+		return `screenshot-${device.name}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+	};
+
+	const onTakeScreenshot = async () => {
+		if (!selectedDevice) {
+			return;
+		}
+
+		try {
+			const response = await getJsonRpcClient().sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId: selectedDevice.id });
+
+			if (response.data && response.data.startsWith("data:image/png;base64,")) {
+				// convert base64 to blob
+				const base64Data = response.data.substring("data:image/png;base64,".length);
+				const byteCharacters = atob(base64Data);
+				const byteNumbers = Array.from(byteCharacters, char => char.charCodeAt(0));
+				const byteArray = new Uint8Array(byteNumbers);
+				const blob = new Blob([byteArray], { type: 'image/png' });
+
+				// create download link
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = getScreenshotFilename(selectedDevice);
+				a.click();
+				URL.revokeObjectURL(url);
+			} else {
+				vscode.postMessage({
+					command: 'alert',
+					text: 'Failed to take screenshot: ' + response.data
+				});
+			}
+		} catch (error) {
+			console.error('Error taking screenshot:', error);
+		}
+	};
+
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
 
 		// Send initialization message to extension
-		if (vscode) {
-			vscode.postMessage({
-				command: 'onInitialized'
-			});
-		}
+		vscode.postMessage({
+			command: 'onInitialized'
+		});
 
 		return () => {
 			window.removeEventListener('message', messageHandler);
@@ -326,6 +355,7 @@ function App() {
 				onHome={() => onHome()}
 				onRefresh={() => refreshDeviceList()}
 				onShowConnectDialog={() => setShowConnectDialog(true)}
+				onTakeScreenshot={onTakeScreenshot}
 			/>
 
 			{/* Device stream area */}

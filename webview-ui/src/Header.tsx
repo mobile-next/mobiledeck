@@ -12,7 +12,7 @@ import {
 	DropdownMenuGroup
 } from "./components/ui/dropdown-menu";
 
-import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon } from "lucide-react";
+import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera } from "lucide-react";
 import { DeviceDescriptor } from "./models";
 
 export interface HeaderProps {
@@ -24,6 +24,7 @@ export interface HeaderProps {
 	onHome: () => void;
 	onRefresh: () => void;
 	onShowConnectDialog: () => void;
+	onTakeScreenshot: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
 	onHome,
 	isRefreshing,
 	onShowConnectDialog,
+	onTakeScreenshot,
 }) => {
 	return (
 		<div className="flex items-center justify-between px-2 py-2 border-b border-[#333333]">
@@ -116,8 +118,13 @@ export const Header: React.FC<HeaderProps> = ({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[200px]">
-					<DropdownMenuItem className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d]">
-						Rotate Device
+					<DropdownMenuItem 
+						className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
+						onClick={onTakeScreenshot}
+						disabled={!selectedDevice}
+					>
+						<Camera className="h-3.5 w-3.5 mr-2" />
+						Take Screenshot
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
