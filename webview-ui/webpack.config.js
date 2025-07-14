@@ -33,5 +33,9 @@ module.exports = {
       filename: 'index.html',
     }),
   ],
+  performance: {
+    maxEntrypointSize: 512000,
+    maxAssetSize: 512000,
+  },
   devtool: 'source-map',
 }; 
