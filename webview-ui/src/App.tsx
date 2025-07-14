@@ -179,7 +179,54 @@ function App() {
 	};
 
 	const handleGesture = async (points: Array<[number, number, number]>) => {
-		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', { points, deviceId: selectedDevice?.id });
+		// Convert points to new actions format
+		const actions: Array<{type: string, duration?: number, x?: number, y?: number, button?: number}> = [];
+		
+		if (points.length > 0) {
+			// First point - move to start position
+			actions.push({
+				type: "pointerMove",
+				duration: 0,
+				x: points[0][0],
+				y: points[0][1]
+			});
+			
+			// Pointer down
+			actions.push({
+				type: "pointerDown",
+				button: 0
+			});
+			
+			// Add pause if needed
+			if (points.length > 1) {
+				actions.push({
+					type: "pause",
+					duration: 50
+				});
+			}
+			
+			// Move through all intermediate points
+			for (let i = 1; i < points.length; i++) {
+				const duration = i < points.length - 1 ? points[i][2] - points[i-1][2] : 100;
+				actions.push({
+					type: "pointerMove",
+					duration: Math.max(duration, 0),
+					x: points[i][0],
+					y: points[i][1]
+				});
+			}
+			
+			// Pointer up
+			actions.push({
+				type: "pointerUp",
+				button: 0
+			});
+		}
+		
+		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', { 
+			deviceId: selectedDevice?.id, 
+			actions 
+		});
 	};
 
 	const pendingKeys = useRef("");
@@ -234,6 +281,7 @@ function App() {
 			case 'setServerPort':
 				if (message.port) {
 					setServerPort(message.port);
+					refreshDeviceList();
 				}
 				break;
 			default:
@@ -249,7 +297,6 @@ function App() {
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
-		refreshDeviceList();
 
 		// Send initialization message to extension
 		if (vscode) {

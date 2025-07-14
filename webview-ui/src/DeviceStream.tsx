@@ -109,7 +109,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 			const gestureData: Array<[number, number, number]> = finalPoints.map(point => [
 				point.x,
 				point.y,
-				point.timestamp - gestureState.startTime
+				point.timestamp - gestureState.startTime,
 			]);
 
 			onGesture(gestureData);
@@ -183,8 +183,8 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 												>
 													<polyline
 														fill="none"
-														stroke="#3b82f6"
-														strokeWidth="3"
+														stroke="#ffff00"
+														strokeWidth="5"
 														strokeLinecap="round"
 														strokeLinejoin="round"
 														points={gestureState.path.map((point: [number, number]) => `${point[0]},${point[1]}`).join(' ')}

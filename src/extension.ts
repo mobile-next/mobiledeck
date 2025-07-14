@@ -101,7 +101,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		return false;
 	}
 
-	private async launchMobilecliServer(): Promise<void> {
+	private async launchMobilecliServer(webviewView?: vscode.WebviewView): Promise<void> {
 		const isRunning = await this.checkMobilecliServerRunning();
 
 		if (isRunning) {
@@ -116,6 +116,11 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 		if (!this.serverPort) {
 			this.serverPort = await this.portManager.findAvailablePort(12001, 12099);
+			
+			// Send the server port to the webview if available
+			if (webviewView) {
+				this.sendServerPortToWebview(webviewView);
+			}
 		}
 
 		this.verbose(`Launching mobilecli server on port ${this.serverPort}...`);
@@ -164,12 +169,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				this.verbose('Webview initialized');
 
 				// Send the server port to the webview
-				if (this.serverPort) {
-					this.sendMessageToWebview(webviewView, {
-						command: 'setServerPort',
-						port: this.serverPort
-					});
-				}
+				this.sendServerPortToWebview(webviewView);
 
 				// the moment the webview is all set, we set it to view the device last selected
 				if (this.lastSelectedDevice) {
@@ -205,11 +205,20 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = this.getHtml(webviewView);
 
-		this.launchMobilecliServer();
+		this.launchMobilecliServer(webviewView);
 	}
 
 	private sendMessageToWebview(webviewView: vscode.WebviewView, message: any) {
 		webviewView.webview.postMessage(message);
+	}
+
+	private sendServerPortToWebview(webviewView: vscode.WebviewView) {
+		if (this.serverPort) {
+			this.sendMessageToWebview(webviewView, {
+				command: 'setServerPort',
+				port: this.serverPort
+			});
+		}
 	}
 
 	private getHtml(webviewView: vscode.WebviewView): string {
