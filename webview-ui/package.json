@@ -6,6 +6,7 @@
     "lint": "eslint src",
     "prepare": "npx husky",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "npx webpack watch --mode development",
     "build": "npx @tailwindcss/cli -i ./src/input.css -o ../assets/styles.css && npx webpack --mode production"
   },
   "keywords": [],
