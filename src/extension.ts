@@ -68,6 +68,10 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				mobilecliPath = path.join(root, 'mobilecli-windows-amd64.exe');
 				break;
 
+			case 'win32':
+				mobilecliPath = path.join(root, 'mobilecli-windows-amd64.exe');
+				break;
+
 			case 'linux':
 				switch (process.arch) {
 					case 'x64':
@@ -86,6 +90,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				throw new Error('Unsupported platform: ' + process.platform);
 		}
 
+		this.verbose("mobilecli path: " + mobilecliPath);
 		this.verbose("mobilecli path: " + mobilecliPath);
 
 		const text = execFileSync(mobilecliPath, ['--version']).toString().trim();
@@ -116,7 +121,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 		if (!this.serverPort) {
 			this.serverPort = await this.portManager.findAvailablePort(12001, 12099);
-			
+
 			// Send the server port to the webview if available
 			if (webviewView) {
 				this.sendServerPortToWebview(webviewView);
