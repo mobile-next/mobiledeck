@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Wifi } from "lucide-react";
-import { DeviceDescriptor } from "./models";
+import { DeviceDescriptor, ScreenSize } from "./models";
 
 export interface DeviceStreamProps {
 	isConnecting: boolean;
 	selectedDevice: DeviceDescriptor | null;
-	screenshotScale: number;
+	screenSize: ScreenSize;
 	imageUrl: string;
 	onTap: (x: number, y: number) => void;
 	onKeyDown: (key: string) => void;
@@ -20,7 +20,7 @@ interface ClickAnimation {
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
 	selectedDevice,
-	screenshotScale,
+	screenSize,
 	imageUrl,
 	onTap,
 	onKeyDown,
@@ -58,8 +58,8 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 
 													const newClick: ClickAnimation = {
 														id: Date.now(),
-														x: x,
-														y: y,
+														x,
+														y,
 													};
 
 													setClicks(prevClicks => [...prevClicks, newClick]);
@@ -68,9 +68,9 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 														setClicks(prevClicks => prevClicks.filter(c => c.id !== newClick.id));
 													}, 400);
 
-													const screenX = Math.floor((x / e.currentTarget.width) * e.currentTarget.naturalWidth / screenshotScale);
-													const screenY = Math.floor((y / e.currentTarget.height) * e.currentTarget.naturalHeight / screenshotScale);
-													// convert to screenshot size
+													const screenX = Math.floor((x / e.currentTarget.width) * screenSize.width);
+													const screenY = Math.floor((y / e.currentTarget.height) * screenSize.height);
+													// console.log("gilm: ", x, y, screenX, screenY, e.currentTarget.width, e.currentTarget.height, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight, screenSize.scale);
 													onTap(screenX, screenY);
 												}}
 											/>

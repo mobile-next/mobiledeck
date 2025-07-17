@@ -24,14 +24,16 @@ export interface DeviceInfoResponse {
 	device: DeviceInfo;
 }
 
+export interface ScreenSize {
+	width: number;
+	height: number;
+	scale: number;
+}
+
 export interface DeviceInfo {
 	id: string;
 	name: string;
 	platform: string;
 	type: string;
-	screenSize: {
-		width: number;
-		height: number;
-		scale: number;
-	};
+	screenSize: ScreenSize;
 }
