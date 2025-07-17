@@ -10,7 +10,7 @@ export class JsonRpcClient {
 
 	constructor(private readonly url: string) {}
 
-	public sendJsonRpcRequest = async <T>(method: string, params: any): Promise<T> => {
+	public sendJsonRpcRequest = async <T>(method: string, params: any, timeoutMs?: number): Promise<T> => {
 		console.log('mobiledeck: sending json rpc request', method, params);
 
 		const id = this.idCounter++;
@@ -22,15 +22,40 @@ export class JsonRpcClient {
 			params,
 		};
 
-		const response = await fetch(this.url, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(body),
-		});
+		let controller: AbortController | undefined;
+		let timeoutId: NodeJS.Timeout | undefined;
 
-		const jsonResponse: JsonRpcResponse<T> = await response.json();
-		return jsonResponse.result;
+		if (timeoutMs !== undefined) {
+			controller = new AbortController();
+			timeoutId = setTimeout(() => controller!.abort(), timeoutMs);
+		}
+
+		try {
+			const response = await fetch(this.url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(body),
+				signal: controller?.signal
+			});
+
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+
+			const jsonResponse: JsonRpcResponse<T> = await response.json();
+			return jsonResponse.result;
+		} catch (error: any) {
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+			}
+
+			if (error.name === 'AbortError') {
+				throw new Error(`Request timeout after ${timeoutMs}ms`);
+			}
+
+			throw error;
+		}
 	};
 }

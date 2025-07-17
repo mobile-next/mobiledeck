@@ -28,8 +28,7 @@ Mobiledeck is a VSCode extension that allows developers to view and interact wit
 
 2. Install dependencies:
    ```bash
-   npm install
-   (cd webview-ui && npm install)
+   make npm_install
    ```
 
 ### Building
@@ -47,3 +46,25 @@ Mobiledeck is a VSCode extension that allows developers to view and interact wit
 4. Open panel by clicking on Mobiledeck (M) icon, or by pressing Cmd-P and selecting `Mobiledeck: View device`
 
 Note that you have to install and reload window every time you build a new version of the .vsix file. No need to uninstall prior.
+
+### Working on webview-ui
+
+You can work on the UI itself without iterating through vsix compilation. This gives you the opportunity to shorten the feedback
+loop and get immediately results.
+
+Notes:
+- mobilecli server needs to be started manually on localhost:12000. Simply run `mobilecli start server --cors`.
+
+To start an http server and webpack on watch, simply run:
+```bash
+cd assets
+npx -y http-server
+```
+
+and in another terminal:
+```bash
+cd webview-ui
+npm run watch
+```
+
+Then simply open http://localhost:8080/ and you should be good to go. Webpack will detect code changes and automatically rebuild, you will still need to refresh the page when desired.

@@ -8,11 +8,14 @@ import { MjpegStream } from './MjpegStream';
 
 declare function acquireVsCodeApi(): any;
 
-let vscode: any = null;
-try {
+let vscode = {
+	postMessage: (message: any) => {
+		console.log('mobiledeck: mock postMessage', message);
+	},
+};
+
+if (typeof acquireVsCodeApi === 'function') {
 	vscode = acquireVsCodeApi();
-} catch (error) {
-	console.error("Failed to acquire VS Code API:", error);
 }
 
 interface StatusBarProps {
@@ -23,6 +26,12 @@ interface StatusBarProps {
 
 interface ScreenshotResponse {
 	data: string;
+}
+
+interface GesturePoint {
+	x: number;
+	y: number;
+	duration: number;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -57,13 +66,25 @@ function App() {
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
+	const [serverPort, setServerPort] = useState<number>(12000);
 
-	const jsonRpcClient = new JsonRpcClient('http://localhost:12000/rpc');
+	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
+	const pendingKeys = useRef("");
+	const isFlushingKeys = useRef(false);
+
+	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
+
+	// Update jsonRpcClient when serverPort changes
+	useEffect(() => {
+		jsonRpcClientRef.current = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+	}, [serverPort]);
+
+	const getJsonRpcClient = () => jsonRpcClientRef.current;
 
 	const startMjpegStream = async (deviceId: string) => {
 		try {
 			setIsConnecting(true);
-			const response = await fetch('http://localhost:12000/rpc', {
+			const response = await fetch(`http://localhost:${serverPort}/rpc`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -129,12 +150,12 @@ function App() {
 	};
 
 	const requestDevices = async () => {
-		const result = await jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', {});
+		const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
 		setLocalDevices(result.devices);
 	};
 
 	const requestDeviceInfo = async (deviceId: string) => {
-		const result = await jsonRpcClient.sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
+		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
 		setScreenSize(result.device.screenSize);
 	};
@@ -158,19 +179,92 @@ function App() {
 		requestDeviceInfo(device.id).then();
 
 		// send message to extension to remember selected device
-		if (vscode) {
-			vscode.postMessage({
-				command: 'onDeviceSelected',
-				device: device
-			});
-		}
+		vscode.postMessage({
+			command: 'onDeviceSelected',
+			device: device
+		});
 	};
 
 	const handleTap = async (x: number, y: number) => {
-		await jsonRpcClient.sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
+		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
+	};
+
+	const handleGesture = async (points: GesturePoint[]) => {
+		// Convert points to new actions format
+		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
+
+		if (points.length > 0) {
+			// First point - move to start position
+			actions.push({
+				type: "pointerMove",
+				duration: 0,
+				x: points[0].x,
+				y: points[0].y
+			});
+
+			// Pointer down
+			actions.push({
+				type: "pointerDown",
+				button: 0
+			});
+
+			// Add pause if needed
+			if (points.length > 1) {
+				actions.push({
+					type: "pause",
+					duration: 50
+				});
+			}
+
+			// Move through all intermediate points
+			for (let i = 1; i < points.length; i++) {
+				const duration = i < points.length - 1 ? points[i].duration - points[i - 1].duration : 100;
+				actions.push({
+					type: "pointerMove",
+					duration: Math.max(duration, 0),
+					x: points[i].x,
+					y: points[i].y
+				});
+			}
+
+			// Pointer up
+			actions.push({
+				type: "pointerUp",
+				button: 0
+			});
+		}
+
+		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', {
+			deviceId: selectedDevice?.id,
+			actions
+		});
+	};
+
+	const flushPendingKeys = async () => {
+		console.log('mobiledeck: flushPendingKeys', pendingKeys.current, isFlushingKeys.current);
+		if (isFlushingKeys.current) {
+			return;
+		}
+
+		isFlushingKeys.current = true;
+		const keys = pendingKeys.current;
+		if (keys === "") {
+			isFlushingKeys.current = false;
+			return;
+		}
+
+		pendingKeys.current = "";
+		try {
+			await getJsonRpcClient().sendJsonRpcRequest('io_text', { text: keys, deviceId: selectedDevice?.id }, 3000);
+		} catch (error) {
+			console.error('mobiledeck: error flushing keys:', error);
+		} finally {
+			isFlushingKeys.current = false;
+		}
 	};
 
 	const handleKeyDown = async (text: string) => {
+		console.log('mobiledeck: handleKeyDown', text);
 		if (text === 'Enter') {
 			text = "\n";
 		} else if (text === 'Backspace') {
@@ -184,7 +278,9 @@ function App() {
 			return;
 		}
 
-		await jsonRpcClient.sendJsonRpcRequest('io_text', { text, deviceId: selectedDevice?.id }).then();
+		// await jsonRpcClient.sendJsonRpcRequest('io_text', { text, deviceId: selectedDevice?.id }).then();
+		pendingKeys.current += text;
+		setTimeout(() => flushPendingKeys(), 500);
 	};
 
 	const handleMessage = (event: MessageEvent) => {
@@ -196,6 +292,12 @@ function App() {
 					selectDevice(message.device);
 				}
 				break;
+			case 'setServerPort':
+				if (message.port) {
+					setServerPort(message.port);
+					refreshDeviceList();
+				}
+				break;
 			default:
 				console.log('mobiledeck: unknown message', message);
 				break;
@@ -203,20 +305,55 @@ function App() {
 	};
 
 	const onHome = () => {
-		jsonRpcClient.sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
+	};
+
+	const getScreenshotFilename = (device: DeviceDescriptor) => {
+		return `screenshot-${device.name}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+	};
+
+	const onTakeScreenshot = async () => {
+		if (!selectedDevice) {
+			return;
+		}
+
+		try {
+			const response = await getJsonRpcClient().sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId: selectedDevice.id });
+
+			if (response.data && response.data.startsWith("data:image/png;base64,")) {
+				// convert base64 to blob
+				const base64Data = response.data.substring("data:image/png;base64,".length);
+				const byteCharacters = atob(base64Data);
+				const byteNumbers = Array.from(byteCharacters, char => char.charCodeAt(0));
+				const byteArray = new Uint8Array(byteNumbers);
+				const blob = new Blob([byteArray], { type: 'image/png' });
+
+				// create download link
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = getScreenshotFilename(selectedDevice);
+				a.click();
+				URL.revokeObjectURL(url);
+			} else {
+				vscode.postMessage({
+					command: 'alert',
+					text: 'Failed to take screenshot: ' + response.data
+				});
+			}
+		} catch (error) {
+			console.error('Error taking screenshot:', error);
+		}
 	};
 
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
-		refreshDeviceList();
 
 		// Send initialization message to extension
-		if (vscode) {
-			vscode.postMessage({
-				command: 'onInitialized'
-			});
-		}
+		vscode.postMessage({
+			command: 'onInitialized'
+		});
 
 		return () => {
 			window.removeEventListener('message', messageHandler);
@@ -239,6 +376,7 @@ function App() {
 				onHome={() => onHome()}
 				onRefresh={() => refreshDeviceList()}
 				onShowConnectDialog={() => setShowConnectDialog(true)}
+				onTakeScreenshot={onTakeScreenshot}
 			/>
 
 			{/* Device stream area */}
@@ -248,6 +386,7 @@ function App() {
 				imageUrl={imageUrl}
 				screenSize={screenSize}
 				onTap={handleTap}
+				onGesture={handleGesture}
 				onKeyDown={handleKeyDown}
 			/>
 

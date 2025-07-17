@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import { ChildProcess, execFileSync } from 'child_process';
 import path from 'path';
 import { spawn } from 'child_process';
+import { Logger } from './utils/Logger';
+import { PortManager } from './managers/PortManager';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Mobiledeck extension is being activated');
@@ -34,20 +36,22 @@ export function deactivate() {
 class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 	private mobilecliPath: string;
-	private outputChannel: vscode.OutputChannel;
+	private logger: Logger;
+	private portManager: PortManager;
 	private lastSelectedDevice: string | null = null;
 	private mobilecliServerProcess: ChildProcess | null = null;
+	private serverPort: number | null = null;
 
 	constructor(private readonly context: vscode.ExtensionContext) {
-		this.outputChannel = vscode.window.createOutputChannel('Mobiledeck');
-		this.verbose("MobiledeckViewProvider constructor called");
+		this.logger = new Logger('Mobiledeck');
+		this.portManager = new PortManager(this.logger);
+		this.logger.log("MobiledeckViewProvider constructor called");
 
 		this.mobilecliPath = this.findMobilecliPath();
 	}
 
 	private verbose(message: string) {
-		const timestamp = new Date().toISOString();
-		this.outputChannel.appendLine(`[${timestamp}] ${message}`);
+		this.logger.log(message);
 	}
 
 	private findMobilecliPath(): string {
@@ -58,6 +62,10 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		switch (process.platform) {
 			case 'darwin':
 				mobilecliPath = path.join(root, 'mobilecli-darwin');
+				break;
+
+			case 'win32':
+				mobilecliPath = path.join(root, 'mobilecli-windows-amd64.exe');
 				break;
 
 			case 'win32':
@@ -83,6 +91,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		this.verbose("mobilecli path: " + mobilecliPath);
+		this.verbose("mobilecli path: " + mobilecliPath);
 
 		const text = execFileSync(mobilecliPath, ['--version']).toString().trim();
 		this.verbose("mobilecli version: " + text);
@@ -91,24 +100,17 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private async checkMobilecliServerRunning(): Promise<boolean> {
-		try {
-			const response = await fetch('http://localhost:12000/', {
-				method: 'GET',
-				signal: AbortSignal.timeout(2000)
-			});
-
-			const data: any = await response.json();
-			return data.status === 'ok';
-		} catch (error: any) {
-			return false;
+		if (this.serverPort) {
+			return await this.portManager.checkServerHealth(this.serverPort);
 		}
+		return false;
 	}
 
-	private async launchMobilecliServer(): Promise<void> {
+	private async launchMobilecliServer(webviewView?: vscode.WebviewView): Promise<void> {
 		const isRunning = await this.checkMobilecliServerRunning();
 
 		if (isRunning) {
-			this.verbose('mobilecli server is already running');
+			this.verbose(`mobilecli server is already running on port ${this.serverPort}`);
 			return;
 		}
 
@@ -117,9 +119,18 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
-		this.verbose('Launching mobilecli server...');
+		if (!this.serverPort) {
+			this.serverPort = await this.portManager.findAvailablePort(12001, 12099);
 
-		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['server', 'start', '--cors', '--listen', 'localhost:12000'], {
+			// Send the server port to the webview if available
+			if (webviewView) {
+				this.sendServerPortToWebview(webviewView);
+			}
+		}
+
+		this.verbose(`Launching mobilecli server on port ${this.serverPort}...`);
+
+		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {
 			detached: false,
 			stdio: 'pipe'
 		});
@@ -162,6 +173,9 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 			case 'onInitialized':
 				this.verbose('Webview initialized');
 
+				// Send the server port to the webview
+				this.sendServerPortToWebview(webviewView);
+
 				// the moment the webview is all set, we set it to view the device last selected
 				if (this.lastSelectedDevice) {
 					this.sendMessageToWebview(webviewView, {
@@ -196,11 +210,20 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = this.getHtml(webviewView);
 
-		this.launchMobilecliServer();
+		this.launchMobilecliServer(webviewView);
 	}
 
 	private sendMessageToWebview(webviewView: vscode.WebviewView, message: any) {
 		webviewView.webview.postMessage(message);
+	}
+
+	private sendServerPortToWebview(webviewView: vscode.WebviewView) {
+		if (this.serverPort) {
+			this.sendMessageToWebview(webviewView, {
+				command: 'setServerPort',
+				port: this.serverPort
+			});
+		}
 	}
 
 	private getHtml(webviewView: vscode.WebviewView): string {

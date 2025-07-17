@@ -71,7 +71,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.13",
+    "@mobilenext/mobilecli": "0.0.14",
     "react-icons": "^5.5.0"
   }
 }
