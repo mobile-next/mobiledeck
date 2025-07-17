@@ -8,7 +8,15 @@ import { MjpegStream } from './MjpegStream';
 
 declare function acquireVsCodeApi(): any;
 
-const vscode = acquireVsCodeApi();
+let vscode = {
+	postMessage: (message: any) => {
+		console.log('mobiledeck: mock postMessage', message);
+	},
+};
+
+if (typeof acquireVsCodeApi === 'function') {
+	vscode = acquireVsCodeApi();
+}
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -18,6 +26,12 @@ interface StatusBarProps {
 
 interface ScreenshotResponse {
 	data: string;
+}
+
+interface GesturePoint {
+	x: number;
+	y: number;
+	duration: number;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -53,6 +67,10 @@ function App() {
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
 	const [serverPort, setServerPort] = useState<number>(12000);
+
+	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
+	const pendingKeys = useRef("");
+	const isFlushingKeys = useRef(false);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 
@@ -171,7 +189,7 @@ function App() {
 		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
 	};
 
-	const handleGesture = async (points: Array<[number, number, number]>) => {
+	const handleGesture = async (points: GesturePoint[]) => {
 		// Convert points to new actions format
 		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
 
@@ -180,8 +198,8 @@ function App() {
 			actions.push({
 				type: "pointerMove",
 				duration: 0,
-				x: points[0][0],
-				y: points[0][1]
+				x: points[0].x,
+				y: points[0].y
 			});
 
 			// Pointer down
@@ -200,12 +218,12 @@ function App() {
 
 			// Move through all intermediate points
 			for (let i = 1; i < points.length; i++) {
-				const duration = i < points.length - 1 ? points[i][2] - points[i - 1][2] : 100;
+				const duration = i < points.length - 1 ? points[i].duration - points[i - 1].duration : 100;
 				actions.push({
 					type: "pointerMove",
 					duration: Math.max(duration, 0),
-					x: points[i][0],
-					y: points[i][1]
+					x: points[i].x,
+					y: points[i].y
 				});
 			}
 
@@ -222,10 +240,8 @@ function App() {
 		});
 	};
 
-	const pendingKeys = useRef("");
-	const isFlushingKeys = useRef(false);
-
 	const flushPendingKeys = async () => {
+		console.log('mobiledeck: flushPendingKeys', pendingKeys.current, isFlushingKeys.current);
 		if (isFlushingKeys.current) {
 			return;
 		}
@@ -233,17 +249,22 @@ function App() {
 		isFlushingKeys.current = true;
 		const keys = pendingKeys.current;
 		if (keys === "") {
-			// already flushed
+			isFlushingKeys.current = false;
 			return;
 		}
 
 		pendingKeys.current = "";
-		getJsonRpcClient().sendJsonRpcRequest('io_text', { text: keys, deviceId: selectedDevice?.id }).then(() => {
+		try {
+			await getJsonRpcClient().sendJsonRpcRequest('io_text', { text: keys, deviceId: selectedDevice?.id }, 3000);
+		} catch (error) {
+			console.error('mobiledeck: error flushing keys:', error);
+		} finally {
 			isFlushingKeys.current = false;
-		});
+		}
 	};
 
 	const handleKeyDown = async (text: string) => {
+		console.log('mobiledeck: handleKeyDown', text);
 		if (text === 'Enter') {
 			text = "\n";
 		} else if (text === 'Backspace') {
