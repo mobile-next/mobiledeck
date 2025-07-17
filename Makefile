@@ -1,6 +1,6 @@
 .PHONY: build npm_install npm_update
 
-build: npm_install
+build:
 	make -C webview-ui
 	cp -R node_modules/\@mobilenext/mobilecli assets
 	npx vsce package
