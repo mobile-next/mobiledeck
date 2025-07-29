@@ -12,7 +12,7 @@ import {
 	DropdownMenuGroup
 } from "./components/ui/dropdown-menu";
 
-import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera } from "lucide-react";
+import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowLeft } from "lucide-react";
 import { DeviceDescriptor } from "./models";
 
 export interface HeaderProps {
@@ -22,6 +22,7 @@ export interface HeaderProps {
 	recentHosts: string[];
 	onSelectDevice: (device: DeviceDescriptor) => void;
 	onHome: () => void;
+	onBack: () => void;
 	onRefresh: () => void;
 	onShowConnectDialog: () => void;
 	onTakeScreenshot: () => void;
@@ -34,6 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
 	onSelectDevice,
 	onRefresh,
 	onHome,
+	onBack,
 	isRefreshing,
 	onShowConnectDialog,
 	onTakeScreenshot,
@@ -96,6 +98,20 @@ export const Header: React.FC<HeaderProps> = ({
 					disabled={isRefreshing}
 				>
 					<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+				</Button>
+
+				{/* Delimiter */}
+				<div className="h-4 w-px bg-[#3c3c3c] mx-2" />
+
+				{/* Back button */}
+				<Button
+					variant="ghost"
+					size="icon"
+					className="h-8 w-8 hover:bg-[#2a2a2a]"
+					onClick={onBack}
+					disabled={!selectedDevice || selectedDevice?.platform === 'ios'}
+				>
+					<ArrowLeft className={`h-3.5 w-3.5`} />
 				</Button>
 
 				{/* Home button */}

@@ -308,6 +308,10 @@ function App() {
 		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
 	};
 
+	const onBack = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'BACK' }).then();
+	};
+
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
 		return `screenshot-${device.name}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
 	};
@@ -374,6 +378,7 @@ function App() {
 				recentHosts={recentHosts}
 				onSelectDevice={selectDevice}
 				onHome={() => onHome()}
+				onBack={() => onBack()}
 				onRefresh={() => refreshDeviceList()}
 				onShowConnectDialog={() => setShowConnectDialog(true)}
 				onTakeScreenshot={onTakeScreenshot}
