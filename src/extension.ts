@@ -75,7 +75,7 @@ class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 			case 'linux':
 				switch (process.arch) {
 					case 'x64':
-						mobilecliPath = path.join(root, 'mobilecli-linux-x64');
+						mobilecliPath = path.join(root, 'mobilecli-linux-amd64');
 						break;
 					case 'arm64':
 						mobilecliPath = path.join(root, 'mobilecli-linux-arm64');
