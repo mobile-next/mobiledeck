@@ -2,8 +2,9 @@
 
 build:
 	make -C webview-ui
-	cp -R node_modules/\@mobilenext/mobilecli assets
-	npx vsce package
+	cp node_modules/go-ios/dist/go-ios-darwin-arm64_darwin_arm64/ios assets/ios
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
+	npx vsce package --target darwin-arm64
 
 npm_install:
 	npm install
