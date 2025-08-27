@@ -124,26 +124,29 @@ export const Header: React.FC<HeaderProps> = ({
 				>
 					<House className={`h-3.5 w-3.5`} />
 				</Button>
+
+				{/* Screenshot button */}
+				<Button
+					variant="ghost"
+					size="icon"
+					className="h-8 w-8 hover:bg-[#2a2a2a]"
+					onClick={onTakeScreenshot}
+					disabled={!selectedDevice}
+				>
+					<Camera className={`h-3.5 w-3.5`} />
+				</Button>
 			</div>
 
 			{/* Kebab menu */}
-			<DropdownMenu>
+			{/* <DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#2a2a2a]">
 						<MoreVertical className="h-3.5 w-3.5" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[200px]">
-					<DropdownMenuItem 
-						className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
-						onClick={onTakeScreenshot}
-						disabled={!selectedDevice}
-					>
-						<Camera className="h-3.5 w-3.5 mr-2" />
-						Take Screenshot
-					</DropdownMenuItem>
 				</DropdownMenuContent>
-			</DropdownMenu>
+			</DropdownMenu> */}
 		</div>
 	);
 };
