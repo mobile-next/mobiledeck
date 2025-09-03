@@ -140,7 +140,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	};
 
 	return (
-		<div className="relative flex-grow flex items-center justify-center bg-black overflow-hidden focus:outline-none" tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
+		<div className="relative flex-grow flex items-center justify-center overflow-hidden focus:outline-none" style={{backgroundColor: "#202224"}} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
 				{/* Simulated device stream */}
 				<div className={`relative rounded-[36px] overflow-hidden`}>
