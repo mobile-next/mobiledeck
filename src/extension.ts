@@ -7,20 +7,11 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register a command to open the iOS Preview view
 	const openViewCommand = vscode.commands.registerCommand('mobiledeck.openPreview', () => {
 		console.log('mobiledeck.openPreview command executed');
-		vscode.commands.executeCommand('mobiledeckSidebar.focus');
+		const provider = new MobiledeckViewProvider(context);
+		provider.createWebviewPanel();
 	});
 
 	context.subscriptions.push(openViewCommand);
-
-	// Register the webview view provider for the right pane
-	console.log('Registering webview view provider...');
-	const provider = new MobiledeckViewProvider(context);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(
-			'mobiledeckSidebar',
-			provider
-		)
-	);
 	console.log('Mobiledeck extension activated successfully');
 }
 
