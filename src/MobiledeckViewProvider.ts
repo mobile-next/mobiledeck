@@ -18,7 +18,7 @@ interface LogWebviewMessage {
 interface OnDeviceSelectedMessage {
     command: 'onDeviceSelected';
     device: string;
-}		
+}
 
 interface OnInitializedMessage {
     command: 'onInitialized';
@@ -29,7 +29,6 @@ type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelected
 export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 
 	private mobilecliPath: string;
-	private goIosPath: string;
 	private logger: Logger;
 	private portManager: PortManager;
 	private lastSelectedDevice: string | null = null;
@@ -41,7 +40,6 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		this.portManager = new PortManager(this.logger);
 		this.logger.log("MobiledeckViewProvider constructor called");
 
-		this.goIosPath = this.findGoIosPath();
 		this.mobilecliPath = this.findMobilecliPath();
 	}
 
@@ -59,15 +57,6 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		this.verbose("mobilecli version: " + text);
 
 		return mobilecliPath;
-	}
-
-	private findGoIosPath(): string {
-		const basePath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'ios').fsPath;
-		const goIosPath = process.platform === 'win32' ? `${basePath}.exe` : basePath;
-
-		this.verbose("go-ios path: " + goIosPath);
-
-		return goIosPath;
 	}
 
 	private async checkMobilecliServerRunning(): Promise<boolean> {
@@ -105,10 +94,6 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {
 			detached: false,
 			stdio: 'pipe',
-			env: {
-				...process.env,
-				GO_IOS_PATH: this.goIosPath,
-			}
 		});
 
 		this.mobilecliServerProcess.stdout?.on('data', (data: Buffer) => {
