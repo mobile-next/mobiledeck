@@ -71,8 +71,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.18",
-    "go-ios": "1.0.182",
+    "@mobilenext/mobilecli": "^0.0.19",
     "react-icons": "^5.5.0"
   }
 }
