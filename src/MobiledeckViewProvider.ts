@@ -26,7 +26,7 @@ interface OnInitializedMessage {
 
 type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage;
 
-export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
+export class MobiledeckViewProvider {
 
 	private mobilecliPath: string;
 	private logger: Logger;
@@ -67,7 +67,7 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		return false;
 	}
 
-	private async launchMobilecliServer(webviewView?: vscode.WebviewView): Promise<void> {
+	private async launchMobilecliServer(webviewPanel?: vscode.WebviewPanel): Promise<void> {
 		const isRunning = await this.checkMobilecliServerRunning();
 
 		if (isRunning) {
@@ -84,8 +84,8 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 			this.serverPort = await this.portManager.findAvailablePort(12001, 12099);
 
 			// Send the server port to the webview if available
-			if (webviewView) {
-				this.sendServerPortToWebview(webviewView);
+			if (webviewPanel) {
+				this.sendServerPortToWebview(webviewPanel);
 			}
 		}
 
@@ -115,7 +115,7 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		});
 	}
 
-	handleMessage(webviewView: vscode.WebviewView, message: WebviewMessage) {
+	handleMessage(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
 		this.verbose('Received message: ' + JSON.stringify(message));
 		switch (message.command) {
 			case 'alert':
@@ -135,11 +135,11 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 				this.verbose('Webview initialized');
 
 				// Send the server port to the webview
-				this.sendServerPortToWebview(webviewView);
+				this.sendServerPortToWebview(webviewPanel);
 
 				// the moment the webview is all set, we set it to view the device last selected
 				if (this.lastSelectedDevice) {
-					this.sendMessageToWebview(webviewView, {
+					this.sendMessageToWebview(webviewPanel, {
 						command: 'selectDevice',
 						device: this.lastSelectedDevice
 					});
@@ -152,48 +152,51 @@ export class MobiledeckViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	resolveWebviewView(
-		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
-		_token: vscode.CancellationToken
-	) {
-		console.log('resolveWebviewView called');
+	createWebviewPanel(): vscode.WebviewPanel {
+		console.log('createWebviewPanel called');
 
-		webviewView.webview.options = {
-			enableScripts: true,
-			localResourceRoots: [
-				// allow css and js files to be loaded
-				vscode.Uri.joinPath(this.context.extensionUri, 'assets')
-			]
-		};
+		const panel = vscode.window.createWebviewPanel(
+			'mobiledeck',
+			'Mobiledeck Device View',
+			vscode.ViewColumn.One,
+			{
+				enableScripts: true,
+				localResourceRoots: [
+					// allow css and js files to be loaded
+					vscode.Uri.joinPath(this.context.extensionUri, 'assets')
+				]
+			}
+		);
 
-		webviewView.webview.onDidReceiveMessage(message => this.handleMessage(webviewView, message), undefined, this.context.subscriptions);
+		panel.webview.onDidReceiveMessage(message => this.handleMessage(panel, message), undefined, this.context.subscriptions);
 
-		webviewView.webview.html = this.getHtml(webviewView);
+		panel.webview.html = this.getHtml(panel);
 
-		this.launchMobilecliServer(webviewView);
+		this.launchMobilecliServer(panel);
+
+		return panel;
 	}
 
-	private sendMessageToWebview(webviewView: vscode.WebviewView, message: any) {
-		webviewView.webview.postMessage(message);
+	private sendMessageToWebview(webviewPanel: vscode.WebviewPanel, message: any) {
+		webviewPanel.webview.postMessage(message);
 	}
 
-	private sendServerPortToWebview(webviewView: vscode.WebviewView) {
+	private sendServerPortToWebview(webviewPanel: vscode.WebviewPanel) {
 		if (this.serverPort) {
-			this.sendMessageToWebview(webviewView, {
+			this.sendMessageToWebview(webviewPanel, {
 				command: 'setServerPort',
 				port: this.serverPort
 			});
 		}
 	}
 
-	private getHtml(webviewView: vscode.WebviewView): string {
+	private getHtml(webviewPanel: vscode.WebviewPanel): string {
 		const htmlPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'index.html');
 		let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
 
 		const assets = ["styles.css", "bundle.js"];
 		for (const asset of assets) {
-			const uri = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', asset));
+			const uri = webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', asset));
 			htmlContent = htmlContent.replace(asset, uri.toString());
 		}
 

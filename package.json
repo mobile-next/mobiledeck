@@ -15,7 +15,6 @@
     "url": "https://github.com/mobile-next/mobiledeck"
   },
   "activationEvents": [
-    "onView:mobiledeckSidebar",
     "onCommand:mobiledeck.openPreview"
   ],
   "main": "./out/extension.js",
@@ -25,25 +24,7 @@
         "command": "mobiledeck.openPreview",
         "title": "Mobiledeck: View Device"
       }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "mobiledeckActivityBar",
-          "title": "Mobiledeck",
-          "icon": "assets/mobiledeck-icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "mobiledeckActivityBar": [
-        {
-          "type": "webview",
-          "id": "mobiledeckSidebar",
-          "name": ""
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
