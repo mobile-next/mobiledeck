@@ -157,12 +157,12 @@ function App() {
 		console.log('mobiledeck: selectDevice called with device:', selectedDevice);
 		stopMjpegStream();
 
-		if (selectedDevice != null) {
+		if (selectedDevice !== null) {
 			console.log('mobiledeck: starting mjpeg stream with port', serverPort);
 			startMjpegStream(selectedDevice.id);
 			requestDeviceInfo(selectedDevice.id).then();
 		}
-	}, [selectedDevice])
+	}, [selectedDevice]);
 
 	const handleTap = async (x: number, y: number) => {
 		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
