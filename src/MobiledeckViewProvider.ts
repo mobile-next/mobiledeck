@@ -4,6 +4,7 @@ import { ChildProcess, execFileSync } from 'child_process';
 import { spawn } from 'child_process';
 import { Logger } from './utils/Logger';
 import { PortManager } from './managers/PortManager';
+import { MobileCliServer } from './MobileCliServer';
 
 interface AlertWebviewMessage {
     command: 'alert';
@@ -15,9 +16,16 @@ interface LogWebviewMessage {
     text: string;
 }
 
+interface DeviceDescriptor {
+    id: string;
+    name: string;
+    platform: string;
+    type: string;
+}
+
 interface OnDeviceSelectedMessage {
     command: 'onDeviceSelected';
-    device: string;
+    device: DeviceDescriptor;
 }
 
 interface OnInitializedMessage {
@@ -28,94 +36,21 @@ type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelected
 
 export class MobiledeckViewProvider {
 
-	private mobilecliPath: string;
-	private logger: Logger;
-	private portManager: PortManager;
-	private lastSelectedDevice: string | null = null;
-	private mobilecliServerProcess: ChildProcess | null = null;
-	private serverPort: number | null = null;
+	private logger: Logger = new Logger('Mobiledeck');
 
-	constructor(private readonly context: vscode.ExtensionContext) {
-		this.logger = new Logger('Mobiledeck');
-		this.portManager = new PortManager(this.logger);
+	constructor(
+		private readonly context: vscode.ExtensionContext, 
+		private readonly selectedDevice: DeviceDescriptor,
+		private readonly cliServer: MobileCliServer,
+	) {
 		this.logger.log("MobiledeckViewProvider constructor called");
-
-		this.mobilecliPath = this.findMobilecliPath();
 	}
 
 	private verbose(message: string) {
 		this.logger.log(message);
 	}
 
-	private findMobilecliPath(): string {
-		const basePath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilecli').fsPath;
-		const mobilecliPath = process.platform === 'win32' ? `${basePath}.exe` : basePath;
-
-		this.verbose("mobilecli path: " + mobilecliPath);
-
-		const text = execFileSync(mobilecliPath, ['--version']).toString().trim();
-		this.verbose("mobilecli version: " + text);
-
-		return mobilecliPath;
-	}
-
-	private async checkMobilecliServerRunning(): Promise<boolean> {
-		if (this.serverPort) {
-			return await this.portManager.checkServerHealth(this.serverPort);
-		}
-
-		return false;
-	}
-
-	private async launchMobilecliServer(webviewPanel?: vscode.WebviewPanel): Promise<void> {
-		const isRunning = await this.checkMobilecliServerRunning();
-
-		if (isRunning) {
-			this.verbose(`mobilecli server is already running on port ${this.serverPort}`);
-			return;
-		}
-
-		if (this.mobilecliServerProcess) {
-			this.verbose('mobilecli server process already exists');
-			return;
-		}
-
-		if (!this.serverPort) {
-			this.serverPort = await this.portManager.findAvailablePort(12001, 12099);
-
-			// Send the server port to the webview if available
-			if (webviewPanel) {
-				this.sendServerPortToWebview(webviewPanel);
-			}
-		}
-
-		this.verbose(`Launching mobilecli server on port ${this.serverPort}...`);
-
-		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {
-			detached: false,
-			stdio: 'pipe',
-		});
-
-		this.mobilecliServerProcess.stdout?.on('data', (data: Buffer) => {
-			this.verbose(`mobilecli server stdout: ${data.toString().trimEnd()}`);
-		});
-
-		this.mobilecliServerProcess.stderr?.on('data', (data: Buffer) => {
-			this.verbose(`mobilecli server stderr: ${data.toString().trimEnd()}`);
-		});
-
-		this.mobilecliServerProcess.on('close', (code: number) => {
-			this.verbose(`mobilecli server process exited with code ${code}`);
-			this.mobilecliServerProcess = null;
-		});
-
-		this.mobilecliServerProcess.on('error', (error: Error) => {
-			this.verbose(`mobilecli server error: ${error.message}`);
-			this.mobilecliServerProcess = null;
-		});
-	}
-
-	handleMessage(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
+	async handleMessage(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
 		this.verbose('Received message: ' + JSON.stringify(message));
 		switch (message.command) {
 			case 'alert':
@@ -126,24 +61,17 @@ export class MobiledeckViewProvider {
 				this.verbose(message.text);
 				break;
 
-			case 'onDeviceSelected':
-				this.lastSelectedDevice = message.device;
-				this.verbose('Device selected: ' + JSON.stringify(message.device));
-				break;
-
 			case 'onInitialized':
 				this.verbose('Webview initialized');
 
-				// Send the server port to the webview
-				this.sendServerPortToWebview(webviewPanel);
+				// Send configure message with both device and server port
+				this.sendMessageToWebview(webviewPanel, {
+					command: 'configure',
+					device: this.selectedDevice,
+					serverPort: this.cliServer.getJsonRpcServerPort(),
+				});
 
-				// the moment the webview is all set, we set it to view the device last selected
-				if (this.lastSelectedDevice) {
-					this.sendMessageToWebview(webviewPanel, {
-						command: 'selectDevice',
-						device: this.lastSelectedDevice
-					});
-				}
+				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
 				break;
 
 			default:
@@ -152,9 +80,9 @@ export class MobiledeckViewProvider {
 		}
 	}
 
-	createWebviewPanel(): vscode.WebviewPanel {
+	createWebviewPanel(preselectedDevice?: DeviceDescriptor): vscode.WebviewPanel {
 		console.log('createWebviewPanel called');
-
+		
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',
 			'Mobiledeck Device View',
@@ -172,8 +100,6 @@ export class MobiledeckViewProvider {
 
 		panel.webview.html = this.getHtml(panel);
 
-		this.launchMobilecliServer(panel);
-
 		return panel;
 	}
 
@@ -181,13 +107,11 @@ export class MobiledeckViewProvider {
 		webviewPanel.webview.postMessage(message);
 	}
 
-	private sendServerPortToWebview(webviewPanel: vscode.WebviewPanel) {
-		if (this.serverPort) {
-			this.sendMessageToWebview(webviewPanel, {
-				command: 'setServerPort',
-				port: this.serverPort
-			});
-		}
+	private updateWebviewTitle(webviewPanel: vscode.WebviewPanel, device: string) {
+		webviewPanel.title = device;
+		
+		// add device icon
+		webviewPanel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobiledeck-icon.svg');
 	}
 
 	private getHtml(webviewPanel: vscode.WebviewPanel): string {

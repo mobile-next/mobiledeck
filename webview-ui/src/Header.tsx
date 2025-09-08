@@ -12,96 +12,51 @@ import {
 	DropdownMenuGroup
 } from "./components/ui/dropdown-menu";
 
-import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowLeft } from "lucide-react";
+import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Square, Power } from "lucide-react";
 import { DeviceDescriptor } from "./models";
 
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
-	isRefreshing: boolean;
-	localDevices: DeviceDescriptor[];
 	recentHosts: string[];
-	onSelectDevice: (device: DeviceDescriptor) => void;
 	onHome: () => void;
 	onBack: () => void;
-	onRefresh: () => void;
 	onShowConnectDialog: () => void;
 	onTakeScreenshot: () => void;
+	onAppSwitch: () => void;
+	onPower: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
 	selectedDevice,
-	localDevices,
 	recentHosts,
-	onSelectDevice,
-	onRefresh,
 	onHome,
 	onBack,
-	isRefreshing,
 	onShowConnectDialog,
 	onTakeScreenshot,
+	onAppSwitch,
+	onPower,
 }) => {
 	return (
 		<div className="flex items-center justify-between px-2 py-2 border-b border-[#333333]">
 			<div className="flex items-center">
-				{/* Device selector */}
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="ghost"
-							className="h-8 px-2 text-xs hover:bg-[#2a2a2a] focus:outline-none flex items-center"
-						>
-							<Smartphone className="h-3 w-3 mr-1.5" />
-							<span className="mr-1 truncate max-w-[100px]">{selectedDevice?.name || "Select Device.."}</span>
-							<ChevronDown className="h-3 w-3" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[220px]">
-						{localDevices.length === 0 &&
-							<DropdownMenuItem
-								disabled
-								className="text-xs py-1.5 text-gray-500 flex items-center"
-							>
-								<Smartphone className="h-3.5 w-3.5 mr-2" /> No devices found
-							</DropdownMenuItem>
-						}
-						{localDevices.length > 0 &&
-							<>
-							<DropdownMenuGroup>
-								<DropdownMenuLabel className="text-xs">Local Devices</DropdownMenuLabel>
-							</DropdownMenuGroup>
-							{localDevices.map((device) => (
-								<DropdownMenuItem
-									key={device.id}
-									onClick={() => onSelectDevice(device)}
-									className="text-xs py-1.5 cursor-pointer hover:bg-[#2a2a2a] focus:bg-[#37373d] flex items-center"
-								>
-									{/* <Smartphone className="h-3.5 w-3.5 mr-2" /> {device.name} */}
-									<div className="h-3.5 w-3.5 mr-2">
-										{device.platform === "android" ? <IoLogoAndroid /> : <IoLogoApple />}
-									</div>
-									{device.name}
-									{device.type === "emulator" ? " (Emulator)" : ""}
-									{device.type === "simulator" ? " (Simulator)" : ""}
-								</DropdownMenuItem>
-							))}
-							</>
-						}
-					</DropdownMenuContent>
-				</DropdownMenu>
 
-				{/* Refresh button */}
-				<Button
-					variant="ghost"
-					size="icon"
-					className="h-8 w-8 hover:bg-[#2a2a2a]"
-					onClick={onRefresh}
-					disabled={isRefreshing}
-				>
-					<RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-				</Button>
+				{/* Power button - Android only */}
+				{selectedDevice?.platform === 'android' && (
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-8 w-8 hover:bg-[#2a2a2a]"
+						onClick={onPower}
+						disabled={!selectedDevice}
+					>
+						<Power className={`h-3.5 w-3.5`} />
+					</Button>
+				)}
 
-				{/* Delimiter */}
-				<div className="h-4 w-px bg-[#3c3c3c] mx-2" />
+				{/* Delimiter after Power button */}
+				{selectedDevice?.platform === 'android' && (
+					<div className="h-4 w-px bg-[#333333] mx-1" />
+				)}
 
 				{/* Back button */}
 				<Button
@@ -111,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
 					onClick={onBack}
 					disabled={!selectedDevice || selectedDevice?.platform === 'ios'}
 				>
-					<ArrowLeft className={`h-3.5 w-3.5`} />
+					<ArrowBigLeft className={`h-3.5 w-3.5`} />
 				</Button>
 
 				{/* Home button */}
@@ -122,8 +77,27 @@ export const Header: React.FC<HeaderProps> = ({
 					onClick={onHome}
 					disabled={!selectedDevice}
 				>
-					<House className={`h-3.5 w-3.5`} />
+					{selectedDevice?.platform === 'ios' ? 
+						<House className={`h-3.5 w-3.5`} /> : 
+						<Circle className={`h-3.5 w-3.5`} />
+					}
 				</Button>
+
+				{/* App switch button - Android only */}
+				{selectedDevice?.platform === 'android' && (
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-8 w-8 hover:bg-[#2a2a2a]"
+						onClick={onAppSwitch}
+						disabled={!selectedDevice}
+					>
+						<Square className={`h-3.5 w-3.5`} />
+					</Button>
+				)}
+
+				{/* Delimiter before Screenshot button */}
+				<div className="h-4 w-px bg-[#333333] mx-1" />
 
 				{/* Screenshot button */}
 				<Button

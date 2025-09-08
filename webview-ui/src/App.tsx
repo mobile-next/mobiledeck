@@ -60,7 +60,6 @@ function App() {
 		"127.0.0.1",
 	]);
 
-	const [localDevices, setLocalDevices] = useState<DeviceDescriptor[]>([]);
 	const [imageUrl, setImageUrl] = useState<string>("");
 	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
@@ -74,7 +73,6 @@ function App() {
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 
-	// Update jsonRpcClient when serverPort changes
 	useEffect(() => {
 		jsonRpcClientRef.current = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
 	}, [serverPort]);
@@ -121,6 +119,7 @@ function App() {
 				}
 				setImageUrl(newImageUrl);
 			});
+
 			setMjpegStream(stream);
 			stream.start();
 
@@ -149,52 +148,33 @@ function App() {
 		setImageUrl("");
 	};
 
-	const requestDevices = async () => {
-		const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
-		setLocalDevices(result.devices);
-	};
-
 	const requestDeviceInfo = async (deviceId: string) => {
 		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
 		setScreenSize(result.device.screenSize);
 	};
 
-	const refreshDeviceList = async () => {
-		try {
-			setIsRefreshing(true);
-			await requestDevices();
-		} catch (error) {
-			console.error('mobiledeck: error refreshing device list', error);
-		} finally {
-			setIsRefreshing(false);
-		}
-	};
-
-	const selectDevice = (device: DeviceDescriptor) => {
+	useEffect(() => {
+		console.log('mobiledeck: selectDevice called with device:', selectedDevice);
 		stopMjpegStream();
 
-		setSelectedDevice(device);
-		startMjpegStream(device.id);
-		requestDeviceInfo(device.id).then();
-
-		// send message to extension to remember selected device
-		vscode.postMessage({
-			command: 'onDeviceSelected',
-			device: device
-		});
-	};
+		if (selectedDevice !== null) {
+			console.log('mobiledeck: starting mjpeg stream with port', serverPort);
+			startMjpegStream(selectedDevice.id);
+			requestDeviceInfo(selectedDevice.id).then();
+		}
+	}, [selectedDevice]);
 
 	const handleTap = async (x: number, y: number) => {
 		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
 	};
 
 	const handleGesture = async (points: GesturePoint[]) => {
-		// Convert points to new actions format
+		// convert points to new actions format
 		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
 
 		if (points.length > 0) {
-			// First point - move to start position
+			// first point - move to start position
 			actions.push({
 				type: "pointerMove",
 				duration: 0,
@@ -202,13 +182,13 @@ function App() {
 				y: points[0].y
 			});
 
-			// Pointer down
+			// pointer down
 			actions.push({
 				type: "pointerDown",
 				button: 0
 			});
 
-			// Add pause if needed
+			// add pause if needed
 			if (points.length > 1) {
 				actions.push({
 					type: "pause",
@@ -216,7 +196,7 @@ function App() {
 				});
 			}
 
-			// Move through all intermediate points
+			// move through all intermediate points
 			for (let i = 1; i < points.length; i++) {
 				const duration = i < points.length - 1 ? points[i].duration - points[i - 1].duration : 100;
 				actions.push({
@@ -227,7 +207,7 @@ function App() {
 				});
 			}
 
-			// Pointer up
+			// pointer up
 			actions.push({
 				type: "pointerUp",
 				button: 0
@@ -285,17 +265,14 @@ function App() {
 
 	const handleMessage = (event: MessageEvent) => {
 		const message = event.data;
+		console.log('mobiledeck: received message:', message);
 
 		switch (message.command) {
-			case 'selectDevice':
-				if (message.device) {
-					selectDevice(message.device);
-				}
-				break;
-			case 'setServerPort':
-				if (message.port) {
-					setServerPort(message.port);
-					refreshDeviceList();
+			case 'configure':
+				if (message.device && message.serverPort) {
+					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
+					setServerPort(message.serverPort);
+					setSelectedDevice(message.device);
 				}
 				break;
 			default:
@@ -312,6 +289,14 @@ function App() {
 		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'BACK' }).then();
 	};
 
+	const onAppSwitch = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'APP_SWITCH' }).then();
+	};
+
+	const onPower = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'POWER' }).then();
+	};
+
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
 		return `screenshot-${device.name}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
 	};
@@ -323,10 +308,11 @@ function App() {
 
 		try {
 			const response = await getJsonRpcClient().sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId: selectedDevice.id });
+			const DATA_IMAGE_PNG = "data:image/png;base64,";
 
-			if (response.data && response.data.startsWith("data:image/png;base64,")) {
+			if (response.data && response.data.startsWith(DATA_IMAGE_PNG)) {
 				// convert base64 to blob
-				const base64Data = response.data.substring("data:image/png;base64,".length);
+				const base64Data = response.data.substring(DATA_IMAGE_PNG.length);
 				const byteCharacters = atob(base64Data);
 				const byteNumbers = Array.from(byteCharacters, char => char.charCodeAt(0));
 				const byteArray = new Uint8Array(byteNumbers);
@@ -354,7 +340,7 @@ function App() {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
 
-		// Send initialization message to extension
+		// send initialization message to extension (parent)
 		vscode.postMessage({
 			command: 'onInitialized'
 		});
@@ -373,15 +359,13 @@ function App() {
 			{/* Header with controls */}
 			<Header
 				selectedDevice={selectedDevice}
-				isRefreshing={isRefreshing}
-				localDevices={localDevices}
 				recentHosts={recentHosts}
-				onSelectDevice={selectDevice}
 				onHome={() => onHome()}
 				onBack={() => onBack()}
-				onRefresh={() => refreshDeviceList()}
 				onShowConnectDialog={() => setShowConnectDialog(true)}
 				onTakeScreenshot={onTakeScreenshot}
+				onAppSwitch={() => onAppSwitch()}
+				onPower={() => onPower()}
 			/>
 
 			{/* Device stream area */}
