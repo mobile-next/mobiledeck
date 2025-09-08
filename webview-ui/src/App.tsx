@@ -119,6 +119,7 @@ function App() {
 				}
 				setImageUrl(newImageUrl);
 			});
+
 			setMjpegStream(stream);
 			stream.start();
 
@@ -270,7 +271,7 @@ function App() {
 			case 'configure':
 				if (message.device && message.serverPort) {
 					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
-					setServerPort(message.serverPort); 
+					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
 				}
 				break;
@@ -288,6 +289,14 @@ function App() {
 		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'BACK' }).then();
 	};
 
+	const onAppSwitch = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'APP_SWITCH' }).then();
+	};
+
+	const onPower = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'POWER' }).then();
+	};
+
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
 		return `screenshot-${device.name}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
 	};
@@ -299,10 +308,11 @@ function App() {
 
 		try {
 			const response = await getJsonRpcClient().sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId: selectedDevice.id });
+			const DATA_IMAGE_PNG = "data:image/png;base64,";
 
-			if (response.data && response.data.startsWith("data:image/png;base64,")) {
+			if (response.data && response.data.startsWith(DATA_IMAGE_PNG)) {
 				// convert base64 to blob
-				const base64Data = response.data.substring("data:image/png;base64,".length);
+				const base64Data = response.data.substring(DATA_IMAGE_PNG.length);
 				const byteCharacters = atob(base64Data);
 				const byteNumbers = Array.from(byteCharacters, char => char.charCodeAt(0));
 				const byteArray = new Uint8Array(byteNumbers);
@@ -354,6 +364,8 @@ function App() {
 				onBack={() => onBack()}
 				onShowConnectDialog={() => setShowConnectDialog(true)}
 				onTakeScreenshot={onTakeScreenshot}
+				onAppSwitch={() => onAppSwitch()}
+				onPower={() => onPower()}
 			/>
 
 			{/* Device stream area */}

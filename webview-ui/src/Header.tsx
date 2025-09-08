@@ -12,7 +12,7 @@ import {
 	DropdownMenuGroup
 } from "./components/ui/dropdown-menu";
 
-import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowLeft } from "lucide-react";
+import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Square, Power } from "lucide-react";
 import { DeviceDescriptor } from "./models";
 
 export interface HeaderProps {
@@ -22,6 +22,8 @@ export interface HeaderProps {
 	onBack: () => void;
 	onShowConnectDialog: () => void;
 	onTakeScreenshot: () => void;
+	onAppSwitch: () => void;
+	onPower: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -31,11 +33,30 @@ export const Header: React.FC<HeaderProps> = ({
 	onBack,
 	onShowConnectDialog,
 	onTakeScreenshot,
+	onAppSwitch,
+	onPower,
 }) => {
 	return (
 		<div className="flex items-center justify-between px-2 py-2 border-b border-[#333333]">
 			<div className="flex items-center">
 
+				{/* Power button - Android only */}
+				{selectedDevice?.platform === 'android' && (
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-8 w-8 hover:bg-[#2a2a2a]"
+						onClick={onPower}
+						disabled={!selectedDevice}
+					>
+						<Power className={`h-3.5 w-3.5`} />
+					</Button>
+				)}
+
+				{/* Delimiter after Power button */}
+				{selectedDevice?.platform === 'android' && (
+					<div className="h-4 w-px bg-[#333333] mx-1" />
+				)}
 
 				{/* Back button */}
 				<Button
@@ -45,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
 					onClick={onBack}
 					disabled={!selectedDevice || selectedDevice?.platform === 'ios'}
 				>
-					<ArrowLeft className={`h-3.5 w-3.5`} />
+					<ArrowBigLeft className={`h-3.5 w-3.5`} />
 				</Button>
 
 				{/* Home button */}
@@ -56,8 +77,27 @@ export const Header: React.FC<HeaderProps> = ({
 					onClick={onHome}
 					disabled={!selectedDevice}
 				>
-					<House className={`h-3.5 w-3.5`} />
+					{selectedDevice?.platform === 'ios' ? 
+						<House className={`h-3.5 w-3.5`} /> : 
+						<Circle className={`h-3.5 w-3.5`} />
+					}
 				</Button>
+
+				{/* App switch button - Android only */}
+				{selectedDevice?.platform === 'android' && (
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-8 w-8 hover:bg-[#2a2a2a]"
+						onClick={onAppSwitch}
+						disabled={!selectedDevice}
+					>
+						<Square className={`h-3.5 w-3.5`} />
+					</Button>
+				)}
+
+				{/* Delimiter before Screenshot button */}
+				<div className="h-4 w-px bg-[#333333] mx-1" />
 
 				{/* Screenshot button */}
 				<Button

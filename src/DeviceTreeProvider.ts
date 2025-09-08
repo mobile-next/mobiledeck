@@ -38,12 +38,12 @@ export class DeviceNode extends vscode.TreeItem {
 	}
 
 	private getIconPath(platform: string): string | IconPath {
-		if (platform.includes('ios')) {
+		if (platform === 'ios') {
 			return vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'ios-icon.svg');
 		}
 		
-		if (platform.includes('android')) {
-			this.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'android-icon.svg');
+		if (platform === 'android') {
+			return vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'android-icon.svg');
 		} 
 
 		return new vscode.ThemeIcon('device-desktop');
@@ -69,23 +69,22 @@ export class DeviceTreeProvider implements vscode.TreeDataProvider<DeviceNode | 
 
 	getChildren(element?: DeviceNode | vscode.TreeItem): Thenable<(DeviceNode | vscode.TreeItem)[]> {
 		if (!element) {
-			const items: (DeviceNode | vscode.TreeItem)[] = [];
-			
-			// Add header
+			// Root level - return just the header
 			const headerItem = new vscode.TreeItem('Local devices:', vscode.TreeItemCollapsibleState.Expanded);
 			headerItem.tooltip = 'Available local devices';
 			headerItem.iconPath = new vscode.ThemeIcon('device-mobile');
 			headerItem.contextValue = 'devices-header';
 			headerItem.description = this.devices.length > 0 ? `${this.devices.length} device${this.devices.length === 1 ? '' : 's'}` : 'No devices';
-			items.push(headerItem);
 			
+			return Promise.resolve([headerItem]);
+		}
+		
+		if (element.contextValue === 'devices-header') {
+			// Return devices as children of the header
 			const deviceNodes = this.devices.map(device => 
 				new DeviceNode(device, vscode.TreeItemCollapsibleState.None, this.context)
 			);
-
-			items.push(...deviceNodes);
-			
-			return Promise.resolve(items);
+			return Promise.resolve(deviceNodes);
 		}
 		
 		return Promise.resolve([]);
