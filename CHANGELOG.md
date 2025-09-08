@@ -1,3 +1,9 @@
+## [0.0.4](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.4) (2025-09-08)
+
+- General: changed design to open list of devices in a tree view manner
+- General: fixed race conditioning when listing available devices upon extension first appear
+- Android: added support for POWER and APP_SWITCH buttons
+
 ## [0.0.3](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.3) (2025-08-27)
 
 - General: split .vsix per platforms (5 targets total) for smaller file size
