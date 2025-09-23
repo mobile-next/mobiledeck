@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
-import { DeviceTreeProvider, DeviceDescriptor, DeviceNode } from './DeviceTreeProvider';
+import { DeviceTreeProvider } from './DeviceTreeProvider';
+import { DeviceDescriptor } from './DeviceDescriptor';
+import { DeviceNode } from './DeviceNode';
 import { MobiledeckViewProvider } from './MobiledeckViewProvider';
 import { MobileCliServer } from './MobileCliServer';
+
+let cliServer: MobileCliServer | null;
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('Mobiledeck extension is being activated');
@@ -9,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Create the device tree provider
 	const deviceTreeProvider = new DeviceTreeProvider(context);
 
-	const cliServer = new MobileCliServer(context);
+	cliServer = new MobileCliServer(context);
 	cliServer.launchMobilecliServer().then();
 	
 	// Register the tree view
@@ -48,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const connectCommand = vscode.commands.registerCommand('mobiledeck.connect', (device: DeviceDescriptor) => {
 		console.log('mobiledeck.connect command executed for device:', device.id);
 		if (device) {
-			const viewProvider = new MobiledeckViewProvider(context, device, cliServer);
+			const viewProvider = new MobiledeckViewProvider(context, device, cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
 	});
@@ -57,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const openDevicePanelCommand = vscode.commands.registerCommand('mobiledeck.openDevicePanel', (device: DeviceDescriptor) => {
 		console.log('mobiledeck.openDevicePanel command executed');
 		if (device) {
-			const viewProvider = new MobiledeckViewProvider(context, device, cliServer);
+			const viewProvider = new MobiledeckViewProvider(context, device, cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
 	});
@@ -75,4 +79,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
 	console.log('Mobiledeck extension deactivated');
+
+	if (cliServer) {
+		cliServer.stopMobilecliServer();
+		cliServer = null;
+	}
 }
