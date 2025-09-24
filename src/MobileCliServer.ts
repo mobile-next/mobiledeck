@@ -41,6 +41,13 @@ export class MobileCliServer {
         return await this.portManager.checkServerHealth(MobileCliServer.DEFAULT_SERVER_PORT);
     }
 
+    public async stopMobilecliServer(): Promise<void> {
+        if (this.mobilecliServerProcess) {
+            this.mobilecliServerProcess.kill();
+            this.mobilecliServerProcess = null;
+        }
+    }
+
     public async launchMobilecliServer(): Promise<void> {
         const isRunning = await this.checkMobilecliServerRunning();
         if (isRunning) {
