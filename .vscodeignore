@@ -12,5 +12,4 @@ Makefile
 .gitignore
 .editorconfig
 **/.gitkeep
-*.md
 

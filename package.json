@@ -1,23 +1,33 @@
 {
   "name": "mobiledeck",
-  "displayName": "mobiledeck",
-  "description": "A Visual Studio Code extension for Android/iOS device previewing and management.",
+  "displayName": "Mobile Deck",
+  "description": "View, control and manage all your Android and iOS devices, simulators, and emulators",
   "version": "0.0.1",
-  "publisher": "mobile-next",
+  "publisher": "mobilenext",
+  "author": "Mobile Next",
+  "license": "AGPL-3.0",
+  "icon": "media/mobilenexthq_logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other"
+    "Debuggers", "Testing"
+  ],
+  "keywords": [
+    "mobile", "xcode", "adb", "emulator", "simulator", "ios", "android"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mobile-next/mobiledeck.git"
+    "url": "https://github.com/mobile-next/mobiledeck.git"
   },
   "activationEvents": [
     "onView:mobiledeckDevices"
   ],
-  "main": "./out/extension.js",
+  "bugs": {
+    "url": "https://github.com/mobile-next/mobiledeck/issues"
+  },
+  "homepage": "https://github.com/mobile-next/mobiledeck/blob/main/README.md",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -54,7 +64,7 @@
         {
           "id": "mobiledeck",
           "title": "Mobiledeck",
-          "icon": "$(device-mobile)"
+          "icon": "media/mobiledeck.svg"
         }
       ]
     },
@@ -97,7 +107,7 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "@vscode/vsce": "^3.6.0",
+    "@vscode/vsce": "3.6.2",
     "eslint": "^9.23.0",
     "husky": "<=9.1.7",
     "ts-loader": "^9.5.2",
@@ -106,15 +116,8 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.24",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "@mobilenext/mobilecli": "0.0.27"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/mobile-next/mobiledeck/issues"
-  },
-  "homepage": "https://github.com/mobile-next/mobiledeck#readme"
+  "type": "commonjs"
 }
