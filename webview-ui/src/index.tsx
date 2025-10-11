@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import DeviceViewPage from './DeviceViewPage';
 import SidebarPage from './SidebarPage';
+import LoginPage from './LoginPage';
 import ErrorPage from './ErrorPage';
 
 const root = ReactDOM.createRoot(
@@ -19,6 +20,9 @@ switch (page) {
     break;
   case 'sidebar':
     PageComponent = SidebarPage;
+    break;
+  case 'login':
+    PageComponent = LoginPage;
     break;
   default:
     PageComponent = ErrorPage;
