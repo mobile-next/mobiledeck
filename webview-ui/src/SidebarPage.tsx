@@ -55,12 +55,14 @@ const mockDevices: DeviceDescriptor[] = [
 
 interface DeviceRowProps {
   device: DeviceDescriptor;
+  onClick: (device: DeviceDescriptor) => void;
 }
 
-function DeviceRow({ device }: DeviceRowProps) {
+function DeviceRow({ device, onClick }: DeviceRowProps) {
   return (
     <div
       className="flex items-center gap-2 py-1.5 px-2 hover:bg-[#2d2d2d] rounded cursor-pointer group"
+      onClick={() => onClick(device)}
     >
       {/* device icon */}
       <div className="flex-shrink-0">
@@ -84,7 +86,17 @@ function DeviceRow({ device }: DeviceRowProps) {
   );
 }
 
-function SidebarPage() {
+interface SidebarPageProps {
+  onDeviceClicked?: (device: DeviceDescriptor) => void;
+  onAddClicked?: () => void;
+  onRefreshClicked?: () => void;
+}
+
+function SidebarPage({
+  onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`),
+  onAddClicked = () => alert('Add clicked'),
+  onRefreshClicked = () => alert('Refresh clicked')
+}: SidebarPageProps) {
   const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 
   return (
@@ -93,10 +105,10 @@ function SidebarPage() {
       <div className="flex items-center justify-between px-4 py-2 border-b border-[#2d2d2d]">
         <h1 className="text-sm font-semibold tracking-wide uppercase">MOBILEDECK: DEVICES</h1>
         <div className="flex gap-2">
-          <button className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded">
+          <button className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded" onClick={onAddClicked}>
             <Plus className="h-4 w-4" />
           </button>
-          <button className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded">
+          <button className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded" onClick={onRefreshClicked}>
             <RefreshCw className="h-4 w-4" />
           </button>
         </div>
@@ -126,7 +138,7 @@ function SidebarPage() {
           {isLocalDevicesExpanded && (
             <div className="ml-6">
               {mockDevices.map((device) => (
-                <DeviceRow key={device.id} device={device} />
+                <DeviceRow key={device.id} device={device} onClick={onDeviceClicked} />
               ))}
             </div>
           )}
