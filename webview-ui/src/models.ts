@@ -14,6 +14,7 @@ export interface DeviceDescriptor {
 	name: string;
 	platform: DevicePlatform;
 	type: DeviceType;
+	version?: string;
 }
 
 export interface ListDevicesResponse {
