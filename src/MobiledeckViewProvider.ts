@@ -7,29 +7,29 @@ import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 
 interface AlertWebviewMessage {
-    command: 'alert';
-    text: string;
+	command: 'alert';
+	text: string;
 }
 
 interface LogWebviewMessage {
-    command: 'log';
-    text: string;
+	command: 'log';
+	text: string;
 }
 
 interface DeviceDescriptor {
-    id: string;
-    name: string;
-    platform: string;
-    type: string;
+	id: string;
+	name: string;
+	platform: string;
+	type: string;
 }
 
 interface OnDeviceSelectedMessage {
-    command: 'onDeviceSelected';
-    device: DeviceDescriptor;
+	command: 'onDeviceSelected';
+	device: DeviceDescriptor;
 }
 
 interface OnInitializedMessage {
-    command: 'onInitialized';
+	command: 'onInitialized';
 }
 
 type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage;
