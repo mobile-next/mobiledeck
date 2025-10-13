@@ -18,7 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider('mobiledeckDevices', sidebarProvider)
 	);
 
-	// register connect command
 	const connectCommand = vscode.commands.registerCommand('mobiledeck.connect', (device: DeviceDescriptor) => {
 		console.log('mobiledeck.connect command executed for device:', device.id);
 		if (device) {

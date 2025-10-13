@@ -135,7 +135,10 @@ function DeviceViewPage() {
 	const requestDeviceInfo = async (deviceId: string) => {
 		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
-		setScreenSize(result.device.screenSize);
+		if (result && result.device) {
+			// TODO: get device info should not call a setter
+			setScreenSize(result.device.screenSize);
+		}
 	};
 
 	const fetchDevices = async () => {

@@ -39,7 +39,7 @@ export class MobiledeckViewProvider {
 	private logger: Logger = new Logger('Mobiledeck');
 
 	constructor(
-		private readonly context: vscode.ExtensionContext, 
+		private readonly context: vscode.ExtensionContext,
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
 	) {
@@ -109,7 +109,7 @@ export class MobiledeckViewProvider {
 
 	private updateWebviewTitle(webviewPanel: vscode.WebviewPanel, device: string) {
 		webviewPanel.title = device;
-		
+
 		// add device icon
 		webviewPanel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobiledeck-icon.svg');
 	}
