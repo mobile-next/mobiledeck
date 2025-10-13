@@ -55,7 +55,7 @@
         {
           "id": "mobiledeck",
           "title": "Mobiledeck",
-          "icon": "$(device-mobile)"
+          "icon": "mobiledeck-icon.svg"
         }
       ]
     }
