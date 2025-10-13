@@ -348,12 +348,18 @@ function DeviceViewPage() {
 		// fetch available devices on mount
 		fetchDevices();
 
+		// poll for devices every 2 seconds
+		const intervalId = setInterval(() => {
+			fetchDevices();
+		}, 2000);
+
 		return () => {
 			window.removeEventListener('message', messageHandler);
 			stopMjpegStream();
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);
 			}
+			clearInterval(intervalId);
 		};
 	}, []);
 
