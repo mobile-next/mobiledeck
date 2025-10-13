@@ -152,8 +152,8 @@ export const Header: React.FC<HeaderProps> = ({
 					onClick={onHome}
 					disabled={!selectedDevice}
 				>
-					{selectedDevice?.platform === 'ios' ? 
-						<House className={`h-3.5 w-3.5`} /> : 
+					{selectedDevice?.platform === 'ios' ?
+						<House className={`h-3.5 w-3.5`} /> :
 						<Circle className={`h-3.5 w-3.5`} />
 					}
 				</Button>

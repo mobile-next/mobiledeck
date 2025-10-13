@@ -5,18 +5,7 @@ import { DeviceStream, GesturePoint } from './DeviceStream';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
-
-declare function acquireVsCodeApi(): any;
-
-let vscode = {
-	postMessage: (message: any) => {
-		console.log('mobiledeck: mock postMessage', message);
-	},
-};
-
-if (typeof acquireVsCodeApi === 'function') {
-	vscode = acquireVsCodeApi();
-}
+import vscode from './vscode';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -146,7 +135,10 @@ function DeviceViewPage() {
 	const requestDeviceInfo = async (deviceId: string) => {
 		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
-		setScreenSize(result.device.screenSize);
+		if (result && result.device) {
+			// TODO: get device info should not call a setter
+			setScreenSize(result.device.screenSize);
+		}
 	};
 
 	const fetchDevices = async () => {
@@ -336,6 +328,16 @@ function DeviceViewPage() {
 		}
 	};
 
+	const onDeviceSelected = (device: DeviceDescriptor) => {
+		setSelectedDevice(device);
+
+		// notify extension to update webview title
+		vscode.postMessage({
+			command: 'onDeviceSelected',
+			device,
+		});
+	};
+
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
@@ -348,12 +350,18 @@ function DeviceViewPage() {
 		// fetch available devices on mount
 		fetchDevices();
 
+		// poll for devices every 2 seconds
+		const intervalId = setInterval(() => {
+			fetchDevices();
+		}, 2000);
+
 		return () => {
 			window.removeEventListener('message', messageHandler);
 			stopMjpegStream();
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);
 			}
+			clearInterval(intervalId);
 		};
 	}, []);
 
@@ -371,7 +379,7 @@ function DeviceViewPage() {
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
 				onRefreshDevices={fetchDevices}
-				onSelectDevice={setSelectedDevice}
+				onSelectDevice={onDeviceSelected}
 			/>
 
 			{/* Device stream area */}
@@ -399,7 +407,7 @@ function DeviceViewPage() {
 				remoteHostIp={remoteHostIp}
 				onRemoteHostIpChange={setRemoteHostIp}
 				recentHosts={recentHosts}
-				onConnectToHost={() => {}}
+				onConnectToHost={() => { }}
 				onSelectRecentHost={(host) => { // New handler to set IP and connect for recent host
 					setRemoteHostIp(host);
 					// Potentially auto-connect or just fill input:
