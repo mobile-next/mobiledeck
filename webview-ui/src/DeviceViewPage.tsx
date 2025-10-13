@@ -336,7 +336,7 @@ function DeviceViewPage() {
 			command: 'onDeviceSelected',
 			device,
 		});
-	}
+	};
 
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
