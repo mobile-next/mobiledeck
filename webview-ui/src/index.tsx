@@ -39,4 +39,4 @@ root.render(
   <React.StrictMode>
     <PageComponent />
   </React.StrictMode>
-); 
+);
