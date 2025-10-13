@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './Header';
 import { ConnectDialog } from './ConnectDialog';
-import { DeviceStream } from './DeviceStream';
+import { DeviceStream, GesturePoint } from './DeviceStream';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
@@ -26,12 +26,6 @@ interface StatusBarProps {
 
 interface ScreenshotResponse {
 	data: string;
-}
-
-interface GesturePoint {
-	x: number;
-	y: number;
-	duration: number;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -183,7 +177,7 @@ function DeviceViewPage() {
 		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
 	};
 
-	const handleGesture = async (points: GesturePoint[]) => {
+	const handleGesture = async (points: Array<GesturePoint>) => {
 		// convert points to new actions format
 		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
 
@@ -201,14 +195,6 @@ function DeviceViewPage() {
 				type: "pointerDown",
 				button: 0
 			});
-
-			// add pause if needed
-			if (points.length > 1) {
-				actions.push({
-					type: "pause",
-					duration: 50
-				});
-			}
 
 			// move through all intermediate points
 			for (let i = 1; i < points.length; i++) {
