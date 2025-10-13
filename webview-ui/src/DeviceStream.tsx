@@ -2,13 +2,19 @@ import React, { useEffect, useState } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor, ScreenSize } from "./models";
 
+export interface GesturePoint {
+	x: number;
+	y: number;
+	duration: number;
+}
+
 export interface DeviceStreamProps {
 	isConnecting: boolean;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
 	imageUrl: string;
 	onTap: (x: number, y: number) => void;
-	onGesture: (points: Array<[number, number, number]>) => void;
+	onGesture: (points: Array<GesturePoint>) => void;
 	onKeyDown: (key: string) => void;
 }
 
@@ -18,16 +24,11 @@ interface ClickAnimation {
 	y: number;
 }
 
-interface GesturePoint {
-	x: number;
-	y: number;
-	timestamp: number;
-}
-
 interface GestureState {
 	isGesturing: boolean;
 	startTime: number;
-	points: GesturePoint[];
+	lastTimestamp: number;
+	points: Array<GesturePoint>;
 	path: Array<[number, number]>;
 }
 
@@ -44,6 +45,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	const [gestureState, setGestureState] = useState<GestureState>({
 		isGesturing: false,
 		startTime: 0,
+		lastTimestamp: 0,
 		points: [],
 		path: []
 	});
@@ -54,6 +56,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		const y = clientY - rect.top;
 		const screenX = Math.floor((x / imgElement.width) * screenSize.width);
 		const screenY = Math.floor((y / imgElement.height) * screenSize.height);
+		console.log("=> converting clientX,clientY " + clientX + "," + clientY + " to " + "x,y " + x + ","+ y);
 		return { x, y, screenX, screenY };
 	};
 
@@ -64,20 +67,22 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		setGestureState({
 			isGesturing: false,
 			startTime: now,
-			points: [{ x: coords.screenX, y: coords.screenY, timestamp: now }],
+			lastTimestamp: now,
+			points: [{ x: coords.screenX, y: coords.screenY, duration: 0}],
 			path: [[coords.x, coords.y]]
 		});
 	};
 
 	const handleMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
 		if (gestureState.points.length === 0) {
+			// move without mousedown
 			return;
 		}
 
 		const coords = convertToScreenCoords(e.clientX, e.clientY, e.currentTarget);
 		const now = Date.now();
 
-		// If we've been dragging for more than 100ms, start collecting gesture
+		// if we've been dragging for more than 100ms, start collecting gesture
 		if (!gestureState.isGesturing && (now - gestureState.startTime) > 100) {
 			setGestureState((prev: GestureState) => ({
 				...prev,
@@ -86,17 +91,21 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		}
 
 		if (gestureState.isGesturing || (now - gestureState.startTime) > 100) {
+			const duration = now - gestureState.lastTimestamp;
+			const newPoint: GesturePoint = { x: coords.screenX, y: coords.screenY, duration };
 			setGestureState((prev: GestureState) => ({
 				...prev,
 				isGesturing: true,
-				points: [...prev.points, { x: coords.screenX, y: coords.screenY, timestamp: now }],
-				path: [...prev.path, [coords.x, coords.y]]
+				points: [...prev.points, newPoint],
+				path: [...prev.path, [coords.x, coords.y]],
+				lastTimestamp: now,
 			}));
 		}
 	};
 
 	const handleMouseUp = (e: React.MouseEvent<HTMLImageElement>) => {
 		if (gestureState.points.length === 0) {
+			// up without gesture
 			return;
 		}
 
@@ -105,14 +114,9 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 
 		if (gestureState.isGesturing) {
 			// Add final point and send gesture
-			const finalPoints = [...gestureState.points, { x: coords.screenX, y: coords.screenY, timestamp: now }];
-			const gestureData: Array<[number, number, number]> = finalPoints.map(point => [
-				point.x,
-				point.y,
-				point.timestamp - gestureState.startTime,
-			]);
-
-			onGesture(gestureData);
+			const duration = now - gestureState.lastTimestamp;
+			const finalPoints: Array<GesturePoint> = [...gestureState.points, { x: coords.screenX, y: coords.screenY, duration }];
+			onGesture(finalPoints);
 		} else {
 			// This was a quick tap, use existing tap logic
 			const newClick: ClickAnimation = {
@@ -134,6 +138,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		setGestureState({
 			isGesturing: false,
 			startTime: 0,
+			lastTimestamp: 0,
 			points: [],
 			path: []
 		});
