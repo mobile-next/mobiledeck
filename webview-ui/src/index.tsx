@@ -1,13 +1,36 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import DeviceViewPage from './DeviceViewPage';
+import SidebarPage from './SidebarPage';
+import LoginPage from './LoginPage';
+import ErrorPage from './ErrorPage';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
+// read query parameter to determine which page to render
+const params = new URLSearchParams(window.location.search);
+const page = params.get('page');
+
+let PageComponent;
+switch (page) {
+  case 'device':
+    PageComponent = DeviceViewPage;
+    break;
+  case 'sidebar':
+    PageComponent = SidebarPage;
+    break;
+  case 'login':
+    PageComponent = LoginPage;
+    break;
+  default:
+    PageComponent = ErrorPage;
+    break;
+}
+
 root.render(
   <React.StrictMode>
-    <App />
+    <PageComponent />
   </React.StrictMode>
 ); 

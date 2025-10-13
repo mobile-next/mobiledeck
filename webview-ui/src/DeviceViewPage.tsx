@@ -43,7 +43,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
 	);
 };
 
-function App() {
+function DeviceViewPage() {
 	const [selectedDevice, setSelectedDevice] = useState<DeviceDescriptor | null>(null);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isConnecting, setIsConnecting] = useState(false);
@@ -390,4 +390,4 @@ function App() {
 		</div>);
 }
 
-export default App;
+export default DeviceViewPage;
