@@ -2,7 +2,7 @@
   "name": "mobiledeck",
   "displayName": "Mobile Deck",
   "description": "View, control and manage all your Android and iOS devices, simulators, and emulators without leaving your IDE",
-  "version": "1.0.5",
+  "version": "0.0.1",
   "publisher": "mobilenext",
   "author": {
     "name": "Mobile Next"
@@ -116,7 +116,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.26",
+    "@mobilenext/mobilecli": "0.0.28",
     "react-icons": "5.5.0"
   },
   "keywords": [],
