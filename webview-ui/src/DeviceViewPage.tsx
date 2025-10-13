@@ -328,6 +328,16 @@ function DeviceViewPage() {
 		}
 	};
 
+	const onDeviceSelected = (device: DeviceDescriptor) => {
+		setSelectedDevice(device);
+
+		// notify extension to update webview title
+		vscode.postMessage({
+			command: 'onDeviceSelected',
+			device,
+		});
+	}
+
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
@@ -369,7 +379,7 @@ function DeviceViewPage() {
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
 				onRefreshDevices={fetchDevices}
-				onSelectDevice={setSelectedDevice}
+				onSelectDevice={onDeviceSelected}
 			/>
 
 			{/* Device stream area */}
@@ -397,7 +407,7 @@ function DeviceViewPage() {
 				remoteHostIp={remoteHostIp}
 				onRemoteHostIpChange={setRemoteHostIp}
 				recentHosts={recentHosts}
-				onConnectToHost={() => {}}
+				onConnectToHost={() => { }}
 				onSelectRecentHost={(host) => { // New handler to set IP and connect for recent host
 					setRemoteHostIp(host);
 					// Potentially auto-connect or just fill input:

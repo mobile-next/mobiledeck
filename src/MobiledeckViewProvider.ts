@@ -74,6 +74,11 @@ export class MobiledeckViewProvider {
 				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
 				break;
 
+			case 'onDeviceSelected':
+				this.verbose('Device selected: ' + message.device.name);
+				this.updateWebviewTitle(webviewPanel, message.device.name);
+				break;
+
 			default:
 				vscode.window.showErrorMessage('Unknown message: ' + JSON.stringify(message));
 				break;
