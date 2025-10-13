@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, RefreshCw, ChevronRight, ChevronDown } from 'lucide-react';
 import { DeviceDescriptor, DevicePlatform, DeviceType } from './models';
+import vscode from './vscode';
 
 // icon components
 function AndroidIcon() {
@@ -99,6 +100,24 @@ function SidebarPage({
 }: SidebarPageProps) {
   const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 
+  useEffect(() => {
+    // send initialization message to extension (parent)
+    vscode.postMessage({
+      command: 'onInitialized'
+    });
+  }, []);
+
+  const handleDeviceClick = (device: DeviceDescriptor) => {
+    // send device click message to extension
+    vscode.postMessage({
+      command: 'deviceClicked',
+      device: device
+    });
+
+    // also call the callback prop if provided
+    onDeviceClicked(device);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
       {/* header */}
@@ -138,7 +157,7 @@ function SidebarPage({
           {isLocalDevicesExpanded && (
             <div className="ml-6">
               {mockDevices.map((device) => (
-                <DeviceRow key={device.id} device={device} onClick={onDeviceClicked} />
+                <DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
               ))}
             </div>
           )}

@@ -35,6 +35,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 						serverPort: this.cliServer.getJsonRpcServerPort(),
 					});
 					break;
+				case 'deviceClicked':
+					console.log('device clicked:', message.device);
+					// open a new tab with the device
+					vscode.commands.executeCommand('mobiledeck.openDevicePanel', message.device);
+					break;
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
 					break;

@@ -5,18 +5,7 @@ import { DeviceStream, GesturePoint } from './DeviceStream';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
-
-declare function acquireVsCodeApi(): any;
-
-let vscode = {
-	postMessage: (message: any) => {
-		console.log('mobiledeck: mock postMessage', message);
-	},
-};
-
-if (typeof acquireVsCodeApi === 'function') {
-	vscode = acquireVsCodeApi();
-}
+import vscode from './vscode';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
