@@ -80,9 +80,9 @@ export class MobiledeckViewProvider {
 		}
 	}
 
-	createWebviewPanel(preselectedDevice?: DeviceDescriptor): vscode.WebviewPanel {
+	createWebviewPanel(preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
 		console.log('createWebviewPanel called');
-		
+
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',
 			'Mobiledeck Device View',
@@ -98,7 +98,7 @@ export class MobiledeckViewProvider {
 
 		panel.webview.onDidReceiveMessage(message => this.handleMessage(panel, message), undefined, this.context.subscriptions);
 
-		panel.webview.html = this.getHtml(panel);
+		panel.webview.html = this.getHtml(panel, page);
 
 		return panel;
 	}
@@ -114,7 +114,7 @@ export class MobiledeckViewProvider {
 		webviewPanel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobiledeck-icon.svg');
 	}
 
-	private getHtml(webviewPanel: vscode.WebviewPanel): string {
+	private getHtml(webviewPanel: vscode.WebviewPanel, page: string = 'device'): string {
 		const htmlPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'index.html');
 		let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
 
@@ -123,6 +123,10 @@ export class MobiledeckViewProvider {
 			const uri = webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', asset));
 			htmlContent = htmlContent.replace(asset, uri.toString());
 		}
+
+		// inject page query parameter into the HTML by adding a base tag or script
+		const pageScript = `<script>window.__VSCODE_PAGE__ = '${page}';</script>`;
+		htmlContent = htmlContent.replace('</head>', `${pageScript}</head>`);
 
 		return htmlContent;
 	}

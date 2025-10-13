@@ -22,16 +22,6 @@ export function activate(context: vscode.ExtensionContext) {
 		showCollapseAll: false
 	});
 
-	// Handle tree view item selection (double-click)
-	treeView.onDidChangeSelection(e => {
-		if (e.selection.length > 0) {
-			const selectedItem = e.selection[0];
-			if (selectedItem instanceof DeviceNode) {
-				vscode.commands.executeCommand('mobiledeck.connect', selectedItem.device);
-			}
-		}
-	});
-
 	// Initial refresh to load devices
 	deviceTreeProvider.refresh();
 

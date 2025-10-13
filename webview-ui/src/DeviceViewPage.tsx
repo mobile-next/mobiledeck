@@ -45,6 +45,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
 
 function DeviceViewPage() {
 	const [selectedDevice, setSelectedDevice] = useState<DeviceDescriptor | null>(null);
+	const [availableDevices, setAvailableDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isConnecting, setIsConnecting] = useState(false);
 	const [fpsCount, setFpsCount] = useState(30);
@@ -146,6 +147,19 @@ function DeviceViewPage() {
 		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
 		setScreenSize(result.device.screenSize);
+	};
+
+	const fetchDevices = async () => {
+		try {
+			setIsRefreshing(true);
+			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
+			console.log('mobiledeck: devices list', result);
+			setAvailableDevices(result.devices);
+		} catch (error) {
+			console.error('mobiledeck: error fetching devices:', error);
+		} finally {
+			setIsRefreshing(false);
+		}
 	};
 
 	useEffect(() => {
@@ -331,6 +345,9 @@ function DeviceViewPage() {
 			command: 'onInitialized'
 		});
 
+		// fetch available devices on mount
+		fetchDevices();
+
 		return () => {
 			window.removeEventListener('message', messageHandler);
 			stopMjpegStream();
@@ -345,6 +362,7 @@ function DeviceViewPage() {
 			{/* Header with controls */}
 			<Header
 				selectedDevice={selectedDevice}
+				availableDevices={availableDevices}
 				recentHosts={recentHosts}
 				onHome={() => onHome()}
 				onBack={() => onBack()}
@@ -352,6 +370,8 @@ function DeviceViewPage() {
 				onTakeScreenshot={onTakeScreenshot}
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
+				onRefreshDevices={fetchDevices}
+				onSelectDevice={setSelectedDevice}
 			/>
 
 			{/* Device stream area */}
