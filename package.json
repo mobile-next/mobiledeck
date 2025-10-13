@@ -1,23 +1,33 @@
 {
   "name": "mobiledeck",
-  "displayName": "mobiledeck",
-  "description": "A Visual Studio Code extension for Android/iOS device previewing and management.",
-  "version": "0.0.1",
-  "publisher": "mobile-next",
+  "displayName": "Mobile Deck",
+  "description": "View, control and manage all your Android and iOS devices, simulators, and emulators without leaving your IDE",
+  "version": "1.0.5",
+  "publisher": "mobilenext",
+  "author": {
+    "name": "Mobile Next"
+  },
+  "license": "AGPL-3.0",
+  "icon": "mobilenexthq_logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
+  "bugs": {
+    "url": "https://github.com/mobile-next/mobiledeck/issues"
+  },
+  "homepage": "https://github.com/mobile-next/mobiledeck#readme",
   "categories": [
-    "Other"
+    "Testing"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mobile-next/mobiledeck.git"
+    "url": "https://github.com/mobile-next/mobiledeck"
   },
   "activationEvents": [
     "onView:mobiledeckDevices"
   ],
   "main": "./out/extension.js",
+  "private": true,
   "contributes": {
     "commands": [
       {
@@ -106,15 +116,9 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.24",
-    "react-icons": "^5.5.0"
+    "@mobilenext/mobilecli": "0.0.26",
+    "react-icons": "5.5.0"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/mobile-next/mobiledeck/issues"
-  },
-  "homepage": "https://github.com/mobile-next/mobiledeck#readme"
+  "type": "commonjs"
 }
