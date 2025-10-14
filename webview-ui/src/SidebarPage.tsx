@@ -69,7 +69,7 @@ function SidebarPage({
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(false);
-	const [serverPort, setServerPort] = useState<number>(12000);
+	const [serverPort, setServerPort] = useState<number>(0);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 

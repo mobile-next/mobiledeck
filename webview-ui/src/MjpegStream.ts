@@ -44,6 +44,7 @@ export class MjpegStream {
 					break;
 				}
 
+				// TODO: we can do this without reallocation of memory. use copyWithin().
 				const newBuffer = new Uint8Array(buffer.length + value.length);
 				newBuffer.set(buffer);
 				newBuffer.set(value, buffer.length);

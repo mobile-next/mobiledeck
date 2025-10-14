@@ -61,7 +61,9 @@ export class MobileCliServer {
 		}
 
 		// look up an available port that is not DEFAULT_SERVER_PORT
-		this.serverPort = await this.portManager.findAvailablePort(MobileCliServer.DEFAULT_SERVER_PORT + 1, MobileCliServer.DEFAULT_SERVER_PORT + 100);
+		const minPort = MobileCliServer.DEFAULT_SERVER_PORT + 1;
+		const maxPort = MobileCliServer.DEFAULT_SERVER_PORT + 100;
+		this.serverPort = await this.portManager.findAvailablePort(minPort, maxPort);
 		this.verbose(`Launching mobilecli server on port ${this.serverPort}...`);
 
 		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {

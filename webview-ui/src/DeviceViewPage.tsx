@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './Header';
-import { ConnectDialog } from './ConnectDialog';
 import { DeviceStream, GesturePoint } from './DeviceStream';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
@@ -38,18 +37,12 @@ function DeviceViewPage() {
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isConnecting, setIsConnecting] = useState(false);
 	const [fpsCount, setFpsCount] = useState(30);
-	const [showConnectDialog, setShowConnectDialog] = useState(false);
-	const [remoteHostIp, setRemoteHostIp] = useState("");
-	const [recentHosts, setRecentHosts] = useState<string[]>([
-		"127.0.0.1",
-	]);
-
 	const [imageUrl, setImageUrl] = useState<string>("");
 	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
-	const [serverPort, setServerPort] = useState<number>(12000);
+	const [serverPort, setServerPort] = useState<number>(0);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -371,10 +364,8 @@ function DeviceViewPage() {
 			<Header
 				selectedDevice={selectedDevice}
 				availableDevices={availableDevices}
-				recentHosts={recentHosts}
 				onHome={() => onHome()}
 				onBack={() => onBack()}
-				onShowConnectDialog={() => setShowConnectDialog(true)}
 				onTakeScreenshot={onTakeScreenshot}
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
@@ -398,22 +389,6 @@ function DeviceViewPage() {
 				isRefreshing={isRefreshing}
 				selectedDevice={selectedDevice}
 				fpsCount={fpsCount}
-			/>
-
-			{/* Connect to Host Dialog */}
-			<ConnectDialog
-				isOpen={showConnectDialog}
-				onOpenChange={setShowConnectDialog}
-				remoteHostIp={remoteHostIp}
-				onRemoteHostIpChange={setRemoteHostIp}
-				recentHosts={recentHosts}
-				onConnectToHost={() => { }}
-				onSelectRecentHost={(host) => { // New handler to set IP and connect for recent host
-					setRemoteHostIp(host);
-					// Potentially auto-connect or just fill input:
-					// For now, let's just fill the input, user still needs to click "Connect"
-					// If auto-connect is desired, call handleConnectToHost after setRemoteHostIp(host)
-				}}
 			/>
 		</div>);
 }
