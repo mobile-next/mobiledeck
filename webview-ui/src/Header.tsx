@@ -18,10 +18,8 @@ import { DeviceDescriptor } from "./models";
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
 	availableDevices: DeviceDescriptor[];
-	recentHosts: string[];
 	onHome: () => void;
 	onBack: () => void;
-	onShowConnectDialog: () => void;
 	onTakeScreenshot: () => void;
 	onAppSwitch: () => void;
 	onPower: () => void;
@@ -32,10 +30,8 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
 	selectedDevice,
 	availableDevices,
-	recentHosts,
 	onHome,
 	onBack,
-	onShowConnectDialog,
 	onTakeScreenshot,
 	onAppSwitch,
 	onPower,
