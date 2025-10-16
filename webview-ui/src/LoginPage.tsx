@@ -141,7 +141,10 @@ function EmailIcon() {
 
 function LoginPage() {
 	const handleSkipLogin = () => {
-		window.location.href = '/?page=sidebar';
+		// send message to extension to skip login and show sidebar
+		vscode.postMessage({
+			command: 'skipLogin'
+		});
 	};
 
 	const auth = useAuth();

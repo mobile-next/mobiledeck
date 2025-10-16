@@ -12,6 +12,12 @@ export class OAuthCallbackServer {
 		token_endpoint: "https://auth.mobilenexthq.com/oauth2/token"
 	};
 
+	// callback for when auth code is received
+	onAuthCodeReceived: (code: string) => void = () => {};
+
+	// callback for when tokens are received
+	onTokensReceived: (tokens: any) => void = () => {};
+
 	// start the server on a random available port
 	async start(): Promise<number> {
 		return new Promise((resolve, reject) => {
@@ -70,7 +76,7 @@ export class OAuthCallbackServer {
 	}
 
 	// exchange authorization code for tokens
-	private async exchangeCodeForToken(authCode: string): Promise<any> {
+	async exchangeCodeForToken(authCode: string): Promise<any> {
 		const params = new URLSearchParams({
 			grant_type: 'authorization_code',
 			client_id: this.cognitoAuthConfig.client_id,
@@ -133,7 +139,10 @@ export class OAuthCallbackServer {
 					console.log('expires_in:', tokens.expires_in);
 
 					// emit the code for handling
-					this.onAuthCodeReceived?.(code);
+					this.onAuthCodeReceived(code);
+
+					// emit the tokens for handling
+					this.onTokensReceived(tokens);
 				})
 				.catch(error => {
 					console.error('error exchanging code for token:', error);
@@ -159,7 +168,4 @@ export class OAuthCallbackServer {
 			res.end('Not Found');
 		}
 	}
-
-	// callback for when auth code is received
-	onAuthCodeReceived?: (code: string) => void;
 }

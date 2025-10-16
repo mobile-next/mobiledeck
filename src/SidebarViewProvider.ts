@@ -5,6 +5,7 @@ import { OAuthCallbackServer } from './OAuthCallbackServer';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
+	private webviewView?: vscode.WebviewView;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -13,11 +14,13 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		this.oauthServer = new OAuthCallbackServer();
 	}
 
-	resolveWebviewView(
+	async resolveWebviewView(
 		webviewView: vscode.WebviewView,
 		context: vscode.WebviewViewResolveContext,
 		token: vscode.CancellationToken
-	): void | Thenable<void> {
+	): Promise<void> {
+		this.webviewView = webviewView;
+
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [
@@ -25,7 +28,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			]
 		};
 
-		webviewView.webview.html = this.getHtml(webviewView.webview, 'login');
+		// check if user is already authenticated
+		const isAuthenticated = await this.isUserAuthenticated();
+		const page = isAuthenticated ? 'sidebar' : 'login';
+		webviewView.webview.html = this.getHtml(webviewView.webview, page);
 
 		// handle messages from the webview
 		webviewView.webview.onDidReceiveMessage(async (message) => {
@@ -48,6 +54,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					await this.handleOAuthLogin(message.provider, webviewView);
+					break;
+				case 'skipLogin':
+					console.log('user skipped login, switching to sidebar');
+					await this.switchToDeviceList();
 					break;
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
@@ -74,6 +84,13 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					command: 'authCodeReceived',
 					code: code,
 				});
+			};
+
+			// set up callback for when tokens are received
+			this.oauthServer.onTokensReceived = async (tokens: any) => {
+				console.log('tokens received, storing and switching view');
+				await this.storeTokens(tokens);
+				await this.switchToDeviceList();
 			};
 
 			// build oauth url with the dynamic redirect uri
@@ -111,5 +128,58 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		});
 
 		return `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
+	}
+
+	// store tokens in secure storage
+	private async storeTokens(tokens: any): Promise<void> {
+		try {
+			await this.context.secrets.store('mobiledeck.oauth.access_token', tokens.access_token);
+			await this.context.secrets.store('mobiledeck.oauth.id_token', tokens.id_token);
+			if (tokens.refresh_token) {
+				await this.context.secrets.store('mobiledeck.oauth.refresh_token', tokens.refresh_token);
+			}
+			// store token expiry time
+			const expiresAt = Date.now() + (tokens.expires_in * 1000);
+			await this.context.secrets.store('mobiledeck.oauth.expires_at', expiresAt.toString());
+			console.log('tokens stored successfully');
+		} catch (error) {
+			console.error('failed to store tokens:', error);
+			throw error;
+		}
+	}
+
+	// check if user is authenticated
+	private async isUserAuthenticated(): Promise<boolean> {
+		try {
+			const accessToken = await this.context.secrets.get('mobiledeck.oauth.access_token');
+			const expiresAt = await this.context.secrets.get('mobiledeck.oauth.expires_at');
+
+			if (!accessToken || !expiresAt) {
+				return false;
+			}
+
+			// check if token is expired
+			const expiryTime = parseInt(expiresAt, 10);
+			if (Date.now() >= expiryTime) {
+				console.log('token expired');
+				return false;
+			}
+
+			return true;
+		} catch (error) {
+			console.error('error checking auth state:', error);
+			return false;
+		}
+	}
+
+	// switch the webview to device list
+	private async switchToDeviceList(): Promise<void> {
+		if (!this.webviewView) {
+			console.error('webview not available');
+			return;
+		}
+
+		console.log('switching to device list view');
+		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'sidebar');
 	}
 }
