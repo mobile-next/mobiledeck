@@ -87,6 +87,7 @@
   },
   "dependencies": {
     "@mobilenext/mobilecli": "0.0.28",
+    "oidc-client-ts": "^3.3.0",
     "react-icons": "5.5.0"
   },
   "keywords": [],
