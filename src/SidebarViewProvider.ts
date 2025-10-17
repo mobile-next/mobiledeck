@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 import { OAuthCallbackServer } from './OAuthCallbackServer';
+import { OAUTH_CONFIG } from './config/oauth';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -118,13 +119,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private buildOAuthUrl(provider: string, port: number): string {
-		// cognito hosted ui domain
-		const cognitoDomain = "https://auth.mobilenexthq.com";
-		const clientId = "5fuedu10rosgs7l68cup9g3pgv";
 		// use the dynamic port for the redirect uri
-		const redirectUri = "https://mobilenexthq.com/oauth/callback/";
-		const responseType = "code";
-		const scope = "email openid";
 		const state = btoa(JSON.stringify({
 			redirectUri: `http://localhost:${port}/oauth/callback`,
 		}));
@@ -132,15 +127,15 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		// construct the oauth url with identity provider
 		const params = new URLSearchParams({
 			identity_provider: provider,
-			redirect_uri: redirectUri,
-			response_type: responseType,
-			client_id: clientId,
-			scope: scope,
+			redirect_uri: OAUTH_CONFIG.redirect_uri,
+			response_type: OAUTH_CONFIG.response_type,
+			client_id: OAUTH_CONFIG.client_id,
+			scope: OAUTH_CONFIG.scope,
 			state: state,
 			prompt: 'select_account',
 		});
 
-		return `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
+		return `${OAUTH_CONFIG.cognito_domain}/oauth2/authorize?${params.toString()}`;
 	}
 
 	// store tokens in secure storage

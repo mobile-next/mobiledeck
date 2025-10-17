@@ -1,16 +1,9 @@
 import * as http from 'http';
+import { OAUTH_CONFIG } from './config/oauth';
 
 export class OAuthCallbackServer {
 	private server: http.Server | null = null;
 	private port: number = 0;
-	private cognitoAuthConfig = {
-		authority: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_yxInzo34K",
-		client_id: "5fuedu10rosgs7l68cup9g3pgv",
-		redirect_uri: "https://mobilenexthq.com/oauth/callback/",
-		response_type: "code",
-		scope: "email openid",
-		token_endpoint: "https://auth.mobilenexthq.com/oauth2/token"
-	};
 
 	// callback for when auth code is received
 	onAuthCodeReceived: (code: string) => void = () => {};
@@ -95,12 +88,12 @@ export class OAuthCallbackServer {
 	async exchangeCodeForToken(authCode: string): Promise<any> {
 		const params = new URLSearchParams({
 			grant_type: 'authorization_code',
-			client_id: this.cognitoAuthConfig.client_id,
+			client_id: OAUTH_CONFIG.client_id,
 			code: authCode,
-			redirect_uri: this.cognitoAuthConfig.redirect_uri,
+			redirect_uri: OAUTH_CONFIG.redirect_uri,
 		});
 
-		const response = await fetch(this.cognitoAuthConfig.token_endpoint, {
+		const response = await fetch(OAUTH_CONFIG.token_endpoint, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',

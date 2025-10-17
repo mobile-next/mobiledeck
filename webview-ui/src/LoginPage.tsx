@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAuth } from "react-oidc-context";
 import vscode from './vscode';
 
 // styles for the login page
@@ -147,47 +146,26 @@ function LoginPage() {
 		});
 	};
 
-	const auth = useAuth();
-
 	const onGoogleLogin = () => {
-		if (vscode) {
-			// in vscode, post message to extension to open external browser
-			vscode.postMessage({
-				command: 'openOAuthLogin',
-				provider: 'Google'
-			});
-		} else {
-			// standalone mode - use regular redirect
-			auth.signinRedirect({
-				extraQueryParams: { identity_provider: 'Google' }
-			});
-		}
+		// post message to extension to open external browser
+		vscode.postMessage({
+			command: 'openOAuthLogin',
+			provider: 'Google'
+		});
 	};
 
 	const onAzureLogin = () => {
-		if (vscode) {
-			vscode.postMessage({
-				command: 'openOAuthLogin',
-				provider: 'AzureAD'
-			});
-		} else {
-			auth.signinRedirect({
-				extraQueryParams: { identity_provider: 'AzureAD' }
-			});
-		}
+		vscode.postMessage({
+			command: 'openOAuthLogin',
+			provider: 'AzureAD'
+		});
 	};
 
 	const onGitHubLogin = () => {
-		if (vscode) {
-			vscode.postMessage({
-				command: 'openOAuthLogin',
-				provider: 'GitHub'
-			});
-		} else {
-			auth.signinRedirect({
-				extraQueryParams: { identity_provider: 'GitHub' }
-			});
-		}
+		vscode.postMessage({
+			command: 'openOAuthLogin',
+			provider: 'GitHub'
+		});
 	};
 
 	return (
