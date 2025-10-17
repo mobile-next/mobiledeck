@@ -162,7 +162,7 @@ function LoginPage() {
 				extraQueryParams: { identity_provider: 'Google' }
 			});
 		}
-	}
+	};
 
 	const onAzureLogin = () => {
 		if (vscode) {
@@ -175,7 +175,7 @@ function LoginPage() {
 				extraQueryParams: { identity_provider: 'AzureAD' }
 			});
 		}
-	}
+	};
 
 	const onGitHubLogin = () => {
 		if (vscode) {
@@ -188,7 +188,7 @@ function LoginPage() {
 				extraQueryParams: { identity_provider: 'GitHub' }
 			});
 		}
-	}
+	};
 
 	return (
 		<div style={styles.wrapper}>
