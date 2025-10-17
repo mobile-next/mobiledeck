@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DeviceDescriptor, DevicePlatform, DeviceType, ListDevicesResponse } from './models';
-import { Plus, ChevronDown, ChevronRight, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Square, Power } from "lucide-react";
+import { ChevronDown, ChevronRight, House, MoreVertical, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Square, Power } from "lucide-react";
 import vscode from './vscode';
 import { JsonRpcClient } from './JsonRpcClient';
 
@@ -57,14 +57,10 @@ function DeviceRow({ device, onClick }: DeviceRowProps) {
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
-	onAddClicked?: () => void;
-	onRefreshClicked?: () => void;
 }
 
 function SidebarPage({
-	onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`),
-	onAddClicked = () => alert('Add clicked'),
-	onRefreshClicked = () => alert('Refresh clicked')
+	onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`)
 }: SidebarPageProps) {
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
@@ -108,6 +104,10 @@ function SidebarPage({
 					setUserEmail(message.email);
 				}
 				break;
+			case 'refreshDevices':
+				console.log('sidebar: refresh devices message received');
+				fetchDevices();
+				break;
 			default:
 				console.log('sidebar: unknown message', message);
 				break;
@@ -148,30 +148,9 @@ function SidebarPage({
 		onDeviceClicked(device);
 	};
 
-	const handleRefreshClick = () => {
-		fetchDevices();
-		onRefreshClicked();
-	};
 
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
-			{/* header */}
-			<div className="flex items-center justify-between px-4 py-2 border-b border-[#2d2d2d]">
-				<h1 className="text-sm font-semibold">Mobile Deck</h1>
-				<div className="flex gap-2">
-					<button className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded" onClick={onAddClicked}>
-						<Plus className="h-4 w-4" />
-					</button>
-					<button
-						className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded"
-						onClick={handleRefreshClick}
-						disabled={isRefreshing}
-					>
-						<RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-					</button>
-				</div>
-			</div>
-
 			{/* device list */}
 			<div className="flex-1 overflow-y-auto">
 				{/* local devices section */}

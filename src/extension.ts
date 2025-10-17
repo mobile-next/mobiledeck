@@ -24,6 +24,20 @@ class MobiledeckExtension {
 		}
 	}
 
+	private onRefreshDevices() {
+		console.log('mobiledeck.refreshDevices command executed');
+		// send message to sidebar to refresh devices
+		if (this.sidebarProvider) {
+			this.sidebarProvider.refreshDevices();
+		}
+	}
+
+	private onAddDevice() {
+		console.log('mobiledeck.addDevice command executed');
+		// TODO: implement add device functionality
+		vscode.window.showInformationMessage('Add device functionality coming soon');
+	}
+
 	private async onSignOut(context: vscode.ExtensionContext) {
 		console.log('mobiledeck.signOut command executed');
 
@@ -124,8 +138,10 @@ class MobiledeckExtension {
 
 		const connectCommand = vscode.commands.registerCommand('mobiledeck.connect', (device) => this.onConnect(context, device));
 		const openDevicePanelCommand = vscode.commands.registerCommand('mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
+		const refreshDevicesCommand = vscode.commands.registerCommand('mobiledeck.refreshDevices', () => this.onRefreshDevices());
+		const addDeviceCommand = vscode.commands.registerCommand('mobiledeck.addDevice', () => this.onAddDevice());
 		const signOutCommand = vscode.commands.registerCommand('mobiledeck.signOut', () => this.onSignOut(context));
-		context.subscriptions.push(connectCommand, openDevicePanelCommand, signOutCommand);
+		context.subscriptions.push(connectCommand, openDevicePanelCommand, refreshDevicesCommand, addDeviceCommand, signOutCommand);
 
 		console.log('Mobiledeck extension activated successfully');
 	}

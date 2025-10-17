@@ -59,6 +59,8 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case 'skipLogin':
 					console.log('user skipped login, switching to sidebar');
+					// set authentication context so logout button and menu appear
+					await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', true);
 					await this.switchToDeviceList();
 					break;
 				case 'signOut':
@@ -210,6 +212,19 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 		console.log('showing login page');
 		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'login');
+	}
+
+	// public method to refresh devices (called from extension when refresh command is triggered)
+	public refreshDevices(): void {
+		if (!this.webviewView) {
+			console.error('webview not available');
+			return;
+		}
+
+		console.log('refreshing devices');
+		this.webviewView.webview.postMessage({
+			command: 'refreshDevices'
+		});
 	}
 
 	// update sign out button title with email

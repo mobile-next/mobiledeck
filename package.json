@@ -40,6 +40,18 @@
         "title": "Open Device Panel"
       },
       {
+        "command": "mobiledeck.refreshDevices",
+        "title": "Refresh Devices",
+        "icon": "$(refresh)",
+        "enablement": "mobiledeck.isAuthenticated"
+      },
+      {
+        "command": "mobiledeck.addDevice",
+        "title": "Add Device",
+        "icon": "$(add)",
+        "enablement": "mobiledeck.isAuthenticated"
+      },
+      {
         "command": "mobiledeck.signOut",
         "title": "Sign Out",
         "enablement": "mobiledeck.isAuthenticated"
@@ -47,6 +59,16 @@
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "mobiledeck.refreshDevices",
+          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated",
+          "group": "navigation"
+        },
+        {
+          "command": "mobiledeck.addDevice",
+          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated",
+          "group": "navigation"
+        },
         {
           "command": "mobiledeck.signOut",
           "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated"
@@ -57,7 +79,7 @@
       "mobiledeck": [
         {
           "id": "mobiledeckDevices",
-          "name": "Devices",
+          "name": "",
           "type": "webview",
           "when": "true"
         }
