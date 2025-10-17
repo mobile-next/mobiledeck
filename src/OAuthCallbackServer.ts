@@ -6,7 +6,7 @@ export class OAuthCallbackServer {
 	private cognitoAuthConfig = {
 		authority: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_yxInzo34K",
 		client_id: "5fuedu10rosgs7l68cup9g3pgv",
-		redirect_uri: "http://localhost/oauth/callback",
+		redirect_uri: "https://mobilenexthq.com/oauth/callback/",
 		response_type: "code",
 		scope: "email openid",
 		token_endpoint: "https://auth.mobilenexthq.com/oauth2/token"
@@ -16,7 +16,7 @@ export class OAuthCallbackServer {
 	onAuthCodeReceived: (code: string) => void = () => {};
 
 	// callback for when tokens are received
-	onTokensReceived: (tokens: any) => void = () => {};
+	onTokensReceived: (tokens: any, email: string) => void = () => {};
 
 	// start the server on a random available port
 	async start(): Promise<number> {
@@ -73,6 +73,22 @@ export class OAuthCallbackServer {
 	// check if server is running
 	isRunning(): boolean {
 		return this.server !== null && this.port > 0;
+	}
+
+	// decode jwt payload (id_token) to extract claims
+	private decodeJwtPayload(token: string): any {
+		try {
+			const parts = token.split('.');
+			if (parts.length !== 3) {
+				throw new Error('invalid jwt format');
+			}
+			const payload = parts[1];
+			const decoded = Buffer.from(payload, 'base64').toString('utf-8');
+			return JSON.parse(decoded);
+		} catch (error) {
+			console.error('error decoding jwt:', error);
+			return null;
+		}
 	}
 
 	// exchange authorization code for tokens
@@ -138,11 +154,21 @@ export class OAuthCallbackServer {
 					console.log('refresh_token:', tokens.refresh_token);
 					console.log('expires_in:', tokens.expires_in);
 
+					// decode id_token to extract email
+					let email = '';
+					if (tokens.id_token) {
+						const payload = this.decodeJwtPayload(tokens.id_token);
+						if (payload && payload.email) {
+							email = payload.email;
+							console.log('extracted email from id_token:', email);
+						}
+					}
+
 					// emit the code for handling
 					this.onAuthCodeReceived(code);
 
 					// emit the tokens for handling
-					this.onTokensReceived(tokens);
+					this.onTokensReceived(tokens, email);
 				})
 				.catch(error => {
 					console.error('error exchanging code for token:', error);

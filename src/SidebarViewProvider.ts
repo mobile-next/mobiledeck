@@ -40,10 +40,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			switch (message.command) {
 				case 'onInitialized':
 					console.log('sidebar webview initialized');
-					// send server port to webview
+					// send server port and email to webview
+					const email = await this.context.secrets.get('mobiledeck.oauth.email');
 					webviewView.webview.postMessage({
 						command: 'configure',
 						serverPort: this.cliServer.getJsonRpcServerPort(),
+						email: email || '',
 					});
 					break;
 				case 'deviceClicked':
@@ -58,6 +60,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				case 'skipLogin':
 					console.log('user skipped login, switching to sidebar');
 					await this.switchToDeviceList();
+					break;
+				case 'signOut':
+					console.log('sign out requested from webview');
+					await vscode.commands.executeCommand('mobiledeck.signOut');
 					break;
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
@@ -87,9 +93,13 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			};
 
 			// set up callback for when tokens are received
-			this.oauthServer.onTokensReceived = async (tokens: any) => {
+			this.oauthServer.onTokensReceived = async (tokens: any, email: string) => {
 				console.log('tokens received, storing and switching view');
-				await this.storeTokens(tokens);
+				await this.storeTokens(tokens, email);
+				// update sign out button title with email
+				if (email) {
+					await this.updateSignOutButtonTitle(email);
+				}
 				await this.switchToDeviceList();
 			};
 
@@ -110,7 +120,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		const cognitoDomain = "https://auth.mobilenexthq.com";
 		const clientId = "5fuedu10rosgs7l68cup9g3pgv";
 		// use the dynamic port for the redirect uri
-		const redirectUri = "http://localhost/oauth/callback";
+		const redirectUri = "https://mobilenexthq.com/oauth/callback/";
 		const responseType = "code";
 		const scope = "email openid";
 		const state = btoa(JSON.stringify({
@@ -125,13 +135,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			client_id: clientId,
 			scope: scope,
 			state: state,
+			prompt: 'select_account',
 		});
 
 		return `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
 	}
 
 	// store tokens in secure storage
-	private async storeTokens(tokens: any): Promise<void> {
+	private async storeTokens(tokens: any, email: string): Promise<void> {
 		try {
 			await this.context.secrets.store('mobiledeck.oauth.access_token', tokens.access_token);
 			await this.context.secrets.store('mobiledeck.oauth.id_token', tokens.id_token);
@@ -141,7 +152,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			// store token expiry time
 			const expiresAt = Date.now() + (tokens.expires_in * 1000);
 			await this.context.secrets.store('mobiledeck.oauth.expires_at', expiresAt.toString());
+			// store email address
+			if (email) {
+				await this.context.secrets.store('mobiledeck.oauth.email', email);
+			}
 			console.log('tokens stored successfully');
+
+			// update authentication context to show sign out button
+			await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', true);
 		} catch (error) {
 			console.error('failed to store tokens:', error);
 			throw error;
@@ -181,5 +199,25 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 		console.log('switching to device list view');
 		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'sidebar');
+	}
+
+	// public method to show login page (called from extension when signing out)
+	public showLoginPage(): void {
+		if (!this.webviewView) {
+			console.error('webview not available');
+			return;
+		}
+
+		console.log('showing login page');
+		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'login');
+	}
+
+	// update sign out button title with email
+	private async updateSignOutButtonTitle(email: string): Promise<void> {
+		try {
+			await vscode.commands.executeCommand('setContext', 'mobiledeck.userEmail', email);
+		} catch (error) {
+			console.error('failed to update sign out button title:', error);
+		}
 	}
 }

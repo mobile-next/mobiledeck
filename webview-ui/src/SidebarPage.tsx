@@ -70,6 +70,7 @@ function SidebarPage({
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [serverPort, setServerPort] = useState<number>(0);
+	const [userEmail, setUserEmail] = useState<string>('');
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 
@@ -101,6 +102,10 @@ function SidebarPage({
 				if (message.serverPort) {
 					console.log('sidebar: configure message received, port:', message.serverPort);
 					setServerPort(message.serverPort);
+				}
+				if (message.email) {
+					console.log('sidebar: email received:', message.email);
+					setUserEmail(message.email);
 				}
 				break;
 			default:
@@ -152,7 +157,7 @@ function SidebarPage({
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
 			{/* header */}
 			<div className="flex items-center justify-between px-4 py-2 border-b border-[#2d2d2d]">
-				<h1 className="text-sm font-semibold tracking-wide uppercase">MOBILEDECK: DEVICES</h1>
+				<h1 className="text-sm font-semibold">Mobile Deck</h1>
 				<div className="flex gap-2">
 					<button className="text-[#cccccc] hover:bg-[#2d2d2d] p-1 rounded" onClick={onAddClicked}>
 						<Plus className="h-4 w-4" />

@@ -38,8 +38,21 @@
       {
         "command": "mobiledeck.openDevicePanel",
         "title": "Open Device Panel"
+      },
+      {
+        "command": "mobiledeck.signOut",
+        "title": "Sign Out",
+        "enablement": "mobiledeck.isAuthenticated"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mobiledeck.signOut",
+          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated"
+        }
+      ]
+    },
     "views": {
       "mobiledeck": [
         {
