@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { DeviceDescriptor } from './DeviceDescriptor';
-import { MobiledeckViewProvider } from './MobiledeckViewProvider';
+import { DeviceViewProvider } from './DeviceViewProvider';
 import { MobileCliServer } from './MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
 
@@ -10,7 +10,7 @@ class MobiledeckExtension {
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.connect command executed for device:', device.id);
 		if (device) {
-			const viewProvider = new MobiledeckViewProvider(context, device, this.cliServer!);
+			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
 	}
@@ -18,7 +18,7 @@ class MobiledeckExtension {
 	private onOpenDevicePanel(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.openDevicePanel command executed for device:', device.id);
 		if (device) {
-			const viewProvider = new MobiledeckViewProvider(context, device, this.cliServer!);
+			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
 	}
@@ -35,11 +35,15 @@ class MobiledeckExtension {
 			vscode.window.registerWebviewViewProvider('mobiledeckDevices', sidebarProvider)
 		);
 
-		const connectCommand = vscode.commands.registerCommand('mobiledeck.connect', (device) => this.onConnect(context, device));
-		const openDevicePanelCommand = vscode.commands.registerCommand('mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
-		context.subscriptions.push(connectCommand, openDevicePanelCommand);
+		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
+		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
 
 		console.log('Mobiledeck extension activated successfully');
+	}
+
+	private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
+		const disposable = vscode.commands.registerCommand(command, callback);
+		context.subscriptions.push(disposable);
 	}
 
 	public deactivate() {

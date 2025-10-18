@@ -3,7 +3,7 @@ import * as fs from 'fs';
 
 export class HtmlUtils {
 	/**
-	 * generates HTML content for a webview by reading index.html and replacing asset paths
+	 * Generates HTML content for a webview by reading index.html and replacing asset paths
 	 * @param context extension context
 	 * @param webview webview instance (panel or view)
 	 * @param page page identifier to inject as window.__VSCODE_PAGE__
