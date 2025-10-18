@@ -6,10 +6,10 @@ export class OAuthCallbackServer {
 	private port: number = 0;
 
 	// callback for when auth code is received
-	onAuthCodeReceived: (code: string) => void = () => {};
+	onAuthCodeReceived: (code: string) => void = () => { };
 
 	// callback for when tokens are received
-	onTokensReceived: (tokens: any, email: string) => void = () => {};
+	onTokensReceived: (tokens: any, email: string) => void = () => { };
 
 	// start the server on a random available port
 	async start(): Promise<number> {
@@ -140,12 +140,7 @@ export class OAuthCallbackServer {
 			// exchange code for tokens
 			this.exchangeCodeForToken(code)
 				.then(tokens => {
-					console.log('token exchange successful:');
-					console.log(JSON.stringify(tokens, null, 2));
-					console.log('access_token:', tokens.access_token);
-					console.log('id_token:', tokens.id_token);
-					console.log('refresh_token:', tokens.refresh_token);
-					console.log('expires_in:', tokens.expires_in);
+					console.log('token exchange successful');
 
 					// decode id_token to extract email
 					let email = '';
@@ -153,7 +148,6 @@ export class OAuthCallbackServer {
 						const payload = this.decodeJwtPayload(tokens.id_token);
 						if (payload && payload.email) {
 							email = payload.email;
-							console.log('extracted email from id_token:', email);
 						}
 					}
 
@@ -162,25 +156,42 @@ export class OAuthCallbackServer {
 
 					// emit the tokens for handling
 					this.onTokensReceived(tokens, email);
+
+					// send success response to user
+					res.writeHead(200, { 'Content-Type': 'text/html' });
+					res.end(`
+						<html>
+							<body>
+								<h1>Authentication Successful</h1>
+								<p>You can close this window and return to VS Code.</p>
+							</body>
+						</html>
+					`);
+
+					// stop the server after response is fully sent
+					res.on('finish', () => {
+						this.stop().catch(console.error);
+					});
 				})
 				.catch(error => {
 					console.error('error exchanging code for token:', error);
+					// send error response to user
+					res.writeHead(500, { 'Content-Type': 'text/html' });
+					res.end(`
+						<html>
+							<body>
+								<h1>Token Exchange Failed</h1>
+								<p>Failed to exchange authorization code for tokens.</p>
+								<p>Please close this window and try again.</p>
+							</body>
+						</html>
+					`);
+
+					// stop the server after response is fully sent
+					res.on('finish', () => {
+						this.stop().catch(console.error);
+					});
 				});
-
-			res.writeHead(200, { 'Content-Type': 'text/html' });
-			res.end(`
-				<html>
-					<body>
-						<h1>Authentication Successful</h1>
-						<p>You can close this window and return to VS Code.</p>
-					</body>
-				</html>
-			`);
-
-			// stop the server after handling the callback
-			setTimeout(() => {
-				this.stop().catch(console.error);
-			}, 1000);
 		} else {
 			// unknown request
 			res.writeHead(404, { 'Content-Type': 'text/plain' });
