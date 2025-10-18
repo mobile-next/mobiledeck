@@ -150,6 +150,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			if (tokens.refresh_token) {
 				await this.context.secrets.store('mobiledeck.oauth.refresh_token', tokens.refresh_token);
 			}
+
 			// store token expiry time
 			const expiresAt = Date.now() + (tokens.expires_in * 1000);
 			await this.context.secrets.store('mobiledeck.oauth.expires_at', expiresAt.toString());
@@ -157,6 +158,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			if (email) {
 				await this.context.secrets.store('mobiledeck.oauth.email', email);
 			}
+
 			console.log('tokens stored successfully');
 
 			// update authentication context to show sign out button
@@ -170,9 +172,8 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	// check if user is authenticated
 	private async isUserAuthenticated(): Promise<boolean> {
 		try {
-			const accessToken = await this.context.secrets.get('mobiledeck.oauth.access_token');
 			const expiresAt = await this.context.secrets.get('mobiledeck.oauth.expires_at');
-
+			const accessToken = await this.context.secrets.get('mobiledeck.oauth.access_token');
 			if (!accessToken || !expiresAt) {
 				return false;
 			}
