@@ -1,5 +1,7 @@
 import * as http from 'node:http';
 import * as crypto from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
 import { OAUTH_CONFIG } from './config/oauth';
 
 export interface OAuthTokens {
@@ -87,19 +89,64 @@ export class OAuthCallbackServer {
 		});
 	}
 
-	// decode jwt payload (id_token) to extract claims
-	private decodeJwtPayload(token: string): JWTPayload | null {
+	// jwks client for fetching and caching cognito public keys
+	private jwksClient = jwksClient({
+		jwksUri: `${OAUTH_CONFIG.authority}/.well-known/jwks.json`,
+		cache: true,
+		cacheMaxAge: 600000, // 10 minutes
+	});
+
+	// get signing key for jwt verification
+	private getSigningKey(kid: string): Promise<string> {
+		return new Promise((resolve, reject) => {
+			this.jwksClient.getSigningKey(kid, (err, key) => {
+				if (err) {
+					reject(err);
+				} else {
+					const signingKey = key?.getPublicKey();
+					if (signingKey) {
+						resolve(signingKey);
+					} else {
+						reject(new Error('no public key found'));
+					}
+				}
+			});
+		});
+	}
+
+	// verify and decode jwt payload (id_token) to extract claims with signature validation
+	private async verifyAndDecodeJwt(token: string): Promise<JWTPayload | null> {
 		try {
-			const parts = token.split('.');
-			if (parts.length !== 3) {
-				throw new Error('invalid jwt format');
+			// decode header to get kid (key id)
+			const decoded = jwt.decode(token, { complete: true });
+			if (!decoded || !decoded.header.kid) {
+				console.error('invalid jwt: missing kid in header');
+				return null;
 			}
 
-			const payload = parts[1];
-			const decoded = Buffer.from(payload, 'base64').toString('utf-8');
-			return JSON.parse(decoded);
+			// get the signing key from jwks
+			const signingKey = await this.getSigningKey(decoded.header.kid);
+
+			// verify and decode the token
+			const payload = jwt.verify(
+				token,
+				signingKey, {
+				issuer: OAUTH_CONFIG.authority,
+				audience: OAUTH_CONFIG.client_id,
+				algorithms: ['RS256'],
+			}) as JWTPayload;
+
+			console.log("jwt signature was successfully verified");
+
+			// extract and return the relevant claims
+			return {
+				email: payload.email as string | undefined,
+				sub: payload.sub as string,
+				iat: payload.iat as number,
+				exp: payload.exp as number,
+			};
 		} catch (error) {
-			console.error('error decoding jwt:', error);
+			console.error('error verifying jwt:', error);
 			return null;
 		}
 	}
@@ -184,15 +231,23 @@ export class OAuthCallbackServer {
 
 		// exchange code for tokens
 		this.exchangeCodeForToken(code)
-			.then(tokens => {
+			.then(async tokens => {
 				console.log('token exchange successful');
 
-				// decode id_token to extract email
+				// verify and decode id_token to extract email with signature validation
 				let email = '';
 				if (tokens.id_token) {
-					const payload = this.decodeJwtPayload(tokens.id_token);
+					const payload = await this.verifyAndDecodeJwt(tokens.id_token);
 					if (payload && payload.email) {
 						email = payload.email;
+					} else if (!payload) {
+						// jwt verification failed
+						console.error('jwt verification failed - token may be invalid or forged');
+						this.writeSimpleResponse(res, 401, 'Invalid ID token');
+						res.on('finish', () => {
+							this.stop().catch(console.error);
+						});
+						return;
 					}
 				}
 

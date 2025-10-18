@@ -26,7 +26,7 @@
   "activationEvents": [
     "onView:mobiledeckDevices"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "private": true,
   "contributes": {
     "commands": [
@@ -96,7 +96,10 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run webpack",
+    "webpack": "webpack --mode production",
+    "webpack:dev": "webpack --mode development",
+    "webpack:watch": "webpack --mode development --watch",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "prepare": "npx husky",
@@ -105,6 +108,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.85.0",
@@ -122,7 +126,9 @@
   },
   "dependencies": {
     "@mobilenext/mobilecli": "0.0.28",
-    "oidc-client-ts": "^3.3.0",
+    "jsonwebtoken": "9.0.2",
+    "jwks-rsa": "3.2.0",
+    "oidc-client-ts": "3.3.0",
     "react-icons": "5.5.0"
   },
   "keywords": [],
