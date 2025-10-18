@@ -13,3 +13,5 @@ Makefile
 .editorconfig
 **/.gitkeep
 
+eslint.config.mjs
+CLAUDE.md

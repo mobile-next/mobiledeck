@@ -28,7 +28,7 @@ export class PortManager {
 
 			const data = await response.json() as ServerHealthResponse;
 			return data.status === 'ok';
-		} catch (error: any) {
+		} catch {
 			return false;
 		}
 	}

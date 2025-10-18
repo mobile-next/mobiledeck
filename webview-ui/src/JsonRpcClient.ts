@@ -4,11 +4,14 @@ export interface JsonRpcResponse<T> {
 	result: T;
 }
 
+const JSON_RPC_VERSION = '2.0';
+const APPLICATION_JSON = 'application/json';
+
 export class JsonRpcClient {
 
 	private idCounter = 1;
 
-	constructor(private readonly url: string) {}
+	constructor(private readonly url: string) { }
 
 	public sendJsonRpcRequest = async <T>(method: string, params: any, timeoutMs?: number): Promise<T> => {
 		console.log('mobiledeck: sending json rpc request', method, params);
@@ -16,7 +19,7 @@ export class JsonRpcClient {
 		const id = this.idCounter++;
 
 		const body = {
-			jsonrpc: '2.0',
+			jsonrpc: JSON_RPC_VERSION,
 			id,
 			method,
 			params,
@@ -34,7 +37,7 @@ export class JsonRpcClient {
 			const response = await fetch(this.url, {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': APPLICATION_JSON,
 				},
 				body: JSON.stringify(body),
 				signal: controller?.signal

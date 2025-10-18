@@ -1,87 +1,67 @@
 import * as vscode from 'vscode';
-import { DeviceTreeProvider } from './DeviceTreeProvider';
 import { DeviceDescriptor } from './DeviceDescriptor';
-import { DeviceNode } from './DeviceNode';
-import { MobiledeckViewProvider } from './MobiledeckViewProvider';
+import { DeviceViewProvider } from './DeviceViewProvider';
 import { MobileCliServer } from './MobileCliServer';
+import { SidebarViewProvider } from './SidebarViewProvider';
 
-let cliServer: MobileCliServer | null;
+class MobiledeckExtension {
+	private cliServer: MobileCliServer | null = null;
 
-export function activate(context: vscode.ExtensionContext) {
-	console.log('Mobiledeck extension is being activated');
-
-	// Create the device tree provider
-	const deviceTreeProvider = new DeviceTreeProvider(context);
-
-	cliServer = new MobileCliServer(context);
-	cliServer.launchMobilecliServer().then();
-	
-	// Register the tree view
-	const treeView = vscode.window.createTreeView('mobiledeckDevices', {
-		treeDataProvider: deviceTreeProvider,
-		showCollapseAll: false
-	});
-
-	// Handle tree view item selection (double-click)
-	treeView.onDidChangeSelection(e => {
-		if (e.selection.length > 0) {
-			const selectedItem = e.selection[0];
-			if (selectedItem instanceof DeviceNode) {
-				vscode.commands.executeCommand('mobiledeck.connect', selectedItem.device);
-			}
-		}
-	});
-
-	// Initial refresh to load devices
-	deviceTreeProvider.refresh();
-
-	// Register refresh command
-	const refreshCommand = vscode.commands.registerCommand('mobiledeck.refresh', () => {
-		console.log('mobiledeck.refresh command executed');
-		deviceTreeProvider.refresh();
-		vscode.window.showInformationMessage('Device list refreshed');
-	});
-
-	// Register add device command
-	const addDeviceCommand = vscode.commands.registerCommand('mobiledeck.addDevice', async () => {
-		console.log('mobiledeck.addDevice command executed');
-		vscode.window.showInformationMessage('Add Device functionality will be implemented in a future version');
-	});
-
-	// Register connect command
-	const connectCommand = vscode.commands.registerCommand('mobiledeck.connect', (device: DeviceDescriptor) => {
+	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.connect command executed for device:', device.id);
 		if (device) {
-			const viewProvider = new MobiledeckViewProvider(context, device, cliServer!);
+			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
-	});
+	}
 
-	// Register open device panel command
-	const openDevicePanelCommand = vscode.commands.registerCommand('mobiledeck.openDevicePanel', (device: DeviceDescriptor) => {
-		console.log('mobiledeck.openDevicePanel command executed');
+	private onOpenDevicePanel(context: vscode.ExtensionContext, device: DeviceDescriptor) {
+		console.log('mobiledeck.openDevicePanel command executed for device:', device.id);
 		if (device) {
-			const viewProvider = new MobiledeckViewProvider(context, device, cliServer!);
+			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
-	});
+	}
 
-	context.subscriptions.push(
-		treeView,
-		refreshCommand,
-		addDeviceCommand,
-		connectCommand,
-		openDevicePanelCommand
-	);
-	
-	console.log('Mobiledeck extension activated successfully');
+	public activate(context: vscode.ExtensionContext) {
+		console.log('Mobiledeck extension is being activated');
+
+		this.cliServer = new MobileCliServer(context);
+		this.cliServer.launchMobilecliServer().then();
+
+		// register the sidebar webview provider
+		const sidebarProvider = new SidebarViewProvider(context, this.cliServer);
+		context.subscriptions.push(
+			vscode.window.registerWebviewViewProvider('mobiledeckDevices', sidebarProvider)
+		);
+
+		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
+		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
+
+		console.log('Mobiledeck extension activated successfully');
+	}
+
+	private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
+		const disposable = vscode.commands.registerCommand(command, callback);
+		context.subscriptions.push(disposable);
+	}
+
+	public deactivate() {
+		console.log('Mobiledeck extension deactivated');
+
+		if (this.cliServer) {
+			this.cliServer.stopMobilecliServer();
+			this.cliServer = null;
+		}
+	}
+}
+
+const extension = new MobiledeckExtension();
+
+export function activate(context: vscode.ExtensionContext) {
+	extension.activate(context);
 }
 
 export function deactivate() {
-	console.log('Mobiledeck extension deactivated');
-
-	if (cliServer) {
-		cliServer.stopMobilecliServer();
-		cliServer = null;
-	}
+	extension.deactivate();
 }

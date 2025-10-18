@@ -1,22 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './Header';
-import { ConnectDialog } from './ConnectDialog';
-import { DeviceStream } from './DeviceStream';
+import { DeviceStream, GesturePoint } from './DeviceStream';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
-
-declare function acquireVsCodeApi(): any;
-
-let vscode = {
-	postMessage: (message: any) => {
-		console.log('mobiledeck: mock postMessage', message);
-	},
-};
-
-if (typeof acquireVsCodeApi === 'function') {
-	vscode = acquireVsCodeApi();
-}
+import vscode from './vscode';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -26,12 +14,6 @@ interface StatusBarProps {
 
 interface ScreenshotResponse {
 	data: string;
-}
-
-interface GesturePoint {
-	x: number;
-	y: number;
-	duration: number;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -49,23 +31,18 @@ const StatusBar: React.FC<StatusBarProps> = ({
 	);
 };
 
-function App() {
+function DeviceViewPage() {
 	const [selectedDevice, setSelectedDevice] = useState<DeviceDescriptor | null>(null);
+	const [availableDevices, setAvailableDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isConnecting, setIsConnecting] = useState(false);
 	const [fpsCount, setFpsCount] = useState(30);
-	const [showConnectDialog, setShowConnectDialog] = useState(false);
-	const [remoteHostIp, setRemoteHostIp] = useState("");
-	const [recentHosts, setRecentHosts] = useState<string[]>([
-		"127.0.0.1",
-	]);
-
 	const [imageUrl, setImageUrl] = useState<string>("");
 	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
-	const [serverPort, setServerPort] = useState<number>(12000);
+	const [serverPort, setServerPort] = useState<number>(0);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -151,7 +128,23 @@ function App() {
 	const requestDeviceInfo = async (deviceId: string) => {
 		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
 		console.log('mobiledeck: device info', result);
-		setScreenSize(result.device.screenSize);
+		if (result && result.device) {
+			// TODO: get device info should not call a setter
+			setScreenSize(result.device.screenSize);
+		}
+	};
+
+	const fetchDevices = async () => {
+		try {
+			setIsRefreshing(true);
+			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
+			console.log('mobiledeck: devices list', result);
+			setAvailableDevices(result.devices);
+		} catch (error) {
+			console.error('mobiledeck: error fetching devices:', error);
+		} finally {
+			setIsRefreshing(false);
+		}
 	};
 
 	useEffect(() => {
@@ -169,7 +162,7 @@ function App() {
 		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
 	};
 
-	const handleGesture = async (points: GesturePoint[]) => {
+	const handleGesture = async (points: Array<GesturePoint>) => {
 		// convert points to new actions format
 		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
 
@@ -187,14 +180,6 @@ function App() {
 				type: "pointerDown",
 				button: 0
 			});
-
-			// add pause if needed
-			if (points.length > 1) {
-				actions.push({
-					type: "pause",
-					duration: 50
-				});
-			}
 
 			// move through all intermediate points
 			for (let i = 1; i < points.length; i++) {
@@ -336,6 +321,16 @@ function App() {
 		}
 	};
 
+	const onDeviceSelected = (device: DeviceDescriptor) => {
+		setSelectedDevice(device);
+
+		// notify extension to update webview title
+		vscode.postMessage({
+			command: 'onDeviceSelected',
+			device,
+		});
+	};
+
 	useEffect(() => {
 		const messageHandler = (event: MessageEvent) => handleMessage(event);
 		window.addEventListener('message', messageHandler);
@@ -345,12 +340,21 @@ function App() {
 			command: 'onInitialized'
 		});
 
+		// fetch available devices on mount
+		fetchDevices();
+
+		// poll for devices every 2 seconds
+		const intervalId = setInterval(() => {
+			fetchDevices();
+		}, 2000);
+
 		return () => {
 			window.removeEventListener('message', messageHandler);
 			stopMjpegStream();
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);
 			}
+			clearInterval(intervalId);
 		};
 	}, []);
 
@@ -359,13 +363,14 @@ function App() {
 			{/* Header with controls */}
 			<Header
 				selectedDevice={selectedDevice}
-				recentHosts={recentHosts}
+				availableDevices={availableDevices}
 				onHome={() => onHome()}
 				onBack={() => onBack()}
-				onShowConnectDialog={() => setShowConnectDialog(true)}
 				onTakeScreenshot={onTakeScreenshot}
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
+				onRefreshDevices={fetchDevices}
+				onSelectDevice={onDeviceSelected}
 			/>
 
 			{/* Device stream area */}
@@ -385,23 +390,7 @@ function App() {
 				selectedDevice={selectedDevice}
 				fpsCount={fpsCount}
 			/>
-
-			{/* Connect to Host Dialog */}
-			<ConnectDialog
-				isOpen={showConnectDialog}
-				onOpenChange={setShowConnectDialog}
-				remoteHostIp={remoteHostIp}
-				onRemoteHostIpChange={setRemoteHostIp}
-				recentHosts={recentHosts}
-				onConnectToHost={() => {}}
-				onSelectRecentHost={(host) => { // New handler to set IP and connect for recent host
-					setRemoteHostIp(host);
-					// Potentially auto-connect or just fill input:
-					// For now, let's just fill the input, user still needs to click "Connect"
-					// If auto-connect is desired, call handleConnectToHost after setRemoteHostIp(host)
-				}}
-			/>
 		</div>);
 }
 
-export default App;
+export default DeviceViewPage;

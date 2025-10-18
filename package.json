@@ -2,14 +2,17 @@
   "name": "mobiledeck",
   "displayName": "Mobile Deck",
   "description": "View, control and manage all your Android and iOS devices, simulators, and emulators",
+  "icon": "media/mobilenexthq_logo.png",
   "version": "0.0.1",
   "publisher": "mobilenext",
   "author": "Mobile Next",
-  "license": "AGPL-3.0",
-  "icon": "media/mobilenexthq_logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
+  "bugs": {
+    "url": "https://github.com/mobile-next/mobiledeck/issues"
+  },
+  "homepage": "https://github.com/mobile-next/mobiledeck#readme",
   "categories": [
     "Debuggers", "Testing"
   ],
@@ -31,16 +34,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "mobiledeck.refresh",
-        "title": "Refresh",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "mobiledeck.addDevice",
-        "title": "Add Device",
-        "icon": "$(plus)"
-      },
-      {
         "command": "mobiledeck.connect",
         "title": "Connect",
         "icon": "$(device-mobile)"
@@ -55,6 +48,7 @@
         {
           "id": "mobiledeckDevices",
           "name": "Devices",
+          "type": "webview",
           "when": "true"
         }
       ]
@@ -116,8 +110,8 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "react-icons": "^5.5.0",
-    "@mobilenext/mobilecli": "0.0.27"
+    "@mobilenext/mobilecli": "0.0.28",
+    "react-icons": "5.5.0"
   },
   "type": "commonjs"
 }

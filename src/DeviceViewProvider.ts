@@ -1,50 +1,45 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import { ChildProcess, execFileSync } from 'child_process';
-import { spawn } from 'child_process';
 import { Logger } from './utils/Logger';
-import { PortManager } from './managers/PortManager';
 import { MobileCliServer } from './MobileCliServer';
+import { HtmlUtils } from './utils/HtmlUtils';
 
 interface AlertWebviewMessage {
-    command: 'alert';
-    text: string;
+	command: 'alert';
+	text: string;
 }
 
 interface LogWebviewMessage {
-    command: 'log';
-    text: string;
+	command: 'log';
+	text: string;
 }
 
 interface DeviceDescriptor {
-    id: string;
-    name: string;
-    platform: string;
-    type: string;
+	id: string;
+	name: string;
+	platform: string;
+	type: string;
 }
 
 interface OnDeviceSelectedMessage {
-    command: 'onDeviceSelected';
-    device: DeviceDescriptor;
+	command: 'onDeviceSelected';
+	device: DeviceDescriptor;
 }
 
 interface OnInitializedMessage {
-    command: 'onInitialized';
+	command: 'onInitialized';
 }
 
 type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage;
 
-export class MobiledeckViewProvider {
+export class DeviceViewProvider {
 
 	private logger: Logger = new Logger('Mobiledeck');
 
 	constructor(
-		private readonly context: vscode.ExtensionContext, 
+		private readonly context: vscode.ExtensionContext,
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
-	) {
-		this.logger.log("MobiledeckViewProvider constructor called");
-	}
+	) {}
 
 	private verbose(message: string) {
 		this.logger.log(message);
@@ -74,15 +69,20 @@ export class MobiledeckViewProvider {
 				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
 				break;
 
+			case 'onDeviceSelected':
+				this.verbose('Device selected: ' + message.device.name);
+				this.updateWebviewTitle(webviewPanel, message.device.name);
+				break;
+
 			default:
 				vscode.window.showErrorMessage('Unknown message: ' + JSON.stringify(message));
 				break;
 		}
 	}
 
-	createWebviewPanel(preselectedDevice?: DeviceDescriptor): vscode.WebviewPanel {
+	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
 		console.log('createWebviewPanel called');
-		
+
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',
 			'Mobiledeck Device View',
@@ -98,7 +98,7 @@ export class MobiledeckViewProvider {
 
 		panel.webview.onDidReceiveMessage(message => this.handleMessage(panel, message), undefined, this.context.subscriptions);
 
-		panel.webview.html = this.getHtml(panel);
+		panel.webview.html = this.getHtml(panel, page);
 
 		return panel;
 	}
@@ -109,21 +109,12 @@ export class MobiledeckViewProvider {
 
 	private updateWebviewTitle(webviewPanel: vscode.WebviewPanel, device: string) {
 		webviewPanel.title = device;
-		
+
 		// add device icon
 		webviewPanel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobiledeck-icon.svg');
 	}
 
-	private getHtml(webviewPanel: vscode.WebviewPanel): string {
-		const htmlPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'index.html');
-		let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
-
-		const assets = ["styles.css", "bundle.js"];
-		for (const asset of assets) {
-			const uri = webviewPanel.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'assets', asset));
-			htmlContent = htmlContent.replace(asset, uri.toString());
-		}
-
-		return htmlContent;
+	private getHtml(webviewPanel: vscode.WebviewPanel, page: string = 'device'): string {
+		return HtmlUtils.getHtml(this.context, webviewPanel.webview, page);
 	}
 }
