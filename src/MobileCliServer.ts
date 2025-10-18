@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import { ChildProcess, execFileSync } from 'child_process';
-import { spawn } from 'child_process';
+import { ChildProcess, execFileSync, spawn } from 'child_process';
 import { Logger } from './utils/Logger';
 import { PortManager } from './managers/PortManager';
-import { DEFAULT_CIPHERS } from 'tls';
 
 export class MobileCliServer {
 

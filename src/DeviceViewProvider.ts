@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import { ChildProcess, execFileSync } from 'child_process';
-import { spawn } from 'child_process';
 import { Logger } from './utils/Logger';
-import { PortManager } from './managers/PortManager';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 
@@ -83,7 +80,7 @@ export class DeviceViewProvider {
 		}
 	}
 
-	createWebviewPanel(preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
+	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
 		console.log('createWebviewPanel called');
 
 		const panel = vscode.window.createWebviewPanel(
