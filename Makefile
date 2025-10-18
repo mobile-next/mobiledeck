@@ -5,13 +5,13 @@ all: build
 build-darwin-arm64:
 	make -C webview-ui
 	cp *.svg assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
+	lipo node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin -remove x86_64 -output assets/mobilecli
 	npx vsce package --target darwin-arm64
 
 build-darwin-x64:
 	make -C webview-ui
 	cp *.svg assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
+	lipo node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin -remove arm64 -output assets/mobilecli
 	npx vsce package --target darwin-x64
 
 build-linux-x64:

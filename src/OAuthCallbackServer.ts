@@ -1,5 +1,21 @@
-import * as http from 'http';
+import * as http from 'node:http';
+import * as crypto from 'node:crypto';
 import { OAUTH_CONFIG } from './config/oauth';
+
+export interface OAuthTokens {
+	access_token: string;
+	id_token: string;
+	refresh_token?: string;
+	expires_in: number;
+	token_type: string;
+}
+
+interface JWTPayload {
+	email?: string;
+	sub: string;
+	iat: number;
+	exp: number;
+}
 
 export class OAuthCallbackServer {
 	private server: http.Server | null = null;
@@ -9,7 +25,20 @@ export class OAuthCallbackServer {
 	onAuthCodeReceived: (code: string) => void = () => { };
 
 	// callback for when tokens are received
-	onTokensReceived: (tokens: any, email: string) => void = () => { };
+	onTokensReceived: (tokens: OAuthTokens, email: string) => void = () => { };
+
+	// stored state for csrf validation
+	private storedState: string | null = null;
+
+	// generate a random state string for csrf protection
+	static generateState(): string {
+		return crypto.randomBytes(16).toString('hex');
+	}
+
+	// store the state for later validation
+	setStoredState(state: string): void {
+		this.storedState = state;
+	}
 
 	// start the server on a random available port
 	async start(): Promise<number> {
@@ -69,7 +98,7 @@ export class OAuthCallbackServer {
 	}
 
 	// decode jwt payload (id_token) to extract claims
-	private decodeJwtPayload(token: string): any {
+	private decodeJwtPayload(token: string): JWTPayload | null {
 		try {
 			const parts = token.split('.');
 			if (parts.length !== 3) {
@@ -85,7 +114,11 @@ export class OAuthCallbackServer {
 	}
 
 	// exchange authorization code for tokens
-	async exchangeCodeForToken(authCode: string): Promise<any> {
+	async exchangeCodeForToken(authCode: string): Promise<OAuthTokens> {
+		if (!authCode || authCode.trim().length === 0) {
+			throw new Error('authorization code is required');
+		}
+
 		const params = new URLSearchParams({
 			grant_type: 'authorization_code',
 			client_id: OAUTH_CONFIG.client_id,
@@ -106,7 +139,7 @@ export class OAuthCallbackServer {
 			throw new Error(`token exchange failed: ${response.status} ${errorText}`);
 		}
 
-		return await response.json();
+		return await response.json() as OAuthTokens;
 	}
 
 	// handle incoming requests
@@ -118,6 +151,7 @@ export class OAuthCallbackServer {
 		const code = url.searchParams.get('code');
 		const error = url.searchParams.get('error');
 		const errorDescription = url.searchParams.get('error_description');
+		const receivedState = url.searchParams.get('state');
 
 		if (error) {
 			// oauth error
@@ -134,6 +168,58 @@ export class OAuthCallbackServer {
 				</html>
 			`);
 		} else if (code) {
+			// validate state parameter for csrf protection
+			if (!receivedState) {
+				console.error('missing state parameter');
+				res.writeHead(400, { 'Content-Type': 'text/html' });
+				res.end(`
+					<html>
+						<body>
+							<h1>Authentication Failed</h1>
+							<p>Missing state parameter</p>
+							<p>You can close this window.</p>
+						</body>
+					</html>
+				`);
+				return;
+			}
+
+			// decode the state parameter to extract csrf token
+			let csrfState: string;
+			try {
+				const decodedState = JSON.parse(Buffer.from(receivedState, 'base64').toString('utf-8'));
+				csrfState = decodedState.csrf;
+			} catch (error) {
+				console.error('error decoding state parameter:', error);
+				res.writeHead(400, { 'Content-Type': 'text/html' });
+				res.end(`
+					<html>
+						<body>
+							<h1>Authentication Failed</h1>
+							<p>Invalid state parameter format</p>
+							<p>You can close this window.</p>
+						</body>
+					</html>
+				`);
+				return;
+			}
+
+			// validate csrf state
+			if (csrfState !== this.storedState) {
+				console.error('invalid csrf state - possible csrf attack');
+				res.writeHead(400, { 'Content-Type': 'text/html' });
+				res.end(`
+					<html>
+						<body>
+							<h1>Authentication Failed</h1>
+							<p>Invalid state parameter - possible CSRF attack</p>
+							<p>You can close this window.</p>
+						</body>
+					</html>
+				`);
+				return;
+			}
+
 			// successful oauth callback
 			console.log('received oauth code:', code);
 
@@ -159,14 +245,7 @@ export class OAuthCallbackServer {
 
 					// send success response to user
 					res.writeHead(200, { 'Content-Type': 'text/html' });
-					res.end(`
-						<html>
-							<body>
-								<h1>Authentication Successful</h1>
-								<p>You can close this window and return to VS Code.</p>
-							</body>
-						</html>
-					`);
+					res.end(`Authentication Successful`);
 
 					// stop the server after response is fully sent
 					res.on('finish', () => {
@@ -177,15 +256,7 @@ export class OAuthCallbackServer {
 					console.error('error exchanging code for token:', error);
 					// send error response to user
 					res.writeHead(500, { 'Content-Type': 'text/html' });
-					res.end(`
-						<html>
-							<body>
-								<h1>Token Exchange Failed</h1>
-								<p>Failed to exchange authorization code for tokens.</p>
-								<p>Please close this window and try again.</p>
-							</body>
-						</html>
-					`);
+					res.end(`Token Exchange Failed`);
 
 					// stop the server after response is fully sent
 					res.on('finish', () => {

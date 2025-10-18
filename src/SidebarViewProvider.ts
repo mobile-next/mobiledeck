@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
-import { OAuthCallbackServer } from './OAuthCallbackServer';
+import { OAuthCallbackServer, OAuthTokens } from './OAuthCallbackServer';
 import { OAUTH_CONFIG } from './config/oauth';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
@@ -87,7 +87,6 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 			// set up callback for when auth code is received
 			this.oauthServer.onAuthCodeReceived = (code: string) => {
-				console.log('auth code received:', code);
 				// send the code to the webview for further processing
 				webviewView.webview.postMessage({
 					command: 'authCodeReceived',
@@ -96,7 +95,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			};
 
 			// set up callback for when tokens are received
-			this.oauthServer.onTokensReceived = async (tokens: any, email: string) => {
+			this.oauthServer.onTokensReceived = async (tokens: OAuthTokens, email: string) => {
 				console.log('tokens received, storing and switching view');
 				await this.storeTokens(tokens, email);
 				// update sign out button title with email
@@ -119,9 +118,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private buildOAuthUrl(provider: string, port: number): string {
-		// use the dynamic port for the redirect uri
+		// generate random state for csrf protection
+		const csrfState = OAuthCallbackServer.generateState();
+		this.oauthServer.setStoredState(csrfState);
+
+		// use the dynamic port for the redirect uri and include the csrf state
 		const state = btoa(JSON.stringify({
 			redirectUri: `http://localhost:${port}/oauth/callback`,
+			csrf: csrfState,
 		}));
 
 		// construct the oauth url with identity provider
@@ -139,7 +143,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	// store tokens in secure storage
-	private async storeTokens(tokens: any, email: string): Promise<void> {
+	private async storeTokens(tokens: OAuthTokens, email: string): Promise<void> {
 		try {
 			await this.context.secrets.store('mobiledeck.oauth.access_token', tokens.access_token);
 			await this.context.secrets.store('mobiledeck.oauth.id_token', tokens.id_token);
