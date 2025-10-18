@@ -204,6 +204,7 @@ function LoginPage() {
 						</button>
 					</div>
 
+					{/*
 					<div style={styles.divider}>
 						<div style={styles.dividerLine}></div>
 						<span style={styles.dividerSpan}>or</span>
@@ -220,6 +221,7 @@ function LoginPage() {
 						</svg>
 						Skip &amp; Continue as Guest
 					</button>
+					*/}
 				</div>
 			</div>
 		</div>

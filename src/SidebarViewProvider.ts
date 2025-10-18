@@ -107,9 +107,6 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 			// build oauth url with the dynamic redirect uri
 			const authUrl = this.buildOAuthUrl(provider, port);
-			console.log('opening oauth url:', authUrl);
-
-			// open in external browser
 			vscode.env.openExternal(vscode.Uri.parse(authUrl));
 		} catch (error) {
 			console.error('failed to start oauth server:', error);

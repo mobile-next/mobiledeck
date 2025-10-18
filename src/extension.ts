@@ -42,11 +42,17 @@ class MobiledeckExtension {
 		console.log('mobiledeck.signOut command executed');
 
 		// clear all stored tokens
-		await context.secrets.delete('mobiledeck.oauth.access_token');
-		await context.secrets.delete('mobiledeck.oauth.id_token');
-		await context.secrets.delete('mobiledeck.oauth.refresh_token');
-		await context.secrets.delete('mobiledeck.oauth.expires_at');
-		await context.secrets.delete('mobiledeck.oauth.email');
+		const keys = [
+			'mobiledeck.oauth.access_token',
+			'mobiledeck.oauth.id_token',
+			'mobiledeck.oauth.refresh_token',
+			'mobiledeck.oauth.expires_at',
+			'mobiledeck.oauth.email'
+		];
+
+		for (const key of keys) {
+			await context.secrets.delete(key);
+		}
 
 		// update context to hide the sign out button
 		await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', false);
