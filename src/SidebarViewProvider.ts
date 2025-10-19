@@ -168,6 +168,52 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+	// refresh access token using refresh token
+	private async refreshAccessToken(): Promise<boolean> {
+		try {
+			const refreshToken = await this.context.secrets.get('mobiledeck.oauth.refresh_token');
+			if (!refreshToken) {
+				console.log('no refresh token available');
+				return false;
+			}
+
+			console.log('attempting to refresh access token');
+
+			const params = new URLSearchParams({
+				grant_type: 'refresh_token',
+				client_id: OAUTH_CONFIG.client_id,
+				refresh_token: refreshToken,
+			});
+
+			const response = await fetch(OAUTH_CONFIG.token_endpoint, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: params.toString(),
+			});
+
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error('token refresh failed:', response.status, errorText);
+				return false;
+			}
+
+			const tokens = await response.json() as OAuthTokens;
+
+			// get stored email to pass to storeTokens
+			const email = await this.context.secrets.get('mobiledeck.oauth.email') || '';
+
+			await this.storeTokens(tokens, email);
+			console.log('access token refreshed successfully');
+
+			return true;
+		} catch (error) {
+			console.error('error refreshing access token:', error);
+			return false;
+		}
+	}
+
 	// check if user is authenticated
 	private async isUserAuthenticated(): Promise<boolean> {
 		try {
@@ -177,11 +223,20 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				return false;
 			}
 
-			// check if token is expired
+			// check if token is expired or expiring soon (within 5 minutes)
+			const now = Date.now();
 			const expiryTime = parseInt(expiresAt, 10);
-			if (Date.now() >= expiryTime) {
-				console.log('token expired');
-				return false;
+			if (now >= expiryTime) {
+				console.log('token expired, attempting refresh');
+				return await this.refreshAccessToken();
+			}
+
+			const bufferTime = 5 * 60 * 1000; // 5 minutes
+			if (now >= (expiryTime - bufferTime)) {
+				console.log('token expiring soon, attempting refresh');
+				// attempt refresh, without checking for errors. our token
+				// is still valid for a bit.
+				await this.refreshAccessToken();
 			}
 
 			return true;

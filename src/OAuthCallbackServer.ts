@@ -20,8 +20,11 @@ interface JWTPayload {
 }
 
 export class OAuthCallbackServer {
+	private static readonly OAUTH_SERVER_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+
 	private server: http.Server | null = null;
 	private port: number = 0;
+	private timeoutId: NodeJS.Timeout | null = null;
 
 	// callback for when auth code is received
 	onAuthCodeReceived: (code: string) => void = () => { };
@@ -55,6 +58,16 @@ export class OAuthCallbackServer {
 				if (address && typeof address === 'object') {
 					this.port = address.port;
 					console.log(`oauth callback server listening on http://127.0.0.1:${this.port}`);
+
+					// start timeout to auto-stop server if user abandons auth flow
+					this.timeoutId = setTimeout(() => {
+						const minutes = OAuthCallbackServer.OAUTH_SERVER_TIMEOUT_MS / (60 * 1000);
+						console.log(`oauth callback server timeout - stopping after ${minutes} minutes`);
+						this.stop().catch((error) => {
+							console.error('failed to stop oauth server after timeout:', error);
+						});
+					}, OAuthCallbackServer.OAUTH_SERVER_TIMEOUT_MS);
+
 					resolve(this.port);
 				} else {
 					reject(new Error('failed to start oauth callback server'));
@@ -68,8 +81,8 @@ export class OAuthCallbackServer {
 		});
 	}
 
-	// stop the server
-	async stop(): Promise<void> {
+	// close the http server and clean up resources
+	private async closeHttpServer(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (this.server) {
 				this.server.close((error) => {
@@ -87,6 +100,17 @@ export class OAuthCallbackServer {
 				resolve();
 			}
 		});
+	}
+
+	// stop the server
+	async stop(): Promise<void> {
+		// clear timeout if it exists
+		if (this.timeoutId) {
+			clearTimeout(this.timeoutId);
+			this.timeoutId = null;
+		}
+
+		await this.closeHttpServer();
 	}
 
 	// jwks client for fetching and caching cognito public keys
