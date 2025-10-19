@@ -98,10 +98,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			this.oauthServer.onTokensReceived = async (tokens: OAuthTokens, email: string) => {
 				console.log('tokens received, storing and switching view');
 				await this.storeTokens(tokens, email);
+
 				// update sign out button title with email
 				if (email) {
 					await this.updateSignOutButtonTitle(email);
 				}
+
 				await this.switchToDeviceList();
 			};
 
