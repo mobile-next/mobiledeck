@@ -193,10 +193,10 @@ function LoginPage() {
 							Continue with Google
 						</button>
 
-						<button style={styles.oauthBtn} onClick={onAzureLogin}>
+						{/* <button style={styles.oauthBtn} onClick={onAzureLogin}>
 							<AzureIcon />
 							Continue with Azure
-						</button>
+						</button> */}
 
 						<button style={styles.oauthBtn} onClick={onGitHubLogin}>
 							<GitHubIcon />

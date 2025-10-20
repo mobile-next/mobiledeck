@@ -88,9 +88,9 @@ class MobiledeckExtension {
 		}
 
 		// menu commands
-		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices());
-		this.registerCommand(context, 'mobiledeck.addDevice', () => this.onAddDevice());
 		this.registerCommand(context, 'mobiledeck.signOut', () => this.onSignOut(context));
+		this.registerCommand(context, 'mobiledeck.addDevice', () => this.onAddDevice());
+		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices());
 
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));

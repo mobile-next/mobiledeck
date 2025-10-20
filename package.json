@@ -52,7 +52,7 @@
       },
       {
         "command": "mobiledeck.signOut",
-        "title": "Sign Out",
+        "title": "Sign Out from Mobile Deck",
         "enablement": "mobiledeck.isAuthenticated"
       }
     ],
@@ -72,6 +72,13 @@
           "command": "mobiledeck.signOut",
           "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated"
         }
+      ],
+      "view/item/context": [
+        {
+          "command": "mobiledeck.connect",
+          "when": "view == mobiledeckDevices && viewItem == device",
+          "group": "inline"
+        }
       ]
     },
     "views": {
@@ -90,27 +97,6 @@
           "id": "mobiledeck",
           "title": "Mobiledeck",
           "icon": "media/mobiledeck.svg"
-        }
-      ]
-    },
-    "menus": {
-      "view/title": [
-        {
-          "command": "mobiledeck.refresh",
-          "when": "view == mobiledeckDevices",
-          "group": "navigation"
-        },
-        {
-          "command": "mobiledeck.addDevice",
-          "when": "view == mobiledeckDevices",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "mobiledeck.connect",
-          "when": "view == mobiledeckDevices && viewItem == device",
-          "group": "inline"
         }
       ]
     }
