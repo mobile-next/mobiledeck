@@ -1,14 +1,11 @@
 {
   "name": "mobiledeck",
   "displayName": "Mobile Deck",
-  "description": "View, control and manage all your Android and iOS devices, simulators, and emulators without leaving your IDE",
+  "description": "View, control and manage all your Android and iOS devices, simulators, and emulators",
+  "icon": "media/mobilenexthq_logo.png",
   "version": "0.0.1",
   "publisher": "mobilenext",
-  "author": {
-    "name": "Mobile Next"
-  },
-  "license": "AGPL-3.0",
-  "icon": "mobilenexthq_logo.png",
+  "author": "Mobile Next",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -17,17 +14,19 @@
   },
   "homepage": "https://github.com/mobile-next/mobiledeck#readme",
   "categories": [
-    "Testing"
+    "Debuggers", "Testing"
+  ],
+  "keywords": [
+    "mobile", "xcode", "adb", "emulator", "simulator", "ios", "android"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/mobile-next/mobiledeck"
+    "url": "https://github.com/mobile-next/mobiledeck.git"
   },
   "activationEvents": [
     "onView:mobiledeckDevices"
   ],
   "main": "./dist/extension.js",
-  "private": true,
   "contributes": {
     "commands": [
       {
@@ -90,7 +89,28 @@
         {
           "id": "mobiledeck",
           "title": "Mobiledeck",
-          "icon": "mobiledeck-icon.svg"
+          "icon": "media/mobiledeck.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "mobiledeck.refresh",
+          "when": "view == mobiledeckDevices",
+          "group": "navigation"
+        },
+        {
+          "command": "mobiledeck.addDevice",
+          "when": "view == mobiledeckDevices",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mobiledeck.connect",
+          "when": "view == mobiledeckDevices && viewItem == device",
+          "group": "inline"
         }
       ]
     }
@@ -116,7 +136,7 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "@vscode/vsce": "^3.6.0",
+    "@vscode/vsce": "3.6.2",
     "eslint": "^9.23.0",
     "husky": "<=9.1.7",
     "ts-loader": "^9.5.2",
@@ -131,6 +151,5 @@
     "oidc-client-ts": "3.3.0",
     "react-icons": "5.5.0"
   },
-  "keywords": [],
   "type": "commonjs"
 }

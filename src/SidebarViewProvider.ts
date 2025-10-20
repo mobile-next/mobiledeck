@@ -17,11 +17,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 	async resolveWebviewView(
 		webviewView: vscode.WebviewView,
-		context: vscode.WebviewViewResolveContext,
-		token: vscode.CancellationToken
+		_context: vscode.WebviewViewResolveContext,
+		_token: vscode.CancellationToken
 	): Promise<void> {
 		this.webviewView = webviewView;
-
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [

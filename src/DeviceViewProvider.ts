@@ -31,7 +31,7 @@ interface OnInitializedMessage {
 
 type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage;
 
-export class MobiledeckViewProvider {
+export class DeviceViewProvider {
 
 	private logger: Logger = new Logger('Mobiledeck');
 
@@ -39,9 +39,7 @@ export class MobiledeckViewProvider {
 		private readonly context: vscode.ExtensionContext,
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
-	) {
-		this.logger.log("MobiledeckViewProvider constructor called");
-	}
+	) {}
 
 	private verbose(message: string) {
 		this.logger.log(message);

@@ -13,5 +13,6 @@ Makefile
 .gitignore
 .editorconfig
 **/.gitkeep
-*.md
 
+eslint.config.mjs
+CLAUDE.md
