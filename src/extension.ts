@@ -70,7 +70,11 @@ class MobiledeckExtension {
 		console.log('Mobiledeck extension is being activated');
 
 		this.cliServer = new MobileCliServer(context);
-		this.cliServer.launchMobilecliServer().then();
+		this.cliServer.launchMobilecliServer()
+			.catch(error => {
+				console.error('failed to launch mobilecli server:', error);
+				vscode.window.showErrorMessage('Failed to start Mobiledeck server');
+			});
 
 		// register the sidebar webview provider
 		this.sidebarProvider = new SidebarViewProvider(context, this.cliServer);

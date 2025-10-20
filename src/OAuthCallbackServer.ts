@@ -170,7 +170,29 @@ export class OAuthCallbackServer {
 				exp: payload.exp as number,
 			};
 		} catch (error) {
-			console.error('error verifying jwt:', error);
+			// provide specific error logging based on error type
+			if (error instanceof Error) {
+				if (error.name === 'TokenExpiredError') {
+					console.error('jwt verification failed: token has expired', error.message);
+				} else if (error.name === 'JsonWebTokenError') {
+					if (error.message.includes('invalid signature')) {
+						console.error('jwt verification failed: invalid signature - token may be forged');
+					} else if (error.message.includes('jwt audience invalid')) {
+						console.error('jwt verification failed: invalid audience - token not intended for this client');
+					} else if (error.message.includes('jwt issuer invalid')) {
+						console.error('jwt verification failed: invalid issuer - token from unexpected source');
+					} else {
+						console.error('jwt verification failed: invalid token -', error.message);
+					}
+				} else if (error.name === 'NotBeforeError') {
+					console.error('jwt verification failed: token not yet valid', error.message);
+				} else {
+					console.error('jwt verification failed: unexpected error -', error.name, error.message);
+				}
+			} else {
+				console.error('jwt verification failed: unknown error', error);
+			}
+
 			return null;
 		}
 	}
@@ -201,7 +223,35 @@ export class OAuthCallbackServer {
 			throw new Error(`token exchange failed: ${response.status} ${errorText}`);
 		}
 
-		return await response.json() as OAuthTokens;
+		const tokens = await response.json() as any;
+
+		// validate token response structure
+		if (!tokens || typeof tokens !== 'object') {
+			throw new Error('invalid token response: expected object');
+		}
+
+		if (!tokens.access_token || typeof tokens.access_token !== 'string') {
+			throw new Error('invalid token response: missing or invalid access_token');
+		}
+
+		if (!tokens.id_token || typeof tokens.id_token !== 'string') {
+			throw new Error('invalid token response: missing or invalid id_token');
+		}
+
+		if (!tokens.expires_in || typeof tokens.expires_in !== 'number') {
+			throw new Error('invalid token response: missing or invalid expires_in');
+		}
+
+		if (!tokens.token_type || typeof tokens.token_type !== 'string') {
+			throw new Error('invalid token response: missing or invalid token_type');
+		}
+
+		// refresh_token is optional
+		if (tokens.refresh_token && typeof tokens.refresh_token !== 'string') {
+			throw new Error('invalid token response: invalid refresh_token type');
+		}
+
+		return tokens as OAuthTokens;
 	}
 
 	private writeSimpleResponse(res: http.ServerResponse, statusCode: number, message: string): void {
