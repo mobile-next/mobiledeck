@@ -65,21 +65,25 @@ export function getDeviceSkinForDevice(device: { platform: string; name: string 
 		return AndroidDeviceSkin;
 	}
 
-	// iphone models with notch (x, 11, 12, 13, 14)
-	if (device.name.startsWith('iPhone 14') ||
-		device.name.startsWith('iPhone 13') ||
-		device.name.startsWith('iPhone 12') ||
-		device.name.startsWith('iPhone X')) {
-		return iPhoneWithNotchSkin;
+	// extract iphone model number
+	const iPhoneMatch = device.name.match(/iPhone (\d+)/);
+	if (iPhoneMatch) {
+		const modelNumber = parseInt(iPhoneMatch[1]);
+
+		// iphone 15+ have dynamic island
+		if (modelNumber >= 15) {
+			return iPhoneWithIslandSkin;
+		}
+
+		// iphone 12-14 have notch
+		if (modelNumber >= 12) {
+			return iPhoneWithNotchSkin;
+		}
 	}
 
-	// iphone models with dynamic island (15+)
-	if (device.name.startsWith('iPhone 15') ||
-		device.name.startsWith('iPhone 16') ||
-		device.name.startsWith('iPhone 17') ||
-		device.name.startsWith('iPhone 18') ||
-		device.name.startsWith('iPhone 19')) {
-		return iPhoneWithIslandSkin;
+	// iphone x has notch (special case without numeric model)
+	if (device.name.startsWith('iPhone X')) {
+		return iPhoneWithNotchSkin;
 	}
 
 	// default: no skin
