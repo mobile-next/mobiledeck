@@ -26,10 +26,6 @@
   "activationEvents": [
     "onView:mobiledeckDevices"
   ],
-  "bugs": {
-    "url": "https://github.com/mobile-next/mobiledeck/issues"
-  },
-  "homepage": "https://github.com/mobile-next/mobiledeck/blob/main/README.md",
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -41,13 +37,55 @@
       {
         "command": "mobiledeck.openDevicePanel",
         "title": "Open Device Panel"
+      },
+      {
+        "command": "mobiledeck.refreshDevices",
+        "title": "Refresh Devices",
+        "icon": "$(refresh)",
+        "enablement": "mobiledeck.isAuthenticated"
+      },
+      {
+        "command": "mobiledeck.addDevice",
+        "title": "Add Device",
+        "icon": "$(add)",
+        "enablement": "mobiledeck.isAuthenticated"
+      },
+      {
+        "command": "mobiledeck.signOut",
+        "title": "Sign Out from Mobile Deck",
+        "enablement": "mobiledeck.isAuthenticated"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mobiledeck.refreshDevices",
+          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated",
+          "group": "navigation"
+        },
+        {
+          "command": "mobiledeck.addDevice",
+          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated",
+          "group": "navigation"
+        },
+        {
+          "command": "mobiledeck.signOut",
+          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mobiledeck.connect",
+          "when": "view == mobiledeckDevices && viewItem == device",
+          "group": "inline"
+        }
+      ]
+    },
     "views": {
       "mobiledeck": [
         {
           "id": "mobiledeckDevices",
-          "name": "Devices",
+          "name": "",
           "type": "webview",
           "when": "true"
         }
@@ -61,31 +99,13 @@
           "icon": "media/mobiledeck.svg"
         }
       ]
-    },
-    "menus": {
-      "view/title": [
-        {
-          "command": "mobiledeck.refresh",
-          "when": "view == mobiledeckDevices",
-          "group": "navigation"
-        },
-        {
-          "command": "mobiledeck.addDevice",
-          "when": "view == mobiledeckDevices",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "mobiledeck.connect",
-          "when": "view == mobiledeckDevices && viewItem == device",
-          "group": "inline"
-        }
-      ]
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run webpack",
+    "webpack": "webpack --mode production",
+    "webpack:dev": "webpack --mode development",
+    "webpack:watch": "webpack --mode development --watch",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "prepare": "npx husky",
@@ -94,6 +114,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.85.0",
@@ -111,6 +132,9 @@
   },
   "dependencies": {
     "@mobilenext/mobilecli": "0.0.28",
+    "jsonwebtoken": "9.0.2",
+    "jwks-rsa": "3.2.0",
+    "oidc-client-ts": "3.3.0",
     "react-icons": "5.5.0"
   },
   "type": "commonjs"
