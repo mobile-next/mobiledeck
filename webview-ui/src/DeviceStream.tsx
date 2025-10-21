@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor, ScreenSize } from "./models";
+import { DeviceSkin } from "./DeviceSkins";
 
 export interface GesturePoint {
 	x: number;
@@ -14,6 +15,7 @@ export interface DeviceStreamProps {
 	screenSize: ScreenSize;
 	imageUrl: string;
 	skinOverlayUri: string;
+	deviceSkin: DeviceSkin;
 	onTap: (x: number, y: number) => void;
 	onGesture: (points: Array<GesturePoint>) => void;
 	onKeyDown: (key: string) => void;
@@ -65,6 +67,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	screenSize,
 	imageUrl,
 	skinOverlayUri,
+	deviceSkin,
 	onTap,
 	onGesture,
 	onKeyDown,
@@ -186,71 +189,103 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 							) : (
 								<>
 									{imageUrl !== "" && (
-										<div className="relative">
-											{/* device skin frame */}
-											{skinOverlayUri && (
-												<img
-													src={skinOverlayUri}
-													alt=""
-													className="relative"
-													style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
-													draggable={false}
-												/>
-											)}
-											{/* device stream container positioned inside the skin bezel */}
-											<div
-												className="absolute"
-												style={{
-													top: '7%',
-													left: '13.5%',
-													width: '73%',
-													height: '85.5%',
-													zIndex: 1
-												}}
-											>
-												{/* device stream */}
-												<img
-													src={imageUrl}
-													alt=""
-													className="cursor-crosshair w-full h-full"
-													style={{
-														objectFit: 'cover'
-													}}
-													onMouseDown={handleMouseDown}
-													onMouseMove={handleMouseMove}
-													onMouseUp={handleMouseUp}
-													onMouseLeave={handleMouseUp}
-													draggable={false}
-												/>
-												{/* click animations relative to stream */}
-												{clicks.map(click => (
-													<div
-														key={click.id}
-														className="click-animation"
-														style={{ left: `${click.x}px`, top: `${click.y}px` }}
+										<>
+											{skinOverlayUri ? (
+												// with device skin
+												<div className="relative">
+													{/* device skin frame */}
+													<img
+														src={skinOverlayUri}
+														alt=""
+														className="relative"
+														style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
+														draggable={false}
 													/>
-												))}
-												{/* gesture path relative to stream */}
-												{gestureState.isGesturing && <Polyline points={gestureState.path} />}
-											</div>
-											{/* device skin frame overlay on top */}
-											{skinOverlayUri && (
-												<img
-													src={skinOverlayUri}
-													alt=""
-													className="pointer-events-none"
-													style={{
-														position: 'absolute',
-														top: 0,
-														left: 0,
-														width: '100%',
-														height: '100%',
-														zIndex: 2
-													}}
-													draggable={false}
-												/>
+													{/* device stream container positioned inside the skin bezel */}
+													<div
+														className="absolute"
+														style={{
+															top: `${deviceSkin.insets.top}px`,
+															left: `${deviceSkin.insets.left}px`,
+															right: `${deviceSkin.insets.right}px`,
+															bottom: `${deviceSkin.insets.bottom}px`,
+															zIndex: 1
+														}}
+													>
+														{/* device stream */}
+														<img
+															src={imageUrl}
+															alt=""
+															className="cursor-crosshair w-full h-full"
+															style={{
+																objectFit: 'cover',
+																borderRadius: `${deviceSkin.borderRadius}px`
+															}}
+															onMouseDown={handleMouseDown}
+															onMouseMove={handleMouseMove}
+															onMouseUp={handleMouseUp}
+															onMouseLeave={handleMouseUp}
+															draggable={false}
+														/>
+														{/* click animations relative to stream */}
+														{clicks.map(click => (
+															<div
+																key={click.id}
+																className="click-animation"
+																style={{ left: `${click.x}px`, top: `${click.y}px` }}
+															/>
+														))}
+														{/* gesture path relative to stream */}
+														{gestureState.isGesturing && <Polyline points={gestureState.path} />}
+													</div>
+													{/* device skin frame overlay on top */}
+													<img
+														src={skinOverlayUri}
+														alt=""
+														className="pointer-events-none"
+														style={{
+															position: 'absolute',
+															top: 0,
+															left: 0,
+															width: '100%',
+															height: '100%',
+															zIndex: 2
+														}}
+														draggable={false}
+													/>
+												</div>
+											) : (
+												// without device skin
+												<div className="relative">
+													{/* device stream */}
+													<img
+														src={imageUrl}
+														alt=""
+														className="cursor-crosshair"
+														style={{
+															maxHeight: 'calc(100vh - 8em)',
+															maxWidth: 'calc(100vw - 2em)',
+															borderRadius: `${deviceSkin.borderRadius}px`
+														}}
+														onMouseDown={handleMouseDown}
+														onMouseMove={handleMouseMove}
+														onMouseUp={handleMouseUp}
+														onMouseLeave={handleMouseUp}
+														draggable={false}
+													/>
+													{/* click animations relative to stream */}
+													{clicks.map(click => (
+														<div
+															key={click.id}
+															className="click-animation"
+															style={{ left: `${click.x}px`, top: `${click.y}px` }}
+														/>
+													))}
+													{/* gesture path relative to stream */}
+													{gestureState.isGesturing && <Polyline points={gestureState.path} />}
+												</div>
 											)}
-										</div>
+										</>
 									)
 									}
 								</>
