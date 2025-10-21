@@ -47,10 +47,22 @@ export const iPhoneWithNotchSkin: DeviceSkin = {
 	borderRadius: 49
 };
 
+// android device skin (generic android devices)
+export const AndroidDeviceSkin: DeviceSkin = {
+	imageFilename: 'android.png',
+	insets: {
+		top: 17,
+		left: 17,
+		right: 19,
+		bottom: 16
+	},
+	borderRadius: 50
+};
+
 export function getDeviceSkinForDevice(device: { platform: string; name: string }): DeviceSkin {
-	// android devices have no skin
+	// android devices use android skin
 	if (device.platform === 'android') {
-		return NoDeviceSkin;
+		return AndroidDeviceSkin;
 	}
 
 	// iphone models with notch (x, 11, 12, 13, 14)
