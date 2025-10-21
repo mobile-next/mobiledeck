@@ -36,11 +36,11 @@ clean:
 	rm -rf assets
 
 build:
-	#make clean build-darwin-x64
+	make clean build-darwin-x64
 	make clean build-darwin-arm64
-	#make clean build-linux-x64
-	#make clean build-linux-arm64
-	#make clean build-win32-x64
+	make clean build-linux-x64
+	make clean build-linux-arm64
+	make clean build-win32-x64
 
 npm_install:
 	npm install

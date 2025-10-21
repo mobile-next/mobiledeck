@@ -6,6 +6,7 @@ import { SidebarViewProvider } from './SidebarViewProvider';
 
 class MobiledeckExtension {
 	private cliServer: MobileCliServer | null = null;
+	private sidebarProvider: SidebarViewProvider | null = null;
 
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.connect command executed for device:', device.id);
@@ -23,22 +24,91 @@ class MobiledeckExtension {
 		}
 	}
 
-	public activate(context: vscode.ExtensionContext) {
+	private onRefreshDevices() {
+		console.log('mobiledeck.refreshDevices command executed');
+		// send message to sidebar to refresh devices
+		if (this.sidebarProvider) {
+			this.sidebarProvider.refreshDevices();
+		}
+	}
+
+	private onAddDevice() {
+		console.log('mobiledeck.addDevice command executed');
+		// TODO: implement add device functionality
+		vscode.window.showInformationMessage('Add device functionality coming soon');
+	}
+
+	private async onSignOut(context: vscode.ExtensionContext) {
+		console.log('mobiledeck.signOut command executed');
+
+		// clear all stored tokens
+		const keys = [
+			'mobiledeck.oauth.access_token',
+			'mobiledeck.oauth.id_token',
+			'mobiledeck.oauth.refresh_token',
+			'mobiledeck.oauth.expires_at',
+			'mobiledeck.oauth.email'
+		];
+
+		for (const key of keys) {
+			await context.secrets.delete(key);
+		}
+
+		// update context to hide the sign out button
+		await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', false);
+
+		// notify sidebar to show login page
+		if (this.sidebarProvider) {
+			this.sidebarProvider.showLoginPage();
+		}
+
+		vscode.window.showInformationMessage('Successfully signed out');
+	}
+
+
+	public async activate(context: vscode.ExtensionContext) {
 		console.log('Mobiledeck extension is being activated');
 
 		this.cliServer = new MobileCliServer(context);
-		this.cliServer.launchMobilecliServer().then();
+		this.cliServer.launchMobilecliServer()
+			.catch(error => {
+				console.error('failed to launch mobilecli server:', error);
+				vscode.window.showErrorMessage('Failed to start Mobiledeck server');
+			});
 
 		// register the sidebar webview provider
-		const sidebarProvider = new SidebarViewProvider(context, this.cliServer);
+		this.sidebarProvider = new SidebarViewProvider(context, this.cliServer);
 		context.subscriptions.push(
-			vscode.window.registerWebviewViewProvider('mobiledeckDevices', sidebarProvider)
+			vscode.window.registerWebviewViewProvider('mobiledeckDevices', this.sidebarProvider)
 		);
+
+		// set initial authentication context
+		await this.updateAuthenticationContext(context);
+
+		// update sign out button title with email if authenticated
+		const email = await context.secrets.get('mobiledeck.oauth.email');
+		if (email) {
+			await vscode.commands.executeCommand('setContext', 'mobiledeck.userEmail', email);
+		}
+
+		// menu commands
+		this.registerCommand(context, 'mobiledeck.signOut', () => this.onSignOut(context));
+		this.registerCommand(context, 'mobiledeck.addDevice', () => this.onAddDevice());
+		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices());
 
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
 
 		console.log('Mobiledeck extension activated successfully');
+	}
+
+	private async updateAuthenticationContext(context: vscode.ExtensionContext) {
+		// check if user is authenticated by checking for access token
+		const accessToken = await context.secrets.get('mobiledeck.oauth.access_token');
+		const expiresAt = await context.secrets.get('mobiledeck.oauth.expires_at');
+
+		const isAuthenticated = !!(accessToken && expiresAt && Date.now() < parseInt(expiresAt, 10));
+		await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', isAuthenticated);
 	}
 
 	private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
