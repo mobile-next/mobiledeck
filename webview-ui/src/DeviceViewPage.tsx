@@ -43,6 +43,7 @@ function DeviceViewPage() {
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
 	const [serverPort, setServerPort] = useState<number>(0);
+	const [mediaSkinsUri, setMediaSkinsUri] = useState<string>("");
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -258,6 +259,9 @@ function DeviceViewPage() {
 					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
 					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
+					if (message.mediaSkinsUri) {
+						setMediaSkinsUri(message.mediaSkinsUri);
+					}
 				}
 				break;
 			default:
@@ -379,6 +383,7 @@ function DeviceViewPage() {
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}
+				skinOverlayUri={mediaSkinsUri ? `${mediaSkinsUri}/iPhone_13_Mini.png` : ""}
 				onTap={handleTap}
 				onGesture={handleGesture}
 				onKeyDown={handleKeyDown}

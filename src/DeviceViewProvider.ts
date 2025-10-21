@@ -59,11 +59,17 @@ export class DeviceViewProvider {
 			case 'onInitialized':
 				this.verbose('Webview initialized');
 
+				// convert media skins directory path to webview URI
+				const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
+					vscode.Uri.joinPath(this.context.extensionUri, 'media', 'skins')
+				);
+
 				// Send configure message with both device and server port
 				this.sendMessageToWebview(webviewPanel, {
 					command: 'configure',
 					device: this.selectedDevice,
 					serverPort: this.cliServer.getJsonRpcServerPort(),
+					mediaSkinsUri: mediaSkinsUri.toString(),
 				});
 
 				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
@@ -91,7 +97,9 @@ export class DeviceViewProvider {
 				enableScripts: true,
 				localResourceRoots: [
 					// allow css and js files to be loaded
-					vscode.Uri.joinPath(this.context.extensionUri, 'assets')
+					vscode.Uri.joinPath(this.context.extensionUri, 'assets'),
+					// allow media files (skins) to be loaded
+					vscode.Uri.joinPath(this.context.extensionUri, 'media')
 				]
 			}
 		);
