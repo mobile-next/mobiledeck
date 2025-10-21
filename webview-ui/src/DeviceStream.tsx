@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor, ScreenSize } from "./models";
 
@@ -49,6 +49,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		points: [],
 		path: []
 	});
+	const frameCount = useRef(0);
 
 	const convertToScreenCoords = (clientX: number, clientY: number, imgElement: HTMLImageElement) => {
 		const rect = imgElement.getBoundingClientRect();
@@ -143,6 +144,27 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 			path: []
 		});
 	};
+
+	// increment frame count when new frame received
+	useEffect(() => {
+		if (imageUrl !== "") {
+			frameCount.current++;
+		}
+	}, [imageUrl]);
+
+	// log fps every second and reset counter
+	useEffect(() => {
+		const intervalId = setInterval(() => {
+			if (frameCount.current > 0) {
+				console.log(`mobiledeck: current fps ${frameCount.current}`);
+				frameCount.current = 0;
+			}
+		}, 1000);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, []);
 
 	return (
 		<div className="relative flex-grow flex items-center justify-center overflow-hidden focus:outline-none" style={{backgroundColor: "#202224"}} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
