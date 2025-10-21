@@ -6,13 +6,10 @@
   "version": "0.0.1",
   "publisher": "mobilenext",
   "author": "Mobile Next",
+  "license": "AGPL-3.0",
   "engines": {
     "vscode": "^1.85.0"
   },
-  "bugs": {
-    "url": "https://github.com/mobile-next/mobiledeck/issues"
-  },
-  "homepage": "https://github.com/mobile-next/mobiledeck#readme",
   "categories": [
     "Debuggers", "Testing"
   ],
@@ -29,7 +26,7 @@
   "bugs": {
     "url": "https://github.com/mobile-next/mobiledeck/issues"
   },
-  "homepage": "https://github.com/mobile-next/mobiledeck/blob/main/README.md",
+  "homepage": "https://mobilenexthq.com",
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
