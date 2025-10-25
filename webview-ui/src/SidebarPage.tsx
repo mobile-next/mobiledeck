@@ -81,7 +81,11 @@ function SidebarPage({
 			setIsRefreshing(true);
 			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
 			console.log('sidebar: devices list', result);
-			setDevices(result.devices);
+			// sort devices: ios first, then android, each group sorted by name
+			const iosDevices = result.devices.filter(d => d.platform === DevicePlatform.IOS).sort((a, b) => a.name.localeCompare(b.name));
+			const androidDevices = result.devices.filter(d => d.platform === DevicePlatform.ANDROID).sort((a, b) => a.name.localeCompare(b.name));
+			const sortedDevices = [...iosDevices, ...androidDevices];
+			setDevices(sortedDevices);
 		} catch (error) {
 			console.error('sidebar: error fetching devices:', error);
 		} finally {
