@@ -56,15 +56,27 @@ jobs:
         name: mobiledeck
         path: |
           mobiledeck*.vsix
-        retention-days: 14
+        retention-days: 7
         overwrite: true
 
-    - name: Upload to GitHub Release
+    - name: Publish to marketplace
       if: github.ref_type == 'tag'
-      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
-      with:
-        name: Version ${{ github.ref_name }}
-        files: |
-          mobiledeck*.vsix
+      run: |
+        # darwin x64
+        make clean build-darwin-x64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-x64
+        # darwin arm64
+        make clean build-darwin-arm64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-arm64
+        # linux x64
+        make clean build-linux-x64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-64
+        # linux arm64
+        make clean build-linux-arm64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-arm64
+        # linux win32-x64
+        make clean build-win32-x64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target win32-x64
+
