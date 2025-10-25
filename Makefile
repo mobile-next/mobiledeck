@@ -5,13 +5,13 @@ all: build
 build-darwin-arm64:
 	make -C webview-ui
 	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-arm64 assets/mobilecli
 	npx vsce package --target darwin-arm64
 
 build-darwin-x64:
 	make -C webview-ui
 	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-amd64 assets/mobilecli
 	npx vsce package --target darwin-x64
 
 build-linux-x64:
