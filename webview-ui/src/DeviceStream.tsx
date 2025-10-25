@@ -47,7 +47,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onGesture,
 	onKeyDown,
 }) => {
-	// sanitize skin overlay uri for defense in depth
+	// Use whitelisted device skin filename and convert to canonical skin path
 	const safeSkinOverlayUri = sanitizeMediaSkinUri(skinOverlayUri);
 
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);

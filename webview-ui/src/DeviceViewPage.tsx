@@ -392,7 +392,7 @@ function DeviceViewPage() {
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}
-				skinOverlayUri={deviceSkin.imageFilename && mediaSkinsUri ? `${mediaSkinsUri}/${deviceSkin.imageFilename}` : ""}
+				skinOverlayUri={deviceSkin.imageFilename ? deviceSkin.imageFilename : ""}
 				deviceSkin={deviceSkin}
 				onTap={handleTap}
 				onGesture={handleGesture}
