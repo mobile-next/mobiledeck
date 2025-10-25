@@ -1,5 +1,3 @@
-import { markAsUncloneable } from "node:worker_threads";
-
 export interface DeviceSkinInsets {
 	top: number;
 	left: number;
@@ -61,13 +59,18 @@ export const AndroidDeviceSkin: DeviceSkin = {
 	borderRadius: 170,
 };
 
+// whitelist of allowed skin filenames
+const ALLOWED_SKIN_FILES = [
+	'iPhone_with_island.png',
+	'iPhone_with_notch.png',
+	'android.png'
+];
+
 // sanitize media skin uri to prevent xss attacks
 export const sanitizeMediaSkinUri = (uri: string): string => {
-	if (uri && uri.endsWith(".png")) {
-		if (uri.startsWith("vscode://") ||
-			uri.startsWith("http://localhost:") ||
-			uri.startsWith("http://127.0.0.1:") ||
-			uri.startsWith("skin/")) {
+	// check if uri matches skin/filename.png or ends with /skin/filename.png
+	for (const allowedFile of ALLOWED_SKIN_FILES) {
+		if (uri === `skin/${allowedFile}` || uri.endsWith(`/skin/${allowedFile}`)) {
 			return uri;
 		}
 	}
