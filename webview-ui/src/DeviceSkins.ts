@@ -56,7 +56,7 @@ export const AndroidDeviceSkin: DeviceSkin = {
 		right: 19,
 		bottom: 16
 	},
-	borderRadius: 50
+	borderRadius: 170,
 };
 
 export function getDeviceSkinForDevice(device: { platform: string; name: string }): DeviceSkin {

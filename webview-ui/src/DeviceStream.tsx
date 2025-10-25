@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor, ScreenSize } from "./models";
 import { DeviceSkin } from "./DeviceSkins";
@@ -55,6 +55,26 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		points: [],
 		path: []
 	});
+	const [skinRatio, setSkinRatio] = useState<number>(1.0);
+	const deviceSkinRef = useRef<HTMLImageElement>(null);
+
+	const calculateSkinRatio = () => {
+		if (deviceSkinRef.current) {
+			const naturalHeight = deviceSkinRef.current.naturalHeight;
+			const renderedHeight = deviceSkinRef.current.height;
+			const ratio = renderedHeight / naturalHeight;
+			console.log(`Skin height ratio: ${ratio} (rendered: ${renderedHeight}px, natural: ${naturalHeight}px)`);
+			setSkinRatio(ratio);
+		}
+	};
+
+	useEffect(() => {
+		window.addEventListener('resize', calculateSkinRatio);
+
+		return () => {
+			window.removeEventListener('resize', calculateSkinRatio);
+		};
+	}, []);
 
 	const convertToScreenCoords = (clientX: number, clientY: number, imgElement: HTMLImageElement) => {
 		const rect = imgElement.getBoundingClientRect();
@@ -154,7 +174,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		<div className="relative flex-grow flex items-center justify-center overflow-hidden focus:outline-none" style={{backgroundColor: "#202224"}} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
 				{/* Simulated device stream */}
-				<div className={`relative rounded-[36px] overflow-hidden`}>
+				<div className={`relative overflow-hidden`}>
 					<div className="w-full h-full overflow-hidden">
 						<div className="flex flex-col items-center justify-center h-full text-white">
 							{isConnecting ? (
@@ -170,20 +190,22 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 												<div className="relative">
 													{/* device skin frame */}
 													<img
+														ref={deviceSkinRef}
 														src={skinOverlayUri}
 														alt=""
 														className="relative"
 														style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
 														draggable={false}
+														onLoad={calculateSkinRatio}
 													/>
 													{/* device stream container positioned inside the skin bezel */}
 													<div
 														className="absolute"
 														style={{
-															top: `${deviceSkin.insets.top}px`,
-															left: `${deviceSkin.insets.left}px`,
-															right: `${deviceSkin.insets.right}px`,
-															bottom: `${deviceSkin.insets.bottom}px`,
+															top: `${deviceSkin.insets.top * skinRatio}px`,
+															left: `${deviceSkin.insets.left * skinRatio}px`,
+															right: `${deviceSkin.insets.right * skinRatio}px`,
+															bottom: `${deviceSkin.insets.bottom * skinRatio}px`,
 															zIndex: 1
 														}}
 													>
@@ -194,7 +216,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															className="cursor-crosshair w-full h-full"
 															style={{
 																objectFit: 'cover',
-																borderRadius: `${deviceSkin.borderRadius}px`
+																borderRadius: `${deviceSkin.borderRadius * skinRatio}px`
 															}}
 															onMouseDown={handleMouseDown}
 															onMouseMove={handleMouseMove}
