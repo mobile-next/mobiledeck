@@ -4,31 +4,31 @@ all: build
 
 build-darwin-arm64:
 	make -C webview-ui
-	cp media/* assets
+	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
 	npx vsce package --target darwin-arm64
 
 build-darwin-x64:
 	make -C webview-ui
-	cp media/* assets
+	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin assets/mobilecli
 	npx vsce package --target darwin-x64
 
 build-linux-x64:
 	make -C webview-ui
-	cp media/* assets
+	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-amd64 assets/mobilecli
 	npx vsce package --target linux-x64
 
 build-linux-arm64:
 	make -C webview-ui
-	cp media/* assets
+	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-arm64 assets/mobilecli
 	npx vsce package --target linux-arm64
 
 build-win32-x64:
 	make -C webview-ui
-	cp media/* assets
+	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-windows-amd64.exe assets/mobilecli.exe
 	npx vsce package --target win32-x64
 

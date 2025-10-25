@@ -5,6 +5,7 @@ import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, 
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
 import vscode from './vscode';
+import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin, sanitizeMediaSkinUri } from './DeviceSkins';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -42,7 +43,9 @@ function DeviceViewPage() {
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
 	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
-	const [serverPort, setServerPort] = useState<number>(0);
+	const [serverPort, setServerPort] = useState<number>(12000);
+	const [mediaSkinsUri, setMediaSkinsUri] = useState<string>("skins");
+	const [deviceSkin, setDeviceSkin] = useState<DeviceSkin>(NoDeviceSkin);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -94,6 +97,7 @@ function DeviceViewPage() {
 				if (imageUrl) {
 					URL.revokeObjectURL(imageUrl);
 				}
+
 				setImageUrl(newImageUrl);
 			});
 
@@ -155,6 +159,9 @@ function DeviceViewPage() {
 			console.log('mobiledeck: starting mjpeg stream with port', serverPort);
 			startMjpegStream(selectedDevice.id);
 			requestDeviceInfo(selectedDevice.id).then();
+
+			// set device skin based on device platform/model
+			setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
 		}
 	}, [selectedDevice]);
 
@@ -258,6 +265,10 @@ function DeviceViewPage() {
 					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
 					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
+					console.log("gilm: got media skins uri: " + message.mediaSkinsUri);
+					if (message.mediaSkinsUri) {
+						setMediaSkinsUri(message.mediaSkinsUri);
+					}
 				}
 				break;
 			default:
@@ -379,6 +390,8 @@ function DeviceViewPage() {
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}
+				skinOverlayUri={mediaSkinsUri + "/" + deviceSkin.imageFilename}
+				deviceSkin={deviceSkin}
 				onTap={handleTap}
 				onGesture={handleGesture}
 				onKeyDown={handleKeyDown}

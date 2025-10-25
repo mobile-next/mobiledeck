@@ -3,15 +3,10 @@ export interface MjpegStreamCallback {
 }
 
 export class MjpegStream {
-	private reader: ReadableStreamDefaultReader<Uint8Array>;
-	private onImageCallback: MjpegStreamCallback;
 	private isActive: boolean = false;
 	private currentImageUrl: string = "";
 
-	constructor(reader: ReadableStreamDefaultReader<Uint8Array>, onImageCallback: MjpegStreamCallback) {
-		this.reader = reader;
-		this.onImageCallback = onImageCallback;
-	}
+	constructor(private reader: ReadableStreamDefaultReader<Uint8Array>, private onImageCallback: MjpegStreamCallback) { }
 
 	public start(): void {
 		this.isActive = true;

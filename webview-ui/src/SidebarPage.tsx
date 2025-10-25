@@ -103,15 +103,18 @@ function SidebarPage({
 					console.log('sidebar: configure message received, port:', message.serverPort);
 					setServerPort(message.serverPort);
 				}
+
 				if (message.email) {
 					console.log('sidebar: email received:', message.email);
 					setUserEmail(message.email);
 				}
 				break;
+
 			case 'refreshDevices':
 				console.log('sidebar: refresh devices message received');
 				fetchDevices();
 				break;
+
 			default:
 				console.log('sidebar: unknown message', message);
 				break;
