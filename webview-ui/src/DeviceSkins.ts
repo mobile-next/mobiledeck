@@ -51,10 +51,10 @@ export const iPhoneWithNotchSkin: DeviceSkin = {
 export const AndroidDeviceSkin: DeviceSkin = {
 	imageFilename: 'android.png',
 	insets: {
-		top: 17,
-		left: 17,
-		right: 13,
-		bottom: 16,
+		top: 70,
+		left: 70,
+		right: 70,
+		bottom: 75,
 	},
 	borderRadius: 170,
 };
@@ -70,7 +70,7 @@ const ALLOWED_SKIN_FILES = [
 export const sanitizeMediaSkinUri = (uri: string): string => {
 	// check if uri matches skin/filename.png or ends with /skin/filename.png
 	for (const allowedFile of ALLOWED_SKIN_FILES) {
-		if (uri === `skin/${allowedFile}` || uri.endsWith(`/skin/${allowedFile}`)) {
+		if (uri === `skins/${allowedFile}` || uri.endsWith(`/skins/${allowedFile}`)) {
 			return uri;
 		}
 	}
