@@ -61,6 +61,20 @@ export const AndroidDeviceSkin: DeviceSkin = {
 	borderRadius: 170,
 };
 
+// sanitize media skin uri to prevent xss attacks
+export const sanitizeMediaSkinUri = (uri: string): string => {
+	if (uri && uri.endsWith(".png")) {
+		if (uri.startsWith("vscode://") ||
+			uri.startsWith("http://localhost:") ||
+			uri.startsWith("http://127.0.0.1:") ||
+			uri.startsWith("skin/")) {
+			return uri;
+		}
+	}
+
+	return "";
+};
+
 export function getDeviceSkinForDevice(device: { platform: string; name: string }): DeviceSkin {
 	// android devices use android skin
 	if (device.platform === 'android') {

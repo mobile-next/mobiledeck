@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor, ScreenSize } from "./models";
-import { DeviceSkin } from "./DeviceSkins";
+import { DeviceSkin, sanitizeMediaSkinUri } from "./DeviceSkins";
 import { Polyline } from "./Polyline";
 
 export interface GesturePoint {
@@ -47,6 +47,9 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onGesture,
 	onKeyDown,
 }) => {
+	// sanitize skin overlay uri for defense in depth
+	const safeSkinOverlayUri = sanitizeMediaSkinUri(skinOverlayUri);
+
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
 	const [gestureState, setGestureState] = useState<GestureState>({
 		isGesturing: false,
@@ -185,13 +188,13 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 								<>
 									{imageUrl !== "" && (
 										<>
-											{skinOverlayUri ? (
+											{safeSkinOverlayUri ? (
 												// with device skin
 												<div className="relative">
 													{/* device skin frame */}
 													<img
 														ref={deviceSkinRef}
-														src={skinOverlayUri}
+														src={safeSkinOverlayUri}
 														alt=""
 														className="relative"
 														style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
@@ -237,7 +240,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 													</div>
 													{/* device skin frame overlay on top */}
 													<img
-														src={skinOverlayUri}
+														src={safeSkinOverlayUri}
 														alt=""
 														className="pointer-events-none"
 														style={{

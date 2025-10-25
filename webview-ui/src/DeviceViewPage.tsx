@@ -5,21 +5,7 @@ import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, 
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
 import vscode from './vscode';
-import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from './DeviceSkins';
-
-// sanitize media skin uri to prevent xss attacks
-const sanitizeMediaSkinUri = (uri: string): string => {
-	if (uri && uri.endsWith(".png")) {
-		if (uri.startsWith("vscode://") ||
-		    uri.startsWith("http://localhost:") ||
-		    uri.startsWith("http://127.0.0.1:") ||
-		    uri.startsWith("skin/")) {
-			return uri;
-		}
-	}
-
-	return "";
-};
+import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin, sanitizeMediaSkinUri } from './DeviceSkins';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
