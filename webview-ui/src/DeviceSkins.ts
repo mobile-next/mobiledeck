@@ -66,15 +66,13 @@ const ALLOWED_SKIN_FILES = [
 	'android.png'
 ];
 
-// sanitize media skin uri to prevent xss attacks
-export const sanitizeMediaSkinUri = (uri: string): string => {
-	// check if uri matches skin/filename.png or ends with /skin/filename.png
+// sanitize skin image filename: only allow whitelisted filenames, return canonical skin path.
+export const sanitizeMediaSkinUri = (filename: string): string => {
 	for (const allowedFile of ALLOWED_SKIN_FILES) {
-		if (uri === `skin/${allowedFile}` || uri.endsWith(`/skin/${allowedFile}`)) {
-			return uri;
+		if (filename === allowedFile) {
+			return `skin/${allowedFile}`;
 		}
 	}
-
 	return "";
 };
 
