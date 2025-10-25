@@ -1,3 +1,5 @@
+import { markAsUncloneable } from "node:worker_threads";
+
 export interface DeviceSkinInsets {
 	top: number;
 	left: number;
@@ -18,9 +20,9 @@ export const NoDeviceSkin: DeviceSkin = {
 		top: 0,
 		left: 0,
 		right: 0,
-		bottom: 0
+		bottom: 0,
 	},
-	borderRadius: 0
+	borderRadius: 0,
 };
 
 // iphone with dynamic island (iphone 14 pro and newer)
@@ -30,9 +32,9 @@ export const iPhoneWithIslandSkin: DeviceSkin = {
 		top: 21,
 		left: 22,
 		right: 22,
-		bottom: 23
+		bottom: 23,
 	},
-	borderRadius: 49
+	borderRadius: 49,
 };
 
 // iphone with notch (iphone x to iphone 13 pro max)
@@ -42,9 +44,9 @@ export const iPhoneWithNotchSkin: DeviceSkin = {
 		top: 19,
 		left: 24,
 		right: 24,
-		bottom: 18
+		bottom: 18,
 	},
-	borderRadius: 49
+	borderRadius: 49,
 };
 
 // android device skin (generic android devices)
@@ -53,8 +55,8 @@ export const AndroidDeviceSkin: DeviceSkin = {
 	insets: {
 		top: 17,
 		left: 17,
-		right: 19,
-		bottom: 16
+		right: 13,
+		bottom: 16,
 	},
 	borderRadius: 170,
 };
@@ -66,19 +68,21 @@ export function getDeviceSkinForDevice(device: { platform: string; name: string 
 	}
 
 	// extract iphone model number
-	const iPhoneMatch = device.name.match(/iPhone (\d+)/);
-	if (iPhoneMatch) {
-		const modelNumber = parseInt(iPhoneMatch[1]);
+	const m = device.name.match(/iPhone (\d+)/);
+	if (m) {
+		const modelNumber = parseInt(m[1]);
 
-		// iphone 15+ have dynamic island
 		if (modelNumber >= 15) {
+			// iphone 15+ have dynamic island
 			return iPhoneWithIslandSkin;
 		}
 
-		// iphone 12-14 have notch
 		if (modelNumber >= 12) {
+			// iphone 12-14 have notch
 			return iPhoneWithNotchSkin;
 		}
+
+		// fall through, older iphones have no skin
 	}
 
 	// iphone x has notch (special case without numeric model)
