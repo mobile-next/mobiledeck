@@ -1,4 +1,4 @@
-<a href="vscode:extension/mobilenext.mobiledeck">
+<a href="https://marketplace.visualstudio.com/items?itemName=mobilenext.mobiledeck">
     <img src="https://img.shields.io/badge/vscode-install_extension-blue" alt="install in vscode" />
 </a>
   
