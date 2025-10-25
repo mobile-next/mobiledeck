@@ -13,8 +13,56 @@ on:
       - main
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm install
+        cd webview-ui && npm install
+
+    - name: Lint
+      run: |
+        npm run lint || true
+        cd webview-ui
+        npm run lint || true
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm install
+        cd webview-ui && npm install
+
+    - name: Security check
+      run: |
+        npm audit
+        cd webview-ui && npm audit
+
   build:
     runs-on: ubuntu-latest
+    needs: [ lint, security ]
 
     steps:
     - name: Checkout code
@@ -39,12 +87,6 @@ jobs:
         npm install
         cd webview-ui && npm install
 
-    - name: Lint
-      run: |
-        npm run lint || true
-        cd webview-ui
-        npm run lint || true
-
     - name: Build
       run: |
         make
@@ -61,8 +103,6 @@ jobs:
 
     - name: Publish to marketplace
       if: github.ref_type == 'tag'
-      env:
-        GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
       run: |
         # darwin x64
         make clean build-darwin-x64
@@ -72,7 +112,7 @@ jobs:
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-arm64
         # linux x64
         make clean build-linux-x64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-x64
         # linux arm64
         make clean build-linux-arm64
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-arm64
