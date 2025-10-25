@@ -68,10 +68,15 @@ const ALLOWED_SKIN_FILES = [
 
 // sanitize skin image filename: only allow whitelisted filenames, return canonical skin path.
 export const sanitizeMediaSkinUri = (filename: string): string => {
-	for (const allowedFile of ALLOWED_SKIN_FILES) {
-		if (filename === allowedFile) {
-			return `skins/${allowedFile}`;
-		}
+	console.log(".... sanitizing " + filename);
+	if (filename.indexOf("..") !== -1) {
+		return "";
+	}
+
+	const basename = filename.split('/').pop() || '';
+	console.log(".... basename" + basename);
+	if (ALLOWED_SKIN_FILES.includes(basename)) {
+		return filename;
 	}
 
 	return "";

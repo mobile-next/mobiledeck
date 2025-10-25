@@ -3,12 +3,16 @@ import { Logger } from './utils/Logger';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 
-interface AlertWebviewMessage {
+interface Message {
+	command: string;
+}
+
+interface AlertWebviewMessage extends Message {
 	command: 'alert';
 	text: string;
 }
 
-interface LogWebviewMessage {
+interface LogWebviewMessage extends Message {
 	command: 'log';
 	text: string;
 }
@@ -20,16 +24,23 @@ interface DeviceDescriptor {
 	type: string;
 }
 
-interface OnDeviceSelectedMessage {
+interface ConfigureMessage extends Message{
+	command: 'configure';
+	device: DeviceDescriptor;
+	serverPort: number;
+	mediaSkinsUri: string;
+}
+
+interface OnDeviceSelectedMessage extends Message {
 	command: 'onDeviceSelected';
 	device: DeviceDescriptor;
 }
 
-interface OnInitializedMessage {
+interface OnInitializedMessage extends Message {
 	command: 'onInitialized';
 }
 
-type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage;
+type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage | ConfigureMessage;
 
 export class DeviceViewProvider {
 
@@ -39,7 +50,7 @@ export class DeviceViewProvider {
 		private readonly context: vscode.ExtensionContext,
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
-	) {}
+	) { }
 
 	private verbose(message: string) {
 		this.logger.log(message);
@@ -70,7 +81,7 @@ export class DeviceViewProvider {
 					device: this.selectedDevice,
 					serverPort: this.cliServer.getJsonRpcServerPort(),
 					mediaSkinsUri: mediaSkinsUri.toString(),
-				});
+				} as ConfigureMessage);
 
 				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
 				break;
@@ -111,7 +122,7 @@ export class DeviceViewProvider {
 		return panel;
 	}
 
-	private sendMessageToWebview(webviewPanel: vscode.WebviewPanel, message: any) {
+	private sendMessageToWebview(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
 		webviewPanel.webview.postMessage(message);
 	}
 

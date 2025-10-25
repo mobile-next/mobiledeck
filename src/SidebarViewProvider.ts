@@ -48,25 +48,30 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 						email: email || '',
 					});
 					break;
+
 				case 'deviceClicked':
 					console.log('device clicked:', message.device);
 					// open a new tab with the device
 					vscode.commands.executeCommand('mobiledeck.openDevicePanel', message.device);
 					break;
+
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					await this.handleOAuthLogin(message.provider, webviewView);
 					break;
+
 				case 'skipLogin':
 					console.log('user skipped login, switching to sidebar');
 					// set authentication context so logout button and menu appear
 					await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', true);
 					await this.switchToDeviceList();
 					break;
+
 				case 'signOut':
 					console.log('sign out requested from webview');
 					await vscode.commands.executeCommand('mobiledeck.signOut');
 					break;
+
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
 					break;

@@ -265,11 +265,9 @@ function DeviceViewPage() {
 					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
 					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
+					console.log("gilm: got media skins uri: " + message.mediaSkinsUri);
 					if (message.mediaSkinsUri) {
-						const sanitized = sanitizeMediaSkinUri(message.mediaSkinsUri);
-						if (sanitized) {
-							setMediaSkinsUri(sanitized);
-						}
+						setMediaSkinsUri(message.mediaSkinsUri);
 					}
 				}
 				break;
@@ -392,7 +390,7 @@ function DeviceViewPage() {
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}
-				skinOverlayUri={deviceSkin.imageFilename ? deviceSkin.imageFilename : ""}
+				skinOverlayUri={mediaSkinsUri + "/" + deviceSkin.imageFilename}
 				deviceSkin={deviceSkin}
 				onTap={handleTap}
 				onGesture={handleGesture}
