@@ -1,4 +1,4 @@
-# Mobile Deck - Preview and interact with iOS/Android devices
+# Mobile Deck - View, control and manage all your Android and iOS real devices, simulators, and emulators
 
 A Visual Studio Code extension for previewing, interacting and managing your Android/iOS devices from [Mobile Next](https://mobilenexthq.com/).
 
