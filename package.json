@@ -1,6 +1,6 @@
 {
   "name": "mobiledeck",
-  "displayName": "Mobile Deck (iOS/Android Device Manager and Preivew)",
+  "displayName": "Mobile Deck (iOS/Android Device Manager and Preview)",
   "description": "View, control and manage all your Android and iOS real devices, simulators, and emulators",
   "icon": "media/mobilenexthq_logo.png",
   "version": "0.0.1",
