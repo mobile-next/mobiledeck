@@ -385,7 +385,7 @@ function DeviceViewPage() {
 	}, []);
 
 	return (
-		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-x-visible overflow-y-hidden">
+		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-x-visible overflow-y-auto">
 			{/* Header with controls */}
 			<Header
 				selectedDevice={selectedDevice}

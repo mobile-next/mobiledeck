@@ -191,7 +191,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	};
 
 	return (
-		<div className="relative flex-grow flex items-center justify-center overflow-visible focus:outline-none" style={{backgroundColor: "#202224"}} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
+		<div className="relative flex-grow flex items-center justify-center overflow-visible focus:outline-none" style={{backgroundColor: "#202224", paddingTop: "24px", paddingBottom: "24px"}} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
 				{/* Simulated device stream */}
 				<div className={`relative overflow-visible`}>
@@ -215,7 +215,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															src={safeSkinOverlayUri}
 															alt=""
 															className="relative"
-															style={{ maxHeight: 'calc(100vh - 8em)', maxWidth: 'calc(100vw - 2em)' }}
+															style={{ maxHeight: 'calc(100vh - 200px)', maxWidth: 'calc(100vw - 2em)' }}
 															draggable={false}
 															onLoad={calculateSkinRatio}
 														/>
@@ -296,7 +296,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															alt=""
 															className="cursor-crosshair"
 															style={{
-																maxHeight: 'calc(100vh - 8em)',
+																maxHeight: 'calc(100vh - 200px)',
 																maxWidth: 'calc(100vw - 2em)',
 																borderRadius: `${deviceSkin.borderRadius}px`
 															}}
