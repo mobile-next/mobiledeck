@@ -34,7 +34,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, icon, text, isAc
         alignItems: 'center',
         justifyContent: 'flex-start',
         cursor: 'pointer',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.3s',
         position: 'relative',
         overflow: 'hidden',
         padding: '0 16px',
@@ -45,7 +45,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, icon, text, isAc
         width: '24px',
         height: '24px',
         color: isActive ? '#0a0a0a' : '#888',
-        transition: 'color 0.3s',
+        transition: 'color 0.3s 0.3s',
         flexShrink: 0
       }}>
         {icon}
@@ -56,7 +56,7 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, icon, text, isAc
         color: isActive ? '#0a0a0a' : '#e0e0e0',
         whiteSpace: 'nowrap',
         opacity: 0,
-        transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.3s'
       }}>
         {text}
       </span>
@@ -95,7 +95,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
       }}
     >
       <style>{`
-        .device-controls:hover .control-btn {
+        .control-btn:hover {
           width: 150px !important;
           background: #2a2a2a !important;
           border-color: #00ff88 !important;
@@ -103,30 +103,17 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
           box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2) !important;
           z-index: 1001 !important;
           position: relative !important;
-        }
-
-        .device-controls:hover .control-btn svg {
-          color: #00ff88 !important;
-        }
-
-        .device-controls:hover .control-text {
-          opacity: 1 !important;
-        }
-
-        .control-btn:hover {
-          width: 150px !important;
-          background: #2a2a2a !important;
-          border-color: #00ff88 !important;
-          transform: translateX(0px) !important;
-          box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2) !important;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0s !important;
         }
 
         .control-btn:hover svg {
           color: #00ff88 !important;
+          transition: color 0.3s 0s !important;
         }
 
         .control-btn:hover .control-text {
           opacity: 1 !important;
+          transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0s !important;
         }
 
         .control-btn:active {
@@ -155,7 +142,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
             <path d="M21 3v5h-5"/>
           </svg>
         }
-        text="Rotate Device"
+        text="Rotate"
       />
 
       <ControlButton
@@ -166,7 +153,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
             <circle cx="12" cy="13" r="4"/>
           </svg>
         }
-        text="Take Screenshot"
+        text="Screenshot"
       />
 
       <ControlSeparator />
@@ -179,7 +166,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
             <polyline points="9 22 9 12 15 12 15 22"/>
           </svg>
         }
-        text="Home Button"
+        text="Home"
       />
 
       <ControlButton
@@ -190,7 +177,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
             <polyline points="12 19 5 12 12 5"/>
           </svg>
         }
-        text="Back Button"
+        text="Back"
       />
 
       <ControlButton
@@ -203,7 +190,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
             <rect x="3" y="14" width="7" height="7"/>
           </svg>
         }
-        text="Recent Apps"
+        text="Recents"
       />
 
       <ControlSeparator />
