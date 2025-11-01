@@ -299,7 +299,7 @@ export const Footer: React.FC = () => {
         className="install-btn"
         onClick={handleInstallClick}
       >
-        <span>✨ Install MCP Server</span>
+        <span>Install MCP Server</span>
       </button>
 
       {showInstructions && (
@@ -308,7 +308,7 @@ export const Footer: React.FC = () => {
         </div>
       )}
 
-      <div style={{ width: '100%', marginTop: '8px' }}>
+      <div style={{ width: '100%', marginTop: '8px', display: 'flex', justifyContent: 'center' }}>
         <div className="code-block" style={{ position: 'relative', paddingRight: '70px' }}>
           {agentConfigs[selectedAgent].command}
           <button
