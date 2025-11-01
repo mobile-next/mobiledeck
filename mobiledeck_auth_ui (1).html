@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobiledeck - Device Management</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 32px;
+      overflow: hidden;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    h1 {
+      font-size: 32px;
+      text-align: center;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 15px;
+      margin-bottom: 48px;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 32px;
+    }
+
+    .input-group {
+      margin-bottom: 24px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #00ff88;
+      box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 32px 0;
+      color: #555;
+      font-size: 13px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2a2a2a;
+    }
+
+    .divider span {
+      padding: 0 16px;
+    }
+
+    .oauth-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .oauth-btn {
+      width: 100%;
+      padding: 12px 20px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .oauth-btn:hover {
+      background: #333;
+      border-color: #444;
+      transform: translateY(-1px);
+    }
+
+    .oauth-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      border: none;
+      border-radius: 8px;
+      color: #0a0a0a;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 24px;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 255, 136, 0.3);
+    }
+
+    .device-controls-row {
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+      margin-bottom: 32px;
+    }
+
+    .device-selector {
+      flex: 1;
+    }
+
+    .device-selector select {
+      width: 100%;
+      padding: 12px 16px;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .platform-selector-compact {
+      flex-shrink: 0;
+    }
+
+    .platform-icons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .platform-icon {
+      width: 40px;
+      height: 40px;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #888;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .platform-icon:hover {
+      background: #1a1a1a;
+      border-color: #3a3a3a;
+      color: #e0e0e0;
+    }
+
+    .platform-icon.active {
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      border-color: #00ff88;
+      color: #0a0a0a;
+    }
+
+    .platform-icon svg {
+      transition: transform 0.2s;
+    }
+
+    .platform-icon.active svg {
+      transform: scale(1.1);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      background: #1a1a1a;
+      border: 2px dashed #2a2a2a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 32px;
+    }
+
+    .empty-state h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #e0e0e0;
+    }
+
+    .empty-state p {
+      color: #888;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .code-block {
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: left;
+      margin-top: 24px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #00ff88;
+      position: relative;
+    }
+
+    .code-block::before {
+      content: '$';
+      color: #666;
+      margin-right: 8px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 12px;
+      color: #888;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #333;
+      color: #00ff88;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: #0a0a0a;
+    }
+
+    .user-details {
+      flex: 1;
+      margin-left: 12px;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e0e0e0;
+    }
+
+    .user-email {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .logout-btn {
+      padding: 8px 16px;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 6px;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: #333;
+      color: #ff5555;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .step-indicator {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .step {
+      flex: 1;
+      text-align: center;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      background: #2a2a2a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .step.active .step-number {
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      color: #0a0a0a;
+    }
+
+    .step-label {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .step.active .step-label {
+      color: #00ff88;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      margin-bottom: 32px;
+    }
+
+    .app-logo-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .app-logo-header .logo {
+      width: 40px;
+      height: 40px;
+      margin: 0;
+    }
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .profile-menu {
+      position: relative;
+    }
+
+    .profile-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .profile-button:hover {
+      background: #2a2a2a;
+      border-color: #3a3a3a;
+    }
+
+    .profile-avatar-small {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: #0a0a0a;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .profile-name-small {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0e0e0;
+      line-height: 1.2;
+    }
+
+    .profile-email-small {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.2;
+    }
+
+    .profile-chevron {
+      width: 16px;
+      height: 16px;
+      color: #666;
+      transition: transform 0.2s;
+    }
+
+    .profile-button.open .profile-chevron {
+      transform: rotate(180deg);
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      min-width: 200px;
+      padding: 8px 0;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s;
+      z-index: 1000;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .profile-dropdown.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      color: #e0e0e0;
+      font-size: 13px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .dropdown-item:hover {
+      background: #2a2a2a;
+    }
+
+    .dropdown-item svg {
+      width: 16px;
+      height: 16px;
+      color: #888;
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: #2a2a2a;
+      margin: 8px 0;
+    }
+
+    .dropdown-item.danger {
+      color: #ff5555;
+    }
+
+    .dropdown-item.danger svg {
+      color: #ff5555;
+    }
+
+    .device-preview-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 24px;
+      min-height: 600px;
+    }
+
+    .device-frame {
+      position: relative;
+      background: #2a2a2a;
+      border-radius: 32px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .device-frame.ios {
+      width: 320px;
+      border-radius: 48px;
+      padding: 16px;
+    }
+
+    .device-frame.android {
+      width: 340px;
+      border-radius: 32px;
+      padding: 12px;
+    }
+
+    .device-notch {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #0a0a0a;
+      border-radius: 0 0 20px 20px;
+      z-index: 10;
+    }
+
+    .device-screen {
+      width: 100%;
+      height: 640px;
+      background: #000;
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .device-frame.ios .device-screen {
+      border-radius: 38px;
+      height: 680px;
+    }
+
+    .device-statusbar {
+      height: 44px;
+      background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .device-frame.ios .device-statusbar {
+      height: 54px;
+      padding-top: 10px;
+    }
+
+    .statusbar-time {
+      font-weight: 600;
+    }
+
+    .statusbar-icons {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .device-content {
+      flex: 1;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .device-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .device-app-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .device-app-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .device-app-name {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .device-app-subtitle {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .device-home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+    }
+
+    .device-frame.ios .device-home-indicator {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .device-power-button {
+      position: absolute;
+      right: -2px;
+      top: 120px;
+      width: 4px;
+      height: 60px;
+      background: #1a1a1a;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .device-volume-buttons {
+      position: absolute;
+      left: -2px;
+      top: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .device-volume-button {
+      width: 4px;
+      height: 40px;
+      background: #1a1a1a;
+      border-radius: 2px 0 0 2px;
+    }
+
+    .device-info-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      font-size: 12px;
+      color: #00ff88;
+      margin-top: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .device-info-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .device-grid-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.1;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .device-controls {
+      position: absolute;
+      left: calc(100% + 24px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .control-btn {
+      width: 56px;
+      height: 56px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      padding: 0 16px;
+    }
+
+    .device-controls:hover .control-btn {
+      width: 150px;
+      background: #2a2a2a;
+      border-color: #00ff88;
+      transform: translateX(0px);
+      box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2);
+    }
+
+    .control-btn:active {
+      transform: translateX(0px) scale(0.98);
+    }
+
+    .control-btn svg {
+      width: 24px;
+      height: 24px;
+      color: #888;
+      transition: color 0.3s;
+      flex-shrink: 0;
+    }
+
+    .device-controls:hover .control-btn svg {
+      color: #00ff88;
+    }
+
+    .control-btn.active {
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      border-color: #00ff88;
+    }
+
+    .control-btn.active svg {
+      color: #0a0a0a;
+    }
+
+    .control-text {
+      margin-left: 12px;
+      font-size: 12px;
+      color: #e0e0e0;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .device-controls:hover .control-text {
+      opacity: 1;
+    }
+
+    .control-tooltip {
+      display: none;
+    }
+
+    .control-separator {
+      height: 1px;
+      background: #2a2a2a;
+      margin: 4px 0;
+    }
+
+    @media (max-width: 768px) {
+      .device-controls {
+        position: static;
+        transform: none;
+        flex-direction: row;
+        justify-content: center;
+        margin-top: 24px;
+      }
+
+      .control-tooltip {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Screen -->
+  <div id="welcome-screen" class="container">
+    <div class="logo">
+      <img src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4" alt="Mobiledeck Logo">
+    </div>
+    <h1>Welcome to Mobiledeck</h1>
+    <p class="subtitle">Making mobile development accessible to everyone.<br>Build cross-platform applications across any device.</p>
+    
+    <div class="card">
+      <div class="oauth-buttons">
+        <button class="oauth-btn" onclick="loginWithProvider('google')">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continue with Google
+        </button>
+        
+        <button class="oauth-btn" onclick="loginWithProvider('azure')">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.05 4.24L6.28 18.96l-3.38.62 7.82-14.45zm7.26 5.42l-7.31 8.68-7.31-2.47 7.69-9.14z"/>
+          </svg>
+          Continue with Azure
+        </button>
+        
+        <button class="oauth-btn" onclick="loginWithProvider('github')">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+          </svg>
+          Continue with GitHub
+        </button>
+      </div>
+
+      <div class="divider"><span>or</span></div>
+
+      <button class="oauth-btn" onclick="skipLogin()" style="border-style: dashed; border-color: #3a3a3a;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+        Skip & Continue as Guest
+      </button>
+    </div>
+  </div>
+
+  <!-- Email Input Screen -->
+  <div id="email-screen" class="container hidden">
+    <div class="logo">
+      <img src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4" alt="Mobiledeck Logo">
+    </div>
+    <h1>Sign In</h1>
+    <p class="subtitle">Enter your email to continue</p>
+    
+    <div class="card">
+      <div class="step-indicator">
+        <div class="step active">
+          <div class="step-number">1</div>
+          <div class="step-label">Provider</div>
+        </div>
+        <div class="step active">
+          <div class="step-number">2</div>
+          <div class="step-label">Email</div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-label">Dashboard</div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autofocus>
+      </div>
+
+      <button class="primary-btn" onclick="submitEmail()">Continue</button>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="#" onclick="goBack()" style="color: #888; font-size: 13px; text-decoration: none;">← Back to login options</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Screen -->
+  <div id="dashboard-screen" class="container hidden" style="max-width: 800px;">
+    <div class="app-header">
+      <div class="app-logo-header">
+        <div class="logo">
+          <img src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4" alt="Mobiledeck Logo">
+        </div>
+        <div class="app-title">Mobiledeck</div>
+      </div>
+      
+      <div class="profile-menu">
+        <button class="profile-button" onclick="toggleProfileMenu()">
+          <div class="profile-avatar-small" id="header-avatar">U</div>
+          <div class="profile-info">
+            <div class="profile-name-small" id="header-name">User</div>
+            <div class="profile-email-small" id="header-email">user@example.com</div>
+          </div>
+          <svg class="profile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        
+        <div class="profile-dropdown" id="profile-dropdown">
+          <a href="#" class="dropdown-item" onclick="showTerms()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Terms of Service
+          </a>
+          
+          <a href="#" class="dropdown-item" onclick="showPolicy()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Privacy Policy
+          </a>
+          
+          <a href="#" class="dropdown-item" onclick="showContact()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Contact Us
+          </a>
+          
+          <div class="dropdown-divider"></div>
+          
+          <button class="dropdown-item danger" onclick="logout()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="device-controls-row">
+        <div class="platform-selector-compact">
+          <label style="display: block; margin-bottom: 8px; font-size: 13px; color: #aaa;">Platform</label>
+          <div class="platform-icons">
+            <button class="platform-icon active" data-platform="ios" onclick="selectPlatform('ios')" title="iOS">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+            </button>
+            <button class="platform-icon" data-platform="android" onclick="selectPlatform('android')" title="Android">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 0 0-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67a.643.643 0 0 0-.87-.2c-.28.18-.37.54-.22.83L6.4 9.48A10.81 10.81 0 0 0 1 18h22a10.81 10.81 0 0 0-5.4-8.52M7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5m10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/>
+              </svg>
+            </button>
+            <button class="platform-icon" data-platform="remote" onclick="selectPlatform('remote')" title="Remote">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1m0 8h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1M9 5h1V3H9v2m0 8h1v-2H9v2m0 8h1v-2H9v2M5 3v2h2V3H5m0 8v2h2v-2H5m0 8v2h2v-2H5z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="device-selector">
+          <label style="display: block; margin-bottom: 8px; font-size: 13px; color: #aaa;">Select Device</label>
+          <select id="device-select" onchange="selectDevice()">
+            <option value="">No devices available</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">📱</div>
+        <h3>No Devices Connected</h3>
+        <p>Start your local device server to connect and manage your mobile devices.</p>
+        
+        <div class="code-block">
+          mobilecli start server --cors
+          <button class="copy-btn" onclick="copyCommand()">Copy</button>
+        </div>
+
+        <p style="margin-top: 24px; font-size: 13px; color: #666;">
+          Or install the Mobile CLI tool:
+        </p>
+
+        <div class="code-block">
+          npx @mobilenext/mobile-mcp@latest
+          <button class="copy-btn" onclick="copyInstallCommand()">Copy</button>
+        </div>
+
+        <div style="margin-top: 32px; padding: 16px; background: #1a1a1a; border-radius: 8px; text-align: left;">
+          <h4 style="font-size: 14px; margin-bottom: 12px; color: #00ff88;">Quick Start Guide:</h4>
+          <ol style="font-size: 13px; color: #888; line-height: 2; padding-left: 20px;">
+            <li>Install Mobile CLI using npm or npx</li>
+            <li>Connect your Android/iOS device via USB or WiFi</li>
+            <li>Run <code style="background: #0a0a0a; padding: 2px 6px; border-radius: 4px; color: #00ff88;">mobilecli start server</code></li>
+            <li>Your devices will appear in the selector above</li>
+          </ol>
+        </div>
+      </div>
+
+      <div id="device-preview" class="device-preview-container hidden">
+        <div class="device-frame ios" id="device-frame">
+          <!-- Physical buttons -->
+          <div class="device-power-button"></div>
+          <div class="device-volume-buttons">
+            <div class="device-volume-button"></div>
+            <div class="device-volume-button"></div>
+          </div>
+          
+          <!-- Notch for iOS -->
+          <div class="device-notch" id="device-notch"></div>
+          
+          <!-- Screen -->
+          <div class="device-screen">
+            <!-- Status bar -->
+            <div class="device-statusbar">
+              <span class="statusbar-time" id="device-time">9:41</span>
+              <div class="statusbar-icons">
+                <svg width="16" height="12" viewBox="0 0 16 12" fill="white">
+                  <path d="M0 6c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4zm12 0c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z"/>
+                </svg>
+                <svg width="18" height="12" viewBox="0 0 18 12" fill="white">
+                  <rect x="1" y="1" width="14" height="10" rx="2" fill="none" stroke="white" stroke-width="1.5"/>
+                  <rect x="16" y="4" width="2" height="4" rx="1" fill="white"/>
+                </svg>
+              </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="device-content">
+              <div class="device-grid-bg"></div>
+              <div class="device-app-icon">
+                <img src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4" alt="Mobiledeck">
+              </div>
+              <div class="device-app-name">Mobiledeck</div>
+              <div class="device-app-subtitle">Device Preview Active</div>
+              <div class="device-info-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="device-model">Connected</span>
+              </div>
+            </div>
+            
+            <!-- Home indicator -->
+            <div class="device-home-indicator" id="device-home-indicator"></div>
+          </div>
+
+          <!-- Floating control buttons -->
+          <div class="device-controls">
+            <button class="control-btn" onclick="rotateDevice()" title="Rotate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+              </svg>
+              <span class="control-text">Rotate Device</span>
+            </button>
+
+            <button class="control-btn" onclick="takeScreenshot()" title="Screenshot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span class="control-text">Take Screenshot</span>
+            </button>
+
+            <button class="control-btn" id="record-btn" onclick="toggleRecording()" title="Record">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+              </svg>
+              <span class="control-text">Start Recording</span>
+            </button>
+
+            <div class="control-separator"></div>
+
+            <button class="control-btn" onclick="deviceHome()" title="Home">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span class="control-text">Home Button</span>
+            </button>
+
+            <button class="control-btn" onclick="deviceBack()" title="Back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+              </svg>
+              <span class="control-text">Back Button</span>
+            </button>
+
+            <button class="control-btn" onclick="deviceRecents()" title="Recents">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <span class="control-text">Recent Apps</span>
+            </button>
+
+            <div class="control-separator"></div>
+
+            <button class="control-btn" onclick="increaseVolume()" title="Volume Up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+              <span class="control-text">Volume Up</span>
+            </button>
+
+            <button class="control-btn" onclick="decreaseVolume()" title="Volume Down">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <line x1="23" y1="9" x2="17" y2="15"/>
+                <line x1="17" y1="9" x2="23" y2="15"/>
+              </svg>
+              <span class="control-text">Volume Down</span>
+            </button>
+
+            <button class="control-btn" onclick="togglePower()" title="Power">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v10"/>
+                <path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
+              </svg>
+              <span class="control-text">Power</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentProvider = '';
+    let userEmail = '';
+    let currentPlatform = 'ios';
+    let isProfileMenuOpen = false;
+    let isGuestMode = false;
+
+    function loginWithProvider(provider) {
+      currentProvider = provider;
+      document.getElementById('welcome-screen').classList.add('hidden');
+      document.getElementById('email-screen').classList.remove('hidden');
+    }
+
+    function skipLogin() {
+      isGuestMode = true;
+      userEmail = 'guest@mobiledeck.local';
+      
+      document.getElementById('welcome-screen').classList.add('hidden');
+      document.getElementById('dashboard-screen').classList.remove('hidden');
+
+      // Update user info in header for guest
+      document.getElementById('header-name').textContent = 'Guest User';
+      document.getElementById('header-email').textContent = 'Continue as guest';
+      document.getElementById('header-avatar').textContent = 'G';
+      
+      // Load devices for default platform
+      loadDevicesForPlatform(currentPlatform);
+    }
+
+    function submitEmail() {
+      const email = document.getElementById('email').value;
+      if (!email || !email.includes('@')) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      isGuestMode = false;
+      userEmail = email;
+      document.getElementById('email-screen').classList.add('hidden');
+      document.getElementById('dashboard-screen').classList.remove('hidden');
+
+      // Update user info in header
+      const name = email.split('@')[0];
+      const displayName = name.charAt(0).toUpperCase() + name.slice(1);
+      const initial = name.charAt(0).toUpperCase();
+      
+      document.getElementById('header-name').textContent = displayName;
+      document.getElementById('header-email').textContent = email;
+      document.getElementById('header-avatar').textContent = initial;
+      
+      // Load devices for default platform
+      loadDevicesForPlatform(currentPlatform);
+    }
+
+    function goBack() {
+      document.getElementById('email-screen').classList.add('hidden');
+      document.getElementById('welcome-screen').classList.remove('hidden');
+    }
+
+    function toggleProfileMenu() {
+      isProfileMenuOpen = !isProfileMenuOpen;
+      const dropdown = document.getElementById('profile-dropdown');
+      const button = document.querySelector('.profile-button');
+      
+      if (isProfileMenuOpen) {
+        dropdown.classList.add('open');
+        button.classList.add('open');
+      } else {
+        dropdown.classList.remove('open');
+        button.classList.remove('open');
+      }
+    }
+
+    function logout() {
+      closeProfileMenu();
+      document.getElementById('dashboard-screen').classList.add('hidden');
+      document.getElementById('welcome-screen').classList.remove('hidden');
+      userEmail = '';
+      currentProvider = '';
+      isGuestMode = false;
+      
+      // Reset device preview
+      document.getElementById('empty-state').classList.remove('hidden');
+      document.getElementById('device-preview').classList.add('hidden');
+      document.getElementById('device-select').value = '';
+    }
+
+    function closeProfileMenu() {
+      isProfileMenuOpen = false;
+      document.getElementById('profile-dropdown').classList.remove('open');
+      document.querySelector('.profile-button').classList.remove('open');
+    }
+
+    function showTerms() {
+      closeProfileMenu();
+      alert('Terms of Service\n\nThis would open your terms of service page.');
+      return false;
+    }
+
+    function showPolicy() {
+      closeProfileMenu();
+      alert('Privacy Policy\n\nThis would open your privacy policy page.');
+      return false;
+    }
+
+    function showContact() {
+      closeProfileMenu();
+      alert('Contact Us\n\nEmail: support@mobiledeck.io\nThis would open your contact form.');
+      return false;
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const profileMenu = document.querySelector('.profile-menu');
+      if (profileMenu && !profileMenu.contains(event.target) && isProfileMenuOpen) {
+        closeProfileMenu();
+      }
+    });
+
+    function selectPlatform(platform) {
+      currentPlatform = platform;
+      
+      // Update active tab
+      document.querySelectorAll('.platform-icon').forEach(icon => {
+        icon.classList.remove('active');
+        if (icon.dataset.platform === platform) {
+          icon.classList.add('active');
+        }
+      });
+
+      // Load devices for selected platform
+      loadDevicesForPlatform(platform);
+      
+      // Reset device selection
+      document.getElementById('device-select').value = '';
+      document.getElementById('empty-state').classList.remove('hidden');
+      document.getElementById('device-preview').classList.add('hidden');
+    }
+
+    function loadDevicesForPlatform(platform) {
+      const select = document.getElementById('device-select');
+      
+      if (platform === 'ios') {
+        select.innerHTML = `
+          <option value="">Select an iOS device...</option>
+          <option value="iphone-14">iPhone 14 Pro (iOS 17.2)</option>
+          <option value="iphone-15">iPhone 15 (iOS 17.3)</option>
+          <option value="ipad-pro">iPad Pro 12.9" (iOS 17.2)</option>
+          <option value="simulator-iphone">iPhone Simulator (iOS 17)</option>
+        `;
+      } else if (platform === 'android') {
+        select.innerHTML = `
+          <option value="">Select an Android device...</option>
+          <option value="pixel-7">Google Pixel 7 (Android 14)</option>
+          <option value="pixel-8">Google Pixel 8 Pro (Android 14)</option>
+          <option value="samsung-s23">Samsung Galaxy S23 (Android 14)</option>
+          <option value="emulator-pixel">Pixel 7 Emulator (API 34)</option>
+        `;
+      } else if (platform === 'remote') {
+        select.innerHTML = `
+          <option value="">Select a remote device...</option>
+          <option value="remote-ios-1">Remote iOS Device #1</option>
+          <option value="remote-android-1">Remote Android Device #1</option>
+          <option value="remote-lab">Device Lab Pool</option>
+        `;
+      }
+    }
+
+    function selectDevice() {
+      const select = document.getElementById('device-select');
+      const selectedValue = select.value;
+      
+      if (selectedValue) {
+        // Hide empty state, show device preview
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('device-preview').classList.remove('hidden');
+        
+        // Get device info
+        const selectedOption = select.options[select.selectedIndex];
+        const deviceName = selectedOption.text;
+        const deviceFrame = document.getElementById('device-frame');
+        const deviceNotch = document.getElementById('device-notch');
+        const deviceHomeIndicator = document.getElementById('device-home-indicator');
+        const deviceModel = document.getElementById('device-model');
+        
+        // Update device model badge
+        deviceModel.textContent = deviceName;
+        
+        // Determine if iOS or Android based on selection
+        if (selectedValue.includes('iphone') || selectedValue.includes('ipad') || selectedValue.includes('simulator-iphone')) {
+          deviceFrame.className = 'device-frame ios';
+          deviceNotch.style.display = 'block';
+          deviceHomeIndicator.style.display = 'block';
+        } else {
+          deviceFrame.className = 'device-frame android';
+          deviceNotch.style.display = 'none';
+          deviceHomeIndicator.style.display = 'block';
+        }
+      } else {
+        // Show empty state, hide device preview
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('device-preview').classList.add('hidden');
+      }
+    }
+
+    function copyCommand() {
+      navigator.clipboard.writeText('mobilecli start server --cors');
+      const btn = event.target;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    }
+
+    function copyInstallCommand() {
+      navigator.clipboard.writeText('npx @mobilenext/mobile-mcp@latest');
+      const btn = event.target;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    }
+
+    // Simulate device connection after 3 seconds (for demo)
+    setTimeout(() => {
+      if (userEmail) {
+        loadDevicesForPlatform(currentPlatform);
+      }
+    }, 3000);
+
+    // Update time every second
+    function updateDeviceTime() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const timeString = `${hours}:${minutes.toString().padStart(2, '0')}`;
+      const timeElement = document.getElementById('device-time');
+      if (timeElement) {
+        timeElement.textContent = timeString;
+      }
+    }
+
+    setInterval(updateDeviceTime, 1000);
+    updateDeviceTime();
+
+    // Device control functions
+    let isRecording = false;
+
+    function rotateDevice() {
+      alert('🔄 Device rotated');
+      // In real implementation, this would rotate the device screen
+    }
+
+    function takeScreenshot() {
+      const btn = event.target.closest('.control-btn');
+      btn.style.transform = 'translateX(-4px) scale(0.9)';
+      setTimeout(() => {
+        btn.style.transform = '';
+        alert('📸 Screenshot captured!');
+      }, 200);
+      // In real implementation, this would capture the device screen
+    }
+
+    function toggleRecording() {
+      isRecording = !isRecording;
+      const btn = document.getElementById('record-btn');
+      const controlText = btn.querySelector('.control-text');
+      
+      if (isRecording) {
+        btn.classList.add('active');
+        controlText.textContent = 'Stop Recording';
+        alert('🔴 Recording started');
+      } else {
+        btn.classList.remove('active');
+        controlText.textContent = 'Start Recording';
+        alert('⏹️ Recording stopped');
+      }
+    }
+
+    function deviceHome() {
+      alert('🏠 Home button pressed');
+      // In real implementation, this would send home command to device
+    }
+
+    function deviceBack() {
+      alert('⬅️ Back button pressed');
+      // In real implementation, this would send back command to device
+    }
+
+    function deviceRecents() {
+      alert('📱 Recent apps opened');
+      // In real implementation, this would show recent apps
+    }
+
+    function increaseVolume() {
+      alert('🔊 Volume increased');
+      // In real implementation, this would increase device volume
+    }
+
+    function decreaseVolume() {
+      alert('🔉 Volume decreased');
+      // In real implementation, this would decrease device volume
+    }
+
+    function togglePower() {
+      alert('⚡ Power button pressed');
+      // In real implementation, this would toggle device power/screen
+    }
+  </script>
+</body>
+</html>
