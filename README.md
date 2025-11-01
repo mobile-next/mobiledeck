@@ -1,8 +1,4 @@
-<a href="https://marketplace.visualstudio.com/items?itemName=mobilenext.mobiledeck">
-    <img src="https://img.shields.io/badge/vscode-install_extension-blue" alt="install in vscode" />
-</a>
-  
-# Mobile Deck - Preview and interact with iOS/Android devices
+# Mobile Deck - View, control and manage all your Android and iOS real devices, simulators, and emulators
 
 A Visual Studio Code extension for previewing, interacting and managing your Android/iOS devices from [Mobile Next](https://mobilenexthq.com/).
 
@@ -33,3 +29,7 @@ With one-click Mobile MCP installation, you get instant device connectivity and 
 ## Installation
 
 Download directly from [Mobile Deck on VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=mobilenext.mobiledeck)
+
+<a href="https://marketplace.visualstudio.com/items?itemName=mobilenext.mobiledeck">
+    <img src="https://img.shields.io/badge/vscode-install_extension-blue" alt="install in vscode" />
+</a>
