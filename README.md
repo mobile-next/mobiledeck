@@ -4,11 +4,15 @@
   
 # Mobile Deck
 
-A Visual Studio Code extension for Android/iOS device previewing and management.
+Preview and manage your Android/iOS devices in a single pane view.
 
 ## Overview
 
 Mobiledeck is a VSCode extension that allows developers to view and interact with Android/iOS devices directly within their development environment.
+
+## Video
+
+Test video
 
 ### Key Features
 
@@ -20,8 +24,3 @@ Mobiledeck is a VSCode extension that allows developers to view and interact wit
 ## Installation
 
 Download directly from [Mobile Deck on VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=mobilenext.mobiledeck)
-
-## Contributing
-
-Interested in contributing? Check out [CONTRIBUTING.md](CONTRIBUTING.md) for setup and development instructions.
-

@@ -50,7 +50,7 @@ For faster UI development, you can work on the webview interface without rebuild
 - Direct browser access for faster testing and debugging
 
 **Requirements:**
-- mobilecli server needs to be started manually on localhost:12000. Simply run `mobilecli start server --cors`.
+- mobilecli server needs to be started manually on localhost:12000. Simply run `mobilecli server start --cors`.
 
 To start an http server and webpack on watch, simply run:
 ```bash
