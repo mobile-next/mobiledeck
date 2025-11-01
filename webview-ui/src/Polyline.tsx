@@ -16,7 +16,7 @@ export const Polyline: React.FC<PolylineProps> = ({ points }) => {
 		>
 			<polyline
 				fill="none"
-				stroke="#ffff00"
+				stroke="#00ff88"
 				strokeWidth="5"
 				strokeLinecap="round"
 				strokeLinejoin="round"
