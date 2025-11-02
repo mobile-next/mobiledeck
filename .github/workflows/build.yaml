@@ -13,12 +13,55 @@ on:
       - main
 
 jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm install
+        cd webview-ui && npm install
+
+    - name: Lint
+      run: |
+        npm run lint || true
+        cd webview-ui
+        npm run lint || true
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm install
+        cd webview-ui && npm install
+
+    - name: Security
+      run: |
+        npm audit
+	cd webview-ui && npm audit
+
   build:
     runs-on: ubuntu-latest
-
+    needs: [lint, security]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -39,12 +82,6 @@ jobs:
         npm install
         cd webview-ui && npm install
 
-    - name: Lint
-      run: |
-        npm run lint || true
-        cd webview-ui
-        npm run lint || true
-
     - name: Build
       run: |
         make
@@ -56,11 +93,37 @@ jobs:
         name: mobiledeck
         path: |
           mobiledeck*.vsix
-        retention-days: 7
+        retention-days: 2
         overwrite: true
 
+  publish:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [build]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Update package.json version from release tag
+      run: |
+        VERSION=${{ github.ref_name }}
+        VERSION=${VERSION#v}
+        npm version $VERSION --no-git-tag-version
+        git diff
+
+    - name: Install dependencies
+      run: |
+        npm install
+        cd webview-ui && npm install
+
     - name: Publish to marketplace
-      if: github.ref_type == 'tag'
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
       run: |
@@ -72,7 +135,7 @@ jobs:
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-arm64
         # linux x64
         make clean build-linux-x64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-x64
         # linux arm64
         make clean build-linux-arm64
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-arm64
