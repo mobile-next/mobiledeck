@@ -72,11 +72,11 @@ jobs:
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-arm64
         # linux x64
         make clean build-linux-x64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-64
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-x64
         # linux arm64
         make clean build-linux-arm64
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-arm64
-        # linux win32-x64
+        # win32-x64
         make clean build-win32-x64
         npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target win32-x64
 
