@@ -55,7 +55,7 @@ jobs:
     - name: Security
       run: |
         npm audit
-	cd webview-ui && npm audit
+        cd webview-ui && npm audit
 
   build:
     runs-on: ubuntu-latest
