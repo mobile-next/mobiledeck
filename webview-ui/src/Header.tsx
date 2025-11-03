@@ -8,12 +8,12 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 	DropdownMenuSeparator,
-	DropdownMenuLabel,
-	DropdownMenuGroup
+	DropdownMenuLabel
 } from "./components/ui/dropdown-menu";
 
-import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Square, Power } from "lucide-react";
+import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Power } from "lucide-react";
 import { DeviceDescriptor } from "./models";
+import { AppSwitchIcon } from "./CustomIcons";
 
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
@@ -163,7 +163,7 @@ export const Header: React.FC<HeaderProps> = ({
 						onClick={onAppSwitch}
 						disabled={!selectedDevice}
 					>
-						<Square className={`h-3.5 w-3.5`} />
+						<AppSwitchIcon className="h-3.5 w-3.5" />
 					</Button>
 				)}
 

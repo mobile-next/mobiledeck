@@ -5,7 +5,7 @@ import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, 
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
 import vscode from './vscode';
-import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin, sanitizeMediaSkinUri } from './DeviceSkins';
+import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from './DeviceSkins';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -265,10 +265,8 @@ function DeviceViewPage() {
 					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
 					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
-					console.log("gilm: got media skins uri: " + message.mediaSkinsUri);
-					if (message.mediaSkinsUri) {
-						setMediaSkinsUri(message.mediaSkinsUri);
-					}
+					console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
+					setMediaSkinsUri(message.mediaSkinsUri);
 				}
 				break;
 			default:
@@ -291,6 +289,20 @@ function DeviceViewPage() {
 
 	const onPower = () => {
 		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'POWER' }).then();
+	};
+
+	const onRotateDevice = () => {
+		console.log('Rotate device requested');
+		// TODO: Implement device rotation
+	};
+
+
+	const onIncreaseVolume = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'VOLUME_UP' }).then();
+	};
+
+	const onDecreaseVolume = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'VOLUME_DOWN' }).then();
 	};
 
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
@@ -370,7 +382,7 @@ function DeviceViewPage() {
 	}, []);
 
 	return (
-		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-hidden">
+		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-x-visible overflow-y-auto">
 			{/* Header with controls */}
 			<Header
 				selectedDevice={selectedDevice}
@@ -395,6 +407,14 @@ function DeviceViewPage() {
 				onTap={handleTap}
 				onGesture={handleGesture}
 				onKeyDown={handleKeyDown}
+				onRotateDevice={onRotateDevice}
+				onTakeScreenshot={onTakeScreenshot}
+				onDeviceHome={onHome}
+				onDeviceBack={onBack}
+				onAppSwitch={onAppSwitch}
+				onIncreaseVolume={onIncreaseVolume}
+				onDecreaseVolume={onDecreaseVolume}
+				onTogglePower={onPower}
 			/>
 
 			{/* Status bar */}

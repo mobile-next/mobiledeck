@@ -59,27 +59,55 @@ export const AndroidDeviceSkin: DeviceSkin = {
 	borderRadius: 170,
 };
 
-// whitelist of allowed skin filenames
+// allowed skin filenames
 const ALLOWED_SKIN_FILES = [
 	'iPhone_with_island.png',
 	'iPhone_with_notch.png',
 	'android.png'
 ];
 
-// sanitize skin image filename: only allow whitelisted filenames, return canonical skin path.
-export const sanitizeMediaSkinUri = (filename: string): string => {
-	console.log(".... sanitizing " + filename);
-	if (filename.indexOf("..") !== -1) {
-		return "";
+export const isSanitizedSkinOverlayUri = (uriPrefix: string): boolean => {
+	// reject empty or undefined
+	if (!uriPrefix || uriPrefix.trim() === '') {
+		return false;
 	}
 
-	const basename = filename.split('/').pop() || '';
-	console.log(".... basename" + basename);
-	if (ALLOWED_SKIN_FILES.includes(basename)) {
-		return filename;
+	// reject path traversal attempts
+	if (uriPrefix.includes('..')) {
+		console.warn('rejected media skins uri with path traversal: ', uriPrefix);
+		return false;
 	}
 
-	return "";
+	// reject absolute paths (starting with /)
+	if (uriPrefix.startsWith('/')) {
+		console.warn('rejected absolute path for media skins uri: ', uriPrefix);
+		return false;
+	}
+
+	// reject backslashes (windows path traversal)
+	if (uriPrefix.includes('\\')) {
+		console.warn('rejected media skins uri with backslashes: ', uriPrefix);
+		return false;
+	}
+
+	// only allow paths that start with "skins" or contain "skins" as a directory component
+	// this ensures we're in a safe, local resource directory
+	const normalizedPath = uriPrefix.replace(/\/+/g, '/').replace(/\/$/, '');
+	if (!normalizedPath.startsWith('skins') && !normalizedPath.includes('/skins')) {
+		console.warn('rejected media skins uri not in skins directory: ', uriPrefix);
+		return false;
+	}
+
+	// check allowlist
+	const parts = normalizedPath.split('/');
+	const skinFile = parts[parts.length - 1];
+	if (!ALLOWED_SKIN_FILES.includes(skinFile)) {
+		console.warn('rejected media skins uri with non-allowed skin file: ', uriPrefix);
+		return false;
+	}
+
+	// all checks passed
+	return true;
 };
 
 export function getDeviceSkinForDevice(device: { platform: string; name: string }): DeviceSkin {
