@@ -59,7 +59,7 @@ export const AndroidDeviceSkin: DeviceSkin = {
 	borderRadius: 170,
 };
 
-// whitelist of allowed skin filenames
+// allowed skin filenames
 const ALLOWED_SKIN_FILES = [
 	'iPhone_with_island.png',
 	'iPhone_with_notch.png',
@@ -98,6 +98,15 @@ export const sanitizeMediaSkinsUriPrefix = (uriPrefix: string): string => {
 		return 'skins';
 	}
 
+	// check allowlist
+	const parts = normalizedPath.split('/');
+	const skinFile = parts[parts.length - 1];
+	if (!ALLOWED_SKIN_FILES.includes(skinFile)) {
+		console.warn('rejected media skins uri with non-allowed skin file: ', uriPrefix);
+		return 'skins';
+	}
+
+	// all checks passed
 	return normalizedPath;
 };
 
