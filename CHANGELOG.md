@@ -1,3 +1,7 @@
+## [0.0.12](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.12) (2025-11-03)
+
+- General: added device controls on the right-side of the mobile device
+
 ## [0.0.4](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.4) (2025-09-08)
 
 - General: changed design to open list of devices in a tree view manner
