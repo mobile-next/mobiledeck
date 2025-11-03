@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Wifi } from "lucide-react";
-import { DeviceDescriptor, ScreenSize } from "./models";
+import { DeviceDescriptor, DevicePlatform, ScreenSize } from "./models";
 import { DeviceSkin, sanitizeMediaSkinUri } from "./DeviceSkins";
 import { Polyline } from "./Polyline";
 import { DeviceControls } from "./DeviceControls";
@@ -24,8 +24,8 @@ export interface DeviceStreamProps {
 	onRotateDevice?: () => void;
 	onTakeScreenshot: () => void;
 	onDeviceHome: () => void;
-	onDeviceBack: () => void;
-	onDeviceRecents?: () => void;
+	onDeviceBack?: () => void;
+	onAppSwitch?: () => void;
 	onIncreaseVolume?: () => void;
 	onDecreaseVolume?: () => void;
 	onTogglePower?: () => void;
@@ -59,7 +59,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onTakeScreenshot,
 	onDeviceHome,
 	onDeviceBack,
-	onDeviceRecents,
+	onAppSwitch,
 	onIncreaseVolume,
 	onDecreaseVolume,
 	onTogglePower,
@@ -278,8 +278,8 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															onRotateDevice={onRotateDevice || (() => {})}
 															onTakeScreenshot={onTakeScreenshot}
 															onDeviceHome={onDeviceHome}
-															onDeviceBack={onDeviceBack}
-															onDeviceRecents={onDeviceRecents || (() => {})}
+															onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? onDeviceBack : undefined}
+															onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? onAppSwitch : undefined}
 															onIncreaseVolume={onIncreaseVolume || (() => {})}
 															onDecreaseVolume={onDecreaseVolume || (() => {})}
 															onTogglePower={onTogglePower || (() => {})}
@@ -323,8 +323,8 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															onRotateDevice={onRotateDevice || (() => {})}
 															onTakeScreenshot={onTakeScreenshot}
 															onDeviceHome={onDeviceHome}
-															onDeviceBack={onDeviceBack}
-															onDeviceRecents={onDeviceRecents || (() => {})}
+															onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? onDeviceBack : undefined}
+															onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? onAppSwitch : undefined}
 															onIncreaseVolume={onIncreaseVolume || (() => {})}
 															onDecreaseVolume={onDecreaseVolume || (() => {})}
 															onTogglePower={onTogglePower || (() => {})}

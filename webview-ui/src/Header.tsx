@@ -8,8 +8,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 	DropdownMenuSeparator,
-	DropdownMenuLabel,
-	DropdownMenuGroup
+	DropdownMenuLabel
 } from "./components/ui/dropdown-menu";
 
 import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Square, Power } from "lucide-react";

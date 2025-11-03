@@ -413,7 +413,7 @@ function DeviceViewPage() {
 				onTakeScreenshot={onTakeScreenshot}
 				onDeviceHome={onHome}
 				onDeviceBack={onBack}
-				onDeviceRecents={onAppSwitch}
+				onAppSwitch={onAppSwitch}
 				onIncreaseVolume={onIncreaseVolume}
 				onDecreaseVolume={onDecreaseVolume}
 				onTogglePower={onPower}
