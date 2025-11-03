@@ -19,45 +19,59 @@ interface ControlButtonProps {
 }
 
 const ControlButton: React.FC<ControlButtonProps> = ({ onClick, icon, text, isActive = false }) => {
+	const [isHovered, setIsHovered] = useState(false);
+	const [isPressed, setIsPressed] = useState(false);
+
 	return (
 		<button
-			className="control-btn"
 			onClick={onClick}
+			onMouseEnter={() => setIsHovered(true)}
+			onMouseLeave={() => {
+				setIsHovered(false);
+				setIsPressed(false);
+			}}
+			onMouseDown={() => setIsPressed(true)}
+			onMouseUp={() => setIsPressed(false)}
 			title={text}
 			style={{
-				width: '56px',
+				width: isHovered ? '150px' : '56px',
 				height: '56px',
-				background: isActive ? 'linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)' : '#1a1a1a',
-				border: isActive ? '1px solid #00ff88' : '1px solid #2a2a2a',
+				background: isActive
+					? 'linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)'
+					: (isHovered ? '#2a2a2a' : '#1a1a1a'),
+				border: (isActive || isHovered) ? '1px solid #00ff88' : '1px solid #2a2a2a',
 				borderRadius: '12px',
 				display: 'flex',
 				alignItems: 'center',
 				justifyContent: 'flex-start',
 				cursor: 'pointer',
-				transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.3s',
-				position: 'absolute',
+				transition: isHovered ? 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0s' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.3s',
+				position: isHovered ? 'relative' : 'absolute',
 				overflow: 'hidden',
 				padding: '0 16px',
 				color: isActive ? '#0a0a0a' : '#888',
-				left: 0
+				left: 0,
+				boxShadow: isHovered ? '0 8px 24px rgba(0, 255, 136, 0.2)' : 'none',
+				zIndex: isHovered ? 1001 : 'auto',
+				transform: isPressed ? 'translateX(0px) scale(0.98)' : 'translateX(0px)',
 			}}
 		>
 			<div style={{
 				width: '24px',
 				height: '24px',
-				color: isActive ? '#0a0a0a' : '#888',
-				transition: 'color 0.3s 0.3s',
+				color: isActive ? '#0a0a0a' : (isHovered ? '#00ff88' : '#888'),
+				transition: isHovered ? 'color 0.3s 0s' : 'color 0.3s 0.3s',
 				flexShrink: 0
 			}}>
 				{icon}
 			</div>
-			<span className="control-text" style={{
+			<span style={{
 				marginLeft: '12px',
 				fontSize: '12px',
 				color: isActive ? '#0a0a0a' : '#e0e0e0',
 				whiteSpace: 'nowrap',
-				opacity: 0,
-				transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.3s'
+				opacity: isHovered ? 1 : 0,
+				transition: isHovered ? 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0s' : 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.3s'
 			}}>
 				{text}
 			</span>
@@ -152,7 +166,6 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
 
 	return (
 		<div
-			className="device-controls"
 			style={{
 				display: 'flex',
 				flexDirection: 'column',
@@ -163,46 +176,6 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
 				width: '56px'
 			}}
 		>
-			<style>{`
-        .control-btn:hover {
-          width: 150px !important;
-          background: #2a2a2a !important;
-          border-color: #00ff88 !important;
-          transform: translateX(0px) !important;
-          box-shadow: 0 8px 24px rgba(0, 255, 136, 0.2) !important;
-          z-index: 1001 !important;
-          position: relative !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0s !important;
-        }
-
-        .control-btn:hover svg {
-          color: #00ff88 !important;
-          transition: color 0.3s 0s !important;
-        }
-
-        .control-btn:hover .control-text {
-          opacity: 1 !important;
-          transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0s !important;
-        }
-
-        .control-btn:active {
-          transform: translateX(0px) scale(0.98) !important;
-        }
-
-        .control-btn.active {
-          background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%) !important;
-          border-color: #00ff88 !important;
-        }
-
-        .control-btn.active svg {
-          color: #0a0a0a !important;
-        }
-
-        .control-btn.active .control-text {
-          color: #0a0a0a !important;
-        }
-      `}</style>
-
 			{false && (
 				<div style={{ position: 'relative', height: '56px' }}>
 					<ControlButton
