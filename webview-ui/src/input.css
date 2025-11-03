@@ -5,7 +5,7 @@
 	border-radius: 50%;
 	width: 40px;
 	height: 40px;
-	background-color: rgba(255, 255, 0, 1.0);
+	background-color: #00ff88;
 	transform: translate(-50%, -50%) scale(0);
 	animation: click-effect 0.4s ease-out;
 	pointer-events: none;

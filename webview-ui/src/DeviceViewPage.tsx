@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './Header';
 import { DeviceStream, GesturePoint } from './DeviceStream';
+import { Footer } from './Footer';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
@@ -293,6 +294,20 @@ function DeviceViewPage() {
 		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'POWER' }).then();
 	};
 
+	const onRotateDevice = () => {
+		console.log('Rotate device requested');
+		// TODO: Implement device rotation
+	};
+
+
+	const onIncreaseVolume = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'VOLUME_UP' }).then();
+	};
+
+	const onDecreaseVolume = () => {
+		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'VOLUME_DOWN' }).then();
+	};
+
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
 		return `screenshot-${device.name}-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
 	};
@@ -370,7 +385,7 @@ function DeviceViewPage() {
 	}, []);
 
 	return (
-		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-hidden">
+		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-x-visible overflow-y-auto">
 			{/* Header with controls */}
 			<Header
 				selectedDevice={selectedDevice}
@@ -395,6 +410,14 @@ function DeviceViewPage() {
 				onTap={handleTap}
 				onGesture={handleGesture}
 				onKeyDown={handleKeyDown}
+				onRotateDevice={onRotateDevice}
+				onTakeScreenshot={onTakeScreenshot}
+				onDeviceHome={onHome}
+				onDeviceBack={onBack}
+				onDeviceRecents={onAppSwitch}
+				onIncreaseVolume={onIncreaseVolume}
+				onDecreaseVolume={onDecreaseVolume}
+				onTogglePower={onPower}
 			/>
 
 			{/* Status bar */}
@@ -403,6 +426,9 @@ function DeviceViewPage() {
 				selectedDevice={selectedDevice}
 				fpsCount={fpsCount}
 			/>
+
+			{/* Footer */}
+			<Footer />
 		</div>);
 }
 
