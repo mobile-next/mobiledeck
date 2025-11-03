@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Wifi } from "lucide-react";
 import { DeviceDescriptor, DevicePlatform, ScreenSize } from "./models";
-import { DeviceSkin, sanitizeMediaSkinUri } from "./DeviceSkins";
+import { DeviceSkin } from "./DeviceSkins";
 import { Polyline } from "./Polyline";
 import { DeviceControls } from "./DeviceControls";
 
@@ -64,9 +64,6 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onDecreaseVolume,
 	onTogglePower,
 }) => {
-	// Use whitelisted device skin filename and convert to canonical skin path
-	const safeSkinOverlayUri = sanitizeMediaSkinUri(skinOverlayUri);
-
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
 	const [gestureState, setGestureState] = useState<GestureState>({
 		isGesturing: false,
@@ -205,14 +202,14 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 								<>
 									{imageUrl !== "" && (
 										<>
-											{safeSkinOverlayUri ? (
+											{skinOverlayUri ? (
 												// with device skin - wrap in container for controls positioning
 												<div className="relative flex items-center">
 													<div className="relative">
 														{/* device skin frame */}
 														<img
 															ref={deviceSkinRef}
-															src={safeSkinOverlayUri}
+															src={skinOverlayUri}
 															alt=""
 															className="relative"
 															style={{ maxHeight: 'calc(100vh - 200px)', maxWidth: 'calc(100vw - 2em)' }}
@@ -258,7 +255,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 														</div>
 														{/* device skin frame overlay on top */}
 														<img
-															src={safeSkinOverlayUri}
+															src={skinOverlayUri}
 															alt=""
 															className="pointer-events-none"
 															style={{

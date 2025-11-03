@@ -5,7 +5,7 @@ import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, 
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
 import vscode from './vscode';
-import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin, sanitizeMediaSkinUri } from './DeviceSkins';
+import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin, sanitizeMediaSkinUri, sanitizeMediaSkinsUriPrefix } from './DeviceSkins';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -265,9 +265,11 @@ function DeviceViewPage() {
 					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
 					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
-					console.log("gilm: got media skins uri: " + message.mediaSkinsUri);
+					console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
 					if (message.mediaSkinsUri) {
-						setMediaSkinsUri(message.mediaSkinsUri);
+						const sanitizedUri = sanitizeMediaSkinsUriPrefix(message.mediaSkinsUri);
+						console.log("mobiledeck: sanitized media skins uri: " + sanitizedUri);
+						setMediaSkinsUri(sanitizedUri);
 					}
 				}
 				break;
