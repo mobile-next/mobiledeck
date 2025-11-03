@@ -40,13 +40,7 @@ interface OnInitializedMessage extends Message {
 	command: 'onInitialized';
 }
 
-interface InstallMCPMessage extends Message {
-	command: 'installMCP';
-	agent?: string;
-	commandText?: string;
-}
-
-type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage | ConfigureMessage | InstallMCPMessage;
+type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage | ConfigureMessage;
 
 export class DeviceViewProvider {
 
@@ -97,27 +91,9 @@ export class DeviceViewProvider {
 				this.updateWebviewTitle(webviewPanel, message.device.name);
 				break;
 
-			case 'installMCP':
-				this.verbose('Installing MCP server...');
-				await this.installMCPServer(message.commandText);
-				break;
-
 			default:
 				vscode.window.showErrorMessage('Unknown message: ' + JSON.stringify(message));
 				break;
-		}
-	}
-
-	private async installMCPServer(commandText?: string): Promise<void> {
-		try {
-			const terminal = vscode.window.createTerminal('Install MCP Server');
-			terminal.show();
-			const command = commandText || 'code --add-mcp \'{"name":"mobile-mcp","command":"npx","args":["-y","@mobilenext/mobile-mcp@latest"]}\'';
-			terminal.sendText(command);
-			vscode.window.showInformationMessage('MCP Server installation command sent to terminal');
-		} catch (error) {
-			this.verbose('Error installing MCP server: ' + error);
-			vscode.window.showErrorMessage('Failed to install MCP server: ' + error);
 		}
 	}
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './Header';
 import { DeviceStream, GesturePoint } from './DeviceStream';
-import { Footer } from './Footer';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
@@ -426,9 +425,6 @@ function DeviceViewPage() {
 				selectedDevice={selectedDevice}
 				fpsCount={fpsCount}
 			/>
-
-			{/* Footer */}
-			<Footer />
 		</div>);
 }
 
