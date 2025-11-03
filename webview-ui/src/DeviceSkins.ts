@@ -66,28 +66,28 @@ const ALLOWED_SKIN_FILES = [
 	'android.png'
 ];
 
-export const sanitizeMediaSkinsUriPrefix = (uriPrefix: string): string => {
+export const isSanitizedSkinOverlayUri = (uriPrefix: string): boolean => {
 	// reject empty or undefined
 	if (!uriPrefix || uriPrefix.trim() === '') {
-		return 'skins';
+		return false;
 	}
 
 	// reject path traversal attempts
 	if (uriPrefix.includes('..')) {
 		console.warn('rejected media skins uri with path traversal: ', uriPrefix);
-		return 'skins';
+		return false;
 	}
 
 	// reject absolute paths (starting with /)
 	if (uriPrefix.startsWith('/')) {
 		console.warn('rejected absolute path for media skins uri: ', uriPrefix);
-		return 'skins';
+		return false;
 	}
 
 	// reject backslashes (windows path traversal)
 	if (uriPrefix.includes('\\')) {
 		console.warn('rejected media skins uri with backslashes: ', uriPrefix);
-		return 'skins';
+		return false;
 	}
 
 	// only allow paths that start with "skins" or contain "skins" as a directory component
@@ -95,7 +95,7 @@ export const sanitizeMediaSkinsUriPrefix = (uriPrefix: string): string => {
 	const normalizedPath = uriPrefix.replace(/\/+/g, '/').replace(/\/$/, '');
 	if (!normalizedPath.startsWith('skins') && !normalizedPath.includes('/skins')) {
 		console.warn('rejected media skins uri not in skins directory: ', uriPrefix);
-		return 'skins';
+		return false;
 	}
 
 	// check allowlist
@@ -103,11 +103,11 @@ export const sanitizeMediaSkinsUriPrefix = (uriPrefix: string): string => {
 	const skinFile = parts[parts.length - 1];
 	if (!ALLOWED_SKIN_FILES.includes(skinFile)) {
 		console.warn('rejected media skins uri with non-allowed skin file: ', uriPrefix);
-		return 'skins';
+		return false;
 	}
 
 	// all checks passed
-	return normalizedPath;
+	return true;
 };
 
 export function getDeviceSkinForDevice(device: { platform: string; name: string }): DeviceSkin {

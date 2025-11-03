@@ -5,7 +5,7 @@ import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, 
 import { JsonRpcClient } from './JsonRpcClient';
 import { MjpegStream } from './MjpegStream';
 import vscode from './vscode';
-import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin, sanitizeMediaSkinUri, sanitizeMediaSkinsUriPrefix } from './DeviceSkins';
+import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from './DeviceSkins';
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -266,11 +266,7 @@ function DeviceViewPage() {
 					setServerPort(message.serverPort);
 					setSelectedDevice(message.device);
 					console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
-					if (message.mediaSkinsUri) {
-						const sanitizedUri = sanitizeMediaSkinsUriPrefix(message.mediaSkinsUri);
-						console.log("mobiledeck: sanitized media skins uri: " + sanitizedUri);
-						setMediaSkinsUri(sanitizedUri);
-					}
+					setMediaSkinsUri(message.mediaSkinsUri);
 				}
 				break;
 			default:

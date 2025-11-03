@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Wifi } from "lucide-react";
 import { DeviceDescriptor, DevicePlatform, ScreenSize } from "./models";
-import { DeviceSkin } from "./DeviceSkins";
+import { DeviceSkin, isSanitizedSkinOverlayUri } from "./DeviceSkins";
 import { Polyline } from "./Polyline";
 import { DeviceControls } from "./DeviceControls";
 
@@ -202,7 +201,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 								<>
 									{imageUrl !== "" && (
 										<>
-											{skinOverlayUri ? (
+											{skinOverlayUri && isSanitizedSkinOverlayUri(skinOverlayUri) ? (
 												// with device skin - wrap in container for controls positioning
 												<div className="relative flex items-center">
 													<div className="relative">
