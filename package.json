@@ -1,7 +1,7 @@
 {
   "name": "mobiledeck",
-  "displayName": "Mobile Deck",
-  "description": "View, control and manage all your Android and iOS devices, simulators, and emulators",
+  "displayName": "Mobile Deck (iOS/Android Device Manager and Preview)",
+  "description": "View, control and manage all your Android and iOS real devices, simulators, and emulators",
   "icon": "media/mobilenexthq_logo.png",
   "version": "0.0.1",
   "publisher": "mobilenext",
@@ -14,7 +14,7 @@
     "Debuggers", "Testing"
   ],
   "keywords": [
-    "mobile", "xcode", "adb", "emulator", "simulator", "ios", "android"
+    "mobile", "xcode", "adb", "emulator", "simulator", "ios", "android", "preview", "mcp"
   ],
   "repository": {
     "type": "git",
@@ -96,7 +96,7 @@
       "activitybar": [
         {
           "id": "mobiledeck",
-          "title": "Mobiledeck",
+          "title": "Mobile Deck",
           "icon": "media/mobiledeck.svg"
         }
       ]
