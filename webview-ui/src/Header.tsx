@@ -13,7 +13,7 @@ import {
 
 import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Power } from "lucide-react";
 import { DeviceDescriptor } from "./models";
-import { AppSwitchIcon } from "./DeviceControls";
+import { AppSwitchIcon } from "./CustomIcons";
 
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
