@@ -64,7 +64,7 @@ function SidebarPage({
 }: SidebarPageProps) {
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
-	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [isRefreshing, setIsRefreshing] = useState(true);
 	const [serverPort, setServerPort] = useState<number>(0);
 	const [userEmail, setUserEmail] = useState<string>('');
 
@@ -72,23 +72,48 @@ function SidebarPage({
 
 	useEffect(() => {
 		jsonRpcClientRef.current = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+
+		// fetch devices when serverPort changes
+		fetchDevices();
+
+		// poll for devices every 2 seconds
+		const intervalId = setInterval(() => {
+			fetchDevices();
+		}, 2000);
+
+		return () => {
+			clearInterval(intervalId);
+		};
 	}, [serverPort]);
 
 	const getJsonRpcClient = () => jsonRpcClientRef.current;
 
 	const fetchDevices = async () => {
 		try {
+			if (serverPort === 0) {
+				// server port not yet set, probably still launching mobilecli server
+				// return;
+				console.log("gilm: server port not set yet");
+				return;
+			}
+
 			setIsRefreshing(true);
 			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
 			console.log('sidebar: devices list', result);
+
 			// sort devices: ios first, then android, each group sorted by name
-			const iosDevices = result.devices.filter(d => d.platform === DevicePlatform.IOS).sort((a, b) => a.name.localeCompare(b.name));
-			const androidDevices = result.devices.filter(d => d.platform === DevicePlatform.ANDROID).sort((a, b) => a.name.localeCompare(b.name));
+			const iosDevices = result.devices.
+				filter(d => d.platform === DevicePlatform.IOS).
+				sort((a, b) => a.name.localeCompare(b.name));
+			const androidDevices = result.devices.
+				filter(d => d.platform === DevicePlatform.ANDROID).
+				sort((a, b) => a.name.localeCompare(b.name));
+
 			const sortedDevices = [...iosDevices, ...androidDevices];
 			setDevices(sortedDevices);
+			setIsRefreshing(false);
 		} catch (error) {
 			console.error('sidebar: error fetching devices:', error);
-		} finally {
 			setIsRefreshing(false);
 		}
 	};
@@ -130,17 +155,8 @@ function SidebarPage({
 			command: 'onInitialized'
 		});
 
-		// fetch devices on mount
-		fetchDevices();
-
-		// poll for devices every 2 seconds
-		const intervalId = setInterval(() => {
-			fetchDevices();
-		}, 2000);
-
 		return () => {
 			window.removeEventListener('message', messageHandler);
-			clearInterval(intervalId);
 		};
 	}, []);
 
