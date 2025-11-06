@@ -1,16 +1,24 @@
 import * as vscode from 'vscode';
+import * as crypto from 'node:crypto';
 import { DeviceDescriptor } from './DeviceDescriptor';
 import { DeviceViewProvider } from './DeviceViewProvider';
 import { MobileCliServer } from './MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
+import { Telemetry } from './utils/Telemetry';
 
 class MobiledeckExtension {
 	private cliServer: MobileCliServer | null = null;
 	private sidebarProvider: SidebarViewProvider | null = null;
+	private telemetry: Telemetry = new Telemetry('');
 
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.connect command executed for device:', device.id);
 		if (device) {
+			this.telemetry.sendEvent('connect_to_local_device', {
+				DeviceType: device.type,
+				DevicePlatform: device.platform,
+			});
+
 			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
@@ -19,6 +27,11 @@ class MobiledeckExtension {
 	private onOpenDevicePanel(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.openDevicePanel command executed for device:', device.id);
 		if (device) {
+			this.telemetry.sendEvent('connect_to_local_device', {
+				DeviceType: device.type,
+				DevicePlatform: device.platform,
+			});
+
 			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
@@ -26,6 +39,7 @@ class MobiledeckExtension {
 
 	private onRefreshDevices() {
 		console.log('mobiledeck.refreshDevices command executed');
+		this.telemetry.sendEvent('refresh_devices_clicked');
 		// send message to sidebar to refresh devices
 		if (this.sidebarProvider) {
 			this.sidebarProvider.refreshDevices();
@@ -34,12 +48,16 @@ class MobiledeckExtension {
 
 	private onAddDevice() {
 		console.log('mobiledeck.addDevice command executed');
+		this.telemetry.sendEvent('add_device_clicked');
+
 		// TODO: implement add device functionality
 		vscode.window.showInformationMessage('Add device functionality coming soon');
 	}
 
 	private async onSignOut(context: vscode.ExtensionContext) {
 		console.log('mobiledeck.signOut command executed');
+
+		this.telemetry.sendEvent('signed_out');
 
 		// clear all stored tokens
 		const keys = [
@@ -69,15 +87,28 @@ class MobiledeckExtension {
 	public async activate(context: vscode.ExtensionContext) {
 		console.log('Mobiledeck extension is being activated');
 
+		// get or create distinct_id from secrets
+		let distinctId = await context.secrets.get('mobiledeck.telemetry.distinct_id');
+		if (!distinctId) {
+			distinctId = crypto.randomUUID();
+			await context.secrets.store('mobiledeck.telemetry.distinct_id', distinctId);
+		}
+
+		this.telemetry = new Telemetry(distinctId);
+
 		this.cliServer = new MobileCliServer(context);
 		this.cliServer.launchMobilecliServer()
 			.catch(error => {
 				console.error('failed to launch mobilecli server:', error);
+				this.telemetry.sendEvent('mobilecli_server_start_failed', {
+					Error: error.message || 'unknown error'
+				});
+
 				vscode.window.showErrorMessage('Failed to start Mobiledeck server');
 			});
 
 		// register the sidebar webview provider
-		this.sidebarProvider = new SidebarViewProvider(context, this.cliServer);
+		this.sidebarProvider = new SidebarViewProvider(context, this.cliServer, this.telemetry);
 		context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider('mobiledeckDevices', this.sidebarProvider)
 		);
@@ -99,6 +130,10 @@ class MobiledeckExtension {
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
 
+		this.telemetry.sendEvent('panel_activated', {
+			IsLoggedIn: !!email
+		});
+
 		console.log('Mobiledeck extension activated successfully');
 	}
 
@@ -116,8 +151,11 @@ class MobiledeckExtension {
 		context.subscriptions.push(disposable);
 	}
 
-	public deactivate() {
+	public async deactivate() {
 		console.log('Mobiledeck extension deactivated');
+
+		await this.telemetry.sendEvent('panel_deactivated');
+		await this.telemetry.flush();
 
 		if (this.cliServer) {
 			this.cliServer.stopMobilecliServer();
@@ -133,5 +171,5 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-	extension.deactivate();
+	return extension.deactivate();
 }

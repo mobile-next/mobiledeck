@@ -3,6 +3,7 @@ import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 import { OAuthCallbackServer, OAuthTokens } from './OAuthCallbackServer';
 import { OAUTH_CONFIG } from './config/oauth';
+import { Telemetry } from './utils/Telemetry';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -10,7 +11,8 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
-		private readonly cliServer: MobileCliServer
+		private readonly cliServer: MobileCliServer,
+		private readonly telemetry: Telemetry
 	) {
 		this.oauthServer = new OAuthCallbackServer();
 	}
@@ -57,6 +59,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
+					this.telemetry.sendEvent('login_clicked', {
+						Provider: message.provider.toLowerCase()
+					});
+
 					await this.handleOAuthLogin(message.provider, webviewView);
 					break;
 
@@ -107,6 +113,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				if (email) {
 					await this.updateSignOutButtonTitle(email);
 				}
+
+				this.telemetry.sendEvent('login_successful', {
+					Provider: provider.toLowerCase()
+				});
 
 				await this.switchToDeviceList();
 			};
