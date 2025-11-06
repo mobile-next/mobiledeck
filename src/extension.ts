@@ -155,7 +155,7 @@ class MobiledeckExtension {
 		console.log('Mobiledeck extension deactivated');
 
 		await this.telemetry.sendEvent('panel_deactivated');
-		await this.telemetry.dispose();
+		await this.telemetry.flush();
 
 		if (this.cliServer) {
 			this.cliServer.stopMobilecliServer();
