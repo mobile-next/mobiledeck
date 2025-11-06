@@ -1,3 +1,7 @@
+## [0.0.13](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.13) (2025-11-06)
+
+- General: added basic telemetry for debugging
+
 ## [0.0.12](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.12) (2025-11-03)
 
 - General: added device controls on the right-side of the mobile device
