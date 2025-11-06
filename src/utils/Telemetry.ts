@@ -28,7 +28,7 @@ export class Telemetry {
 				return;
 			}
 
-			const systemProps: Record<string, string | number> = {
+			const systemProps: Record<string, string> = {
 				Platform: os.platform(),
 				Version: this.getExtensionVersion(),
 				NodeVersion: process.version,
