@@ -49,7 +49,7 @@ export class Telemetry {
 		}
 	}
 
-	public async dispose(): Promise<void> {
+	public async flush() {
 		try {
 			await this.client.shutdown();
 		} catch (error) {
