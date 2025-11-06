@@ -15,8 +15,8 @@ class MobiledeckExtension {
 		console.log('mobiledeck.connect command executed for device:', device.id);
 		if (device) {
 			this.telemetry.sendEvent('connect_to_local_device', {
-				type: device.type,
-				platform: device.platform,
+				DeviceType: device.type,
+				DevicePlatform: device.platform,
 			});
 
 			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
@@ -27,6 +27,11 @@ class MobiledeckExtension {
 	private onOpenDevicePanel(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		console.log('mobiledeck.openDevicePanel command executed for device:', device.id);
 		if (device) {
+			this.telemetry.sendEvent('connect_to_local_device', {
+				DeviceType: device.type,
+				DevicePlatform: device.platform,
+			});
+
 			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
 			viewProvider.createWebviewPanel(device);
 		}
@@ -96,7 +101,7 @@ class MobiledeckExtension {
 			.catch(error => {
 				console.error('failed to launch mobilecli server:', error);
 				this.telemetry.sendEvent('mobilecli_server_start_failed', {
-					error: error.message || 'unknown error'
+					Error: error.message || 'unknown error'
 				});
 
 				vscode.window.showErrorMessage('Failed to start Mobiledeck server');
@@ -126,7 +131,7 @@ class MobiledeckExtension {
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
 
 		this.telemetry.sendEvent('panel_activated', {
-			isLoggedIn: !!email
+			IsLoggedIn: !!email
 		});
 
 		console.log('Mobiledeck extension activated successfully');

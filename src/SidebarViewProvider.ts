@@ -60,7 +60,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					this.telemetry.sendEvent('login_clicked', {
-						provider: message.provider.toLowerCase()
+						Provider: message.provider.toLowerCase()
 					});
 
 					await this.handleOAuthLogin(message.provider, webviewView);
@@ -113,6 +113,10 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				if (email) {
 					await this.updateSignOutButtonTitle(email);
 				}
+
+				this.telemetry.sendEvent('login_successful', {
+					Provider: provider.toLowerCase()
+				});
 
 				await this.switchToDeviceList();
 			};

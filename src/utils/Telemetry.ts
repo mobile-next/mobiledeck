@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as os from 'node:os';
 import { PostHog } from 'posthog-node';
 
 export class Telemetry {
@@ -11,16 +12,35 @@ export class Telemetry {
 		});
 	}
 
+	private getExtensionVersion(): string {
+		try {
+			const extension = vscode.extensions.getExtension('mobilenext.mobiledeck');
+			return extension?.packageJSON?.version || 'unknown';
+		} catch (error: any) {
+			return 'unknown';
+		}
+	}
+
 	public async sendEvent(event: string, properties?: Record<string, any>): Promise<void> {
 		try {
 			if (!vscode.env.isTelemetryEnabled) {
 				return;
 			}
 
+			const systemProps: Record<string, string | number> = {
+				Platform: os.platform(),
+				Version: this.getExtensionVersion(),
+				NodeVersion: process.version,
+				EditorName: vscode.env.appName,
+			};
+
 			this.client.capture({
 				distinctId: this.distinctId,
 				event,
-				properties
+				properties: {
+					...systemProps,
+					...properties,
+				}
 			});
 		} catch (error) {
 			// silently fail - telemetry should never break functionality
