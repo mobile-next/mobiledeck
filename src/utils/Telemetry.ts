@@ -17,6 +17,7 @@ export class Telemetry {
 			const extension = vscode.extensions.getExtension('mobilenext.mobiledeck');
 			return extension?.packageJSON?.version || 'unknown';
 		} catch (error: any) {
+			console.debug('Error getting extension version:', error);
 			return 'unknown';
 		}
 	}
