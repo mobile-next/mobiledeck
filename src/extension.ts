@@ -5,14 +5,16 @@ import { DeviceViewProvider } from './DeviceViewProvider';
 import { MobileCliServer } from './MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
 import { Telemetry } from './utils/Telemetry';
+import { Logger } from './utils/Logger';
 
 class MobiledeckExtension {
 	private cliServer: MobileCliServer | null = null;
 	private sidebarProvider: SidebarViewProvider | null = null;
 	private telemetry: Telemetry = new Telemetry('');
+	private logger: Logger = new Logger('Mobiledeck');
 
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
-		console.log('mobiledeck.connect command executed for device:', device.id);
+		this.logger.log('mobiledeck.connect command executed for device: ' + device.id);
 		if (device) {
 			this.telemetry.sendEvent('connect_to_local_device', {
 				DeviceType: device.type,
@@ -25,7 +27,7 @@ class MobiledeckExtension {
 	}
 
 	private onOpenDevicePanel(context: vscode.ExtensionContext, device: DeviceDescriptor) {
-		console.log('mobiledeck.openDevicePanel command executed for device:', device.id);
+		this.logger.log('mobiledeck.openDevicePanel command executed for device: ' + device.id);
 		if (device) {
 			this.telemetry.sendEvent('connect_to_local_device', {
 				DeviceType: device.type,
@@ -38,7 +40,7 @@ class MobiledeckExtension {
 	}
 
 	private onRefreshDevices() {
-		console.log('mobiledeck.refreshDevices command executed');
+		this.logger.log('mobiledeck.refreshDevices command executed');
 		this.telemetry.sendEvent('refresh_devices_clicked');
 		// send message to sidebar to refresh devices
 		if (this.sidebarProvider) {
@@ -47,7 +49,7 @@ class MobiledeckExtension {
 	}
 
 	private onAddDevice() {
-		console.log('mobiledeck.addDevice command executed');
+		this.logger.log('mobiledeck.addDevice command executed');
 		this.telemetry.sendEvent('add_device_clicked');
 
 		// TODO: implement add device functionality
@@ -55,7 +57,7 @@ class MobiledeckExtension {
 	}
 
 	private async onSignOut(context: vscode.ExtensionContext) {
-		console.log('mobiledeck.signOut command executed');
+		this.logger.log('mobiledeck.signOut command executed');
 
 		this.telemetry.sendEvent('signed_out');
 
@@ -85,7 +87,7 @@ class MobiledeckExtension {
 
 
 	public async activate(context: vscode.ExtensionContext) {
-		console.log('Mobiledeck extension is being activated');
+		this.logger.log('Mobiledeck extension is being activated');
 
 		// get or create distinct_id from secrets
 		let distinctId = await context.secrets.get('mobiledeck.telemetry.distinct_id');
@@ -99,7 +101,7 @@ class MobiledeckExtension {
 		this.cliServer = new MobileCliServer(context);
 		this.cliServer.launchMobilecliServer()
 			.catch(error => {
-				console.error('failed to launch mobilecli server:', error);
+				this.logger.log('failed to launch mobilecli server: ' + error.message);
 				this.telemetry.sendEvent('mobilecli_server_start_failed', {
 					Error: error.message || 'unknown error'
 				});
@@ -134,7 +136,7 @@ class MobiledeckExtension {
 			IsLoggedIn: !!email
 		});
 
-		console.log('Mobiledeck extension activated successfully');
+		this.logger.log('Mobiledeck extension activated successfully');
 	}
 
 	private async updateAuthenticationContext(context: vscode.ExtensionContext) {
@@ -152,7 +154,7 @@ class MobiledeckExtension {
 	}
 
 	public async deactivate() {
-		console.log('Mobiledeck extension deactivated');
+		this.logger.log('Mobiledeck extension deactivated');
 
 		await this.telemetry.sendEvent('panel_deactivated');
 		await this.telemetry.flush();

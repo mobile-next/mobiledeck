@@ -4,10 +4,12 @@ import { HtmlUtils } from './utils/HtmlUtils';
 import { OAuthCallbackServer, OAuthTokens } from './OAuthCallbackServer';
 import { OAUTH_CONFIG } from './config/oauth';
 import { Telemetry } from './utils/Telemetry';
+import { Logger } from './utils/Logger';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
 	private webviewView?: vscode.WebviewView;
+	private logger: Logger = new Logger('Mobiledeck');
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -37,11 +39,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 		// handle messages from the webview
 		webviewView.webview.onDidReceiveMessage(async (message) => {
-			console.log('sidebar received message:', message);
+			this.logger.log('sidebar received message: ' + message.command);
 
 			switch (message.command) {
 				case 'onInitialized':
-					console.log('sidebar webview initialized');
+					this.logger.log('sidebar webview initialized');
 					// send server port and email to webview
 					const email = await this.context.secrets.get('mobiledeck.oauth.email');
 					webviewView.webview.postMessage({
@@ -52,7 +54,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					break;
 
 				case 'deviceClicked':
-					console.log('device clicked:', message.device);
+					this.logger.log('device clicked: ' + message.device.id);
 					// open a new tab with the device
 					vscode.commands.executeCommand('mobiledeck.openDevicePanel', message.device);
 					break;
@@ -67,14 +69,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					break;
 
 				case 'skipLogin':
-					console.log('user skipped login, switching to sidebar');
+					this.logger.log('user skipped login, switching to sidebar');
 					// set authentication context so logout button and menu appear
 					await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', true);
 					await this.switchToDeviceList();
 					break;
 
 				case 'signOut':
-					console.log('sign out requested from webview');
+					this.logger.log('sign out requested from webview');
 					await vscode.commands.executeCommand('mobiledeck.signOut');
 					break;
 
@@ -93,7 +95,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		try {
 			// start the oauth callback server
 			const port = await this.oauthServer.start();
-			console.log(`oauth server started on port ${port}`);
+			this.logger.log('oauth server started on port ' + port);
 
 			// set up callback for when auth code is received
 			this.oauthServer.onAuthCodeReceived = (code: string) => {
@@ -106,7 +108,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 			// set up callback for when tokens are received
 			this.oauthServer.onTokensReceived = async (tokens: OAuthTokens, email: string) => {
-				console.log('tokens received, storing and switching view');
+				this.logger.log('tokens received, storing and switching view');
 				await this.storeTokens(tokens, email);
 
 				// update sign out button title with email
@@ -125,7 +127,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			const authUrl = this.buildOAuthUrl(provider, port);
 			vscode.env.openExternal(vscode.Uri.parse(authUrl));
 		} catch (error) {
-			console.error('failed to start oauth server:', error);
+			this.logger.log('failed to start oauth server: ' + (error instanceof Error ? error.message : String(error)));
 			vscode.window.showErrorMessage('Failed to start OAuth login process');
 		}
 	}
@@ -172,12 +174,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				await this.context.secrets.store('mobiledeck.oauth.email', email);
 			}
 
-			console.log('tokens stored successfully');
+			this.logger.log('tokens stored successfully');
 
 			// update authentication context to show sign out button
 			await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', true);
 		} catch (error) {
-			console.error('failed to store tokens:', error);
+			this.logger.log('failed to store tokens: ' + (error instanceof Error ? error.message : String(error)));
 			throw error;
 		}
 	}
@@ -187,11 +189,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		try {
 			const refreshToken = await this.context.secrets.get('mobiledeck.oauth.refresh_token');
 			if (!refreshToken) {
-				console.log('no refresh token available');
+				this.logger.log('no refresh token available');
 				return false;
 			}
 
-			console.log('attempting to refresh access token');
+			this.logger.log('attempting to refresh access token');
 
 			const params = new URLSearchParams({
 				grant_type: 'refresh_token',
@@ -209,7 +211,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				console.error('token refresh failed:', response.status, errorText);
+				this.logger.log('token refresh failed: ' + response.status + ' ' + errorText);
 				return false;
 			}
 
@@ -219,11 +221,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			const email = await this.context.secrets.get('mobiledeck.oauth.email') || '';
 
 			await this.storeTokens(tokens, email);
-			console.log('access token refreshed successfully');
+			this.logger.log('access token refreshed successfully');
 
 			return true;
 		} catch (error) {
-			console.error('error refreshing access token:', error);
+			this.logger.log('error refreshing access token: ' + (error instanceof Error ? error.message : String(error)));
 			return false;
 		}
 	}
@@ -241,13 +243,13 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			const now = Date.now();
 			const expiryTime = parseInt(expiresAt, 10);
 			if (now >= expiryTime) {
-				console.log('token expired, attempting refresh');
+				this.logger.log('token expired, attempting refresh');
 				return await this.refreshAccessToken();
 			}
 
 			const bufferTime = 5 * 60 * 1000; // 5 minutes
 			if (now >= (expiryTime - bufferTime)) {
-				console.log('token expiring soon, attempting refresh');
+				this.logger.log('token expiring soon, attempting refresh');
 				// attempt refresh, without checking for errors. our token
 				// is still valid for a bit.
 				await this.refreshAccessToken();
@@ -255,7 +257,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 			return true;
 		} catch (error) {
-			console.error('error checking auth state:', error);
+			this.logger.log('error checking auth state: ' + (error instanceof Error ? error.message : String(error)));
 			return false;
 		}
 	}
@@ -263,33 +265,33 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	// switch the webview to device list
 	private async switchToDeviceList(): Promise<void> {
 		if (!this.webviewView) {
-			console.error('webview not available');
+			this.logger.log('webview not available');
 			return;
 		}
 
-		console.log('switching to device list view');
+		this.logger.log('switching to device list view');
 		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'sidebar');
 	}
 
 	// public method to show login page (called from extension when signing out)
 	public showLoginPage(): void {
 		if (!this.webviewView) {
-			console.error('webview not available');
+			this.logger.log('webview not available');
 			return;
 		}
 
-		console.log('showing login page');
+		this.logger.log('showing login page');
 		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'login');
 	}
 
 	// public method to refresh devices (called from extension when refresh command is triggered)
 	public refreshDevices(): void {
 		if (!this.webviewView) {
-			console.error('webview not available');
+			this.logger.log('webview not available');
 			return;
 		}
 
-		console.log('refreshing devices');
+		this.logger.log('refreshing devices');
 		this.webviewView.webview.postMessage({
 			command: 'refreshDevices'
 		});
@@ -300,7 +302,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		try {
 			await vscode.commands.executeCommand('setContext', 'mobiledeck.userEmail', email);
 		} catch (error) {
-			console.error('failed to update sign out button title:', error);
+			this.logger.log('failed to update sign out button title: ' + (error instanceof Error ? error.message : String(error)));
 		}
 	}
 }
