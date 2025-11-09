@@ -130,6 +130,17 @@ function SidebarPage({
 			command: 'onInitialized'
 		});
 
+		return () => {
+			window.removeEventListener('message', messageHandler);
+		};
+	}, []);
+
+	useEffect(() => {
+		// only start fetching devices after serverPort is configured
+		if (serverPort === 0) {
+			return;
+		}
+
 		// fetch devices on mount
 		fetchDevices();
 
@@ -139,10 +150,9 @@ function SidebarPage({
 		}, 2000);
 
 		return () => {
-			window.removeEventListener('message', messageHandler);
 			clearInterval(intervalId);
 		};
-	}, []);
+	}, [serverPort]);
 
 	const handleDeviceClick = (device: DeviceDescriptor) => {
 		// send device click message to extension
