@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Logger } from './utils/Logger';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
+import { DeviceDescriptor } from './DeviceDescriptor';
 
 interface Message {
 	command: string;
@@ -15,13 +16,6 @@ interface AlertWebviewMessage extends Message {
 interface LogWebviewMessage extends Message {
 	command: 'log';
 	text: string;
-}
-
-interface DeviceDescriptor {
-	id: string;
-	name: string;
-	platform: string;
-	type: string;
 }
 
 interface ConfigureMessage extends Message{
@@ -98,7 +92,7 @@ export class DeviceViewProvider {
 	}
 
 	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
-		console.log('createWebviewPanel called');
+		this.verbose('createWebviewPanel called');
 
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',
