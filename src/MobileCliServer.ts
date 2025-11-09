@@ -6,6 +6,8 @@ import { PortManager } from './managers/PortManager';
 export class MobileCliServer {
 
 	private static DEFAULT_SERVER_PORT = 12000;
+	private static SERVER_STARTUP_TIMEOUT_MS = 10000; // 10 seconds
+	private static SERVER_HEALTH_CHECK_INTERVAL_MS = 200; // 200ms between checks
 
 	private logger: Logger = new Logger('Mobiledeck');
 	private portManager: PortManager = new PortManager(this.logger);
@@ -43,6 +45,23 @@ export class MobileCliServer {
 			this.mobilecliServerProcess.kill();
 			this.mobilecliServerProcess = null;
 		}
+	}
+
+	private async waitForServerReady(port: number, timeoutMs: number): Promise<void> {
+		const startTime = Date.now();
+
+		while (Date.now() - startTime < timeoutMs) {
+			const isHealthy = await this.portManager.checkServerHealth(port);
+			if (isHealthy) {
+				this.verbose(`mobilecli server is ready on port ${port}`);
+				return;
+			}
+
+			// wait before next check
+			await new Promise(resolve => setTimeout(resolve, MobileCliServer.SERVER_HEALTH_CHECK_INTERVAL_MS));
+		}
+
+		throw new Error(`mobilecli server failed to become ready within ${timeoutMs}ms`);
 	}
 
 	public async launchMobilecliServer(): Promise<void> {
@@ -85,6 +104,9 @@ export class MobileCliServer {
 			this.verbose(`mobilecli server error: ${error.message}`);
 			this.mobilecliServerProcess = null;
 		});
+
+		// wait for server to be ready before returning
+		await this.waitForServerReady(this.serverPort, MobileCliServer.SERVER_STARTUP_TIMEOUT_MS);
 	}
 
 	public getJsonRpcServerPort(): number {

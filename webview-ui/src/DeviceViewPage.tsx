@@ -363,6 +363,21 @@ function DeviceViewPage() {
 			command: 'onInitialized'
 		});
 
+		return () => {
+			window.removeEventListener('message', messageHandler);
+			stopMjpegStream();
+			if (imageUrl) {
+				URL.revokeObjectURL(imageUrl);
+			}
+		};
+	}, []);
+
+	useEffect(() => {
+		// only start fetching devices after serverPort is configured
+		if (serverPort === 12000) {
+			return;
+		}
+
 		// fetch available devices on mount
 		fetchDevices();
 
@@ -372,14 +387,9 @@ function DeviceViewPage() {
 		}, 2000);
 
 		return () => {
-			window.removeEventListener('message', messageHandler);
-			stopMjpegStream();
-			if (imageUrl) {
-				URL.revokeObjectURL(imageUrl);
-			}
 			clearInterval(intervalId);
 		};
-	}, []);
+	}, [serverPort]);
 
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-x-visible overflow-y-auto">
