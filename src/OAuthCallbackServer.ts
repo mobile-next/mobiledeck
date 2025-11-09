@@ -3,6 +3,7 @@ import * as crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
 import { OAUTH_CONFIG } from './config/oauth';
+import { Logger } from './utils/Logger';
 
 export interface OAuthTokens {
 	access_token: string;
@@ -25,6 +26,7 @@ export class OAuthCallbackServer {
 	private server: http.Server | null = null;
 	private port: number = 0;
 	private timeoutId: NodeJS.Timeout | null = null;
+	private logger: Logger = new Logger('Mobiledeck');
 
 	// callback for when auth code is received
 	onAuthCodeReceived: (code: string) => void = () => { };
@@ -57,14 +59,14 @@ export class OAuthCallbackServer {
 				const address = this.server?.address();
 				if (address && typeof address === 'object') {
 					this.port = address.port;
-					console.log(`oauth callback server listening on http://127.0.0.1:${this.port}`);
+					this.logger.log('oauth callback server listening on http://127.0.0.1:' + this.port);
 
 					// start timeout to auto-stop server if user abandons auth flow
 					this.timeoutId = setTimeout(() => {
 						const minutes = OAuthCallbackServer.OAUTH_SERVER_TIMEOUT_MS / (60 * 1000);
-						console.log(`oauth callback server timeout - stopping after ${minutes} minutes`);
+						this.logger.log('oauth callback server timeout - stopping after ' + minutes + ' minutes');
 						this.stop().catch((error) => {
-							console.error('failed to stop oauth server after timeout:', error);
+							this.logger.log('failed to stop oauth server after timeout: ' + (error instanceof Error ? error.message : String(error)));
 						});
 					}, OAuthCallbackServer.OAUTH_SERVER_TIMEOUT_MS);
 
@@ -75,7 +77,7 @@ export class OAuthCallbackServer {
 			});
 
 			this.server.on('error', (error) => {
-				console.error('oauth callback server error:', error);
+				this.logger.log('oauth callback server error: ' + (error instanceof Error ? error.message : String(error)));
 				reject(error);
 			});
 		});
@@ -87,10 +89,10 @@ export class OAuthCallbackServer {
 			if (this.server) {
 				this.server.close((error) => {
 					if (error) {
-						console.error('error stopping oauth callback server:', error);
+						this.logger.log('error stopping oauth callback server: ' + (error instanceof Error ? error.message : String(error)));
 						reject(error);
 					} else {
-						console.log('oauth callback server stopped');
+						this.logger.log('oauth callback server stopped');
 						this.server = null;
 						this.port = 0;
 						resolve();
@@ -144,7 +146,7 @@ export class OAuthCallbackServer {
 			// decode header to get kid (key id)
 			const decoded = jwt.decode(token, { complete: true });
 			if (!decoded || !decoded.header.kid) {
-				console.error('invalid jwt: missing kid in header');
+				this.logger.log('invalid jwt: missing kid in header');
 				return null;
 			}
 
@@ -160,7 +162,7 @@ export class OAuthCallbackServer {
 				algorithms: ['RS256'],
 			}) as JWTPayload;
 
-			console.log("jwt signature was successfully verified");
+			this.logger.log('jwt signature was successfully verified');
 
 			// extract and return the relevant claims
 			return {
@@ -173,24 +175,24 @@ export class OAuthCallbackServer {
 			// provide specific error logging based on error type
 			if (error instanceof Error) {
 				if (error.name === 'TokenExpiredError') {
-					console.error('jwt verification failed: token has expired', error.message);
+					this.logger.log('jwt verification failed: token has expired ' + error.message);
 				} else if (error.name === 'JsonWebTokenError') {
 					if (error.message.includes('invalid signature')) {
-						console.error('jwt verification failed: invalid signature - token may be forged');
+						this.logger.log('jwt verification failed: invalid signature - token may be forged');
 					} else if (error.message.includes('jwt audience invalid')) {
-						console.error('jwt verification failed: invalid audience - token not intended for this client');
+						this.logger.log('jwt verification failed: invalid audience - token not intended for this client');
 					} else if (error.message.includes('jwt issuer invalid')) {
-						console.error('jwt verification failed: invalid issuer - token from unexpected source');
+						this.logger.log('jwt verification failed: invalid issuer - token from unexpected source');
 					} else {
-						console.error('jwt verification failed: invalid token -', error.message);
+						this.logger.log('jwt verification failed: invalid token - ' + error.message);
 					}
 				} else if (error.name === 'NotBeforeError') {
-					console.error('jwt verification failed: token not yet valid', error.message);
+					this.logger.log('jwt verification failed: token not yet valid ' + error.message);
 				} else {
-					console.error('jwt verification failed: unexpected error -', error.name, error.message);
+					this.logger.log('jwt verification failed: unexpected error - ' + error.name + ' ' + error.message);
 				}
 			} else {
-				console.error('jwt verification failed: unknown error', error);
+				this.logger.log('jwt verification failed: unknown error ' + String(error));
 			}
 
 			return null;
@@ -261,7 +263,7 @@ export class OAuthCallbackServer {
 
 	// handle incoming requests
 	private handleRequest(req: http.IncomingMessage, res: http.ServerResponse): void {
-		console.log(`received request: ${req.method} ${req.url}`);
+		this.logger.log('received request: ' + req.method + ' ' + req.url);
 
 		// parse the url to get query parameters
 		const url = new URL(req.url || '', `http://${req.headers.host}`);
@@ -277,7 +279,7 @@ export class OAuthCallbackServer {
 
 		// validate state parameter for csrf protection
 		if (!receivedState) {
-			console.error('missing state parameter');
+			this.logger.log('missing state parameter');
 			this.writeSimpleResponse(res, 400, 'Missing state parameter');
 			return;
 		}
@@ -288,25 +290,25 @@ export class OAuthCallbackServer {
 			const decodedState = JSON.parse(Buffer.from(receivedState, 'base64').toString('utf-8'));
 			csrfState = decodedState.csrf;
 		} catch (error) {
-			console.error('error decoding state parameter:', error);
+			this.logger.log('error decoding state parameter: ' + (error instanceof Error ? error.message : String(error)));
 			this.writeSimpleResponse(res, 400, 'Invalid state parameter format');
 			return;
 		}
 
 		// validate csrf state
 		if (csrfState !== this.storedState) {
-			console.error('invalid csrf state - possible csrf attack');
+			this.logger.log('invalid csrf state - possible csrf attack');
 			this.writeSimpleResponse(res, 400, 'Invalid csrf state - possible csrf attack');
 			return;
 		}
 
 		// successful oauth callback
-		console.log('received oauth code:', code);
+		this.logger.log('received oauth code: ' + code);
 
 		// exchange code for tokens
 		this.exchangeCodeForToken(code)
 			.then(async tokens => {
-				console.log('token exchange successful');
+				this.logger.log('token exchange successful');
 
 				// verify and decode id_token to extract email with signature validation
 				let email = '';
@@ -316,10 +318,10 @@ export class OAuthCallbackServer {
 						email = payload.email;
 					} else if (!payload) {
 						// jwt verification failed
-						console.error('jwt verification failed - token may be invalid or forged');
+						this.logger.log('jwt verification failed - token may be invalid or forged');
 						this.writeSimpleResponse(res, 401, 'Invalid ID token');
 						res.on('finish', () => {
-							this.stop().catch(console.error);
+							this.stop().catch((error) => this.logger.log('failed to stop oauth server: ' + (error instanceof Error ? error.message : String(error))));
 						});
 						return;
 					}
@@ -336,18 +338,18 @@ export class OAuthCallbackServer {
 
 				// stop the server after response is fully sent
 				res.on('finish', () => {
-					this.stop().catch(console.error);
+					this.stop().catch((error) => this.logger.log('failed to stop oauth server: ' + (error instanceof Error ? error.message : String(error))));
 				});
 			})
 			.catch(error => {
-				console.error('error exchanging code for token:', error);
+				this.logger.log('error exchanging code for token: ' + (error instanceof Error ? error.message : String(error)));
 
 				// send error response to user
 				this.writeSimpleResponse(res, 500, 'Token Exchange Failed');
 
 				// stop the server after response is fully sent
 				res.on('finish', () => {
-					this.stop().catch(console.error);
+					this.stop().catch((error) => this.logger.log('failed to stop oauth server: ' + (error instanceof Error ? error.message : String(error))));
 				});
 			});
 	}

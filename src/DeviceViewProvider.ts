@@ -92,7 +92,7 @@ export class DeviceViewProvider {
 	}
 
 	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
-		console.log('createWebviewPanel called');
+		this.verbose('createWebviewPanel called');
 
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',
