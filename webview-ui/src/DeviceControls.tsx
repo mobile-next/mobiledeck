@@ -84,14 +84,14 @@ const ControlButton: React.FC<ControlButtonProps> = ({ onClick, icon, text, isAc
 
 const ControlSeparator: React.FC = () => (
 	<div style={{
-		height: '56px',
+		height: '4px',
 		display: 'flex',
 		alignItems: 'center',
 		position: 'relative'
 	}}>
 		<div style={{
 			height: '1px',
-			width: '56px',
+			width: '4px',
 			background: '#2a2a2a'
 		}} />
 	</div>

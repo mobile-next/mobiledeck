@@ -211,7 +211,10 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															src={skinOverlayUri}
 															alt=""
 															className="relative"
-															style={{ maxHeight: 'calc(100vh - 200px)', maxWidth: 'calc(100vw - 2em)' }}
+															style={{
+																maxHeight: 'calc(100vh - 100px)',
+																maxWidth: 'calc(100vw - 2em)'
+															}}
 															draggable={false}
 															onLoad={calculateSkinRatio}
 														/>
@@ -292,7 +295,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 															alt=""
 															className="cursor-crosshair"
 															style={{
-																maxHeight: 'calc(100vh - 200px)',
+																maxHeight: 'calc(100vh - 100px)',
 																maxWidth: 'calc(100vw - 2em)',
 																borderRadius: `${deviceSkin.borderRadius}px`
 															}}
