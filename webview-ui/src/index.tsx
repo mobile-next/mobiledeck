@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import DeviceViewPage from './DeviceViewPage';
-import SidebarPage from './SidebarPage';
-import LoginPage from './LoginPage';
-import ErrorPage from './ErrorPage';
+import LoginPage from './pages/LoginPage';
+import ErrorPage from './pages/ErrorPage';
+import SidebarPage from './pages/SidebarPage';
+import DeviceViewPage from './pages/DeviceViewPage';
 
 const root = ReactDOM.createRoot(
 	document.getElementById('root') as HTMLElement

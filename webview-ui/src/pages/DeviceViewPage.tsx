@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Header } from './Header';
-import { DeviceStream, GesturePoint } from './DeviceStream';
-import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from './models';
-import { JsonRpcClient } from './JsonRpcClient';
-import { MjpegStream } from './MjpegStream';
-import vscode from './vscode';
-import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from './DeviceSkins';
+import { Header } from '../Header';
+import { DeviceStream, GesturePoint } from '../DeviceStream';
+import { JsonRpcClient } from '../JsonRpcClient';
+import { MjpegStream } from '../MjpegStream';
+import vscode from '../vscode';
+import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
+import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from '../models';
 
 interface StatusBarProps {
 	isRefreshing: boolean;

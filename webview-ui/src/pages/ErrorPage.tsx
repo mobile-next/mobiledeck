@@ -1,5 +1,3 @@
-import React from 'react';
-
 function ErrorPage() {
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] p-4">
