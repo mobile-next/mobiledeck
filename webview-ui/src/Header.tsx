@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { Button } from "./components/ui/button";
-import { IoLogoAndroid, IoLogoApple } from "react-icons/io";
 
 import {
 	DropdownMenu,
@@ -13,7 +12,7 @@ import {
 
 import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Power } from "lucide-react";
 import { DeviceDescriptor } from "./models";
-import { AppSwitchIcon, MobileDeckIcon } from "./CustomIcons";
+import { AndroidIcon, AppSwitchIcon, IosIcon, MobileDeckIcon } from "./CustomIcons";
 
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
@@ -51,9 +50,9 @@ export const Header: React.FC<HeaderProps> = ({
 							{selectedDevice ? (
 								<>
 									{selectedDevice.platform === 'ios' ? (
-										<IoLogoApple className="h-4 w-4" />
+										<IosIcon className="h-4 w-4" />
 									) : (
-										<IoLogoAndroid className="h-4 w-4" />
+										<AndroidIcon className="h-4 w-4" />
 									)}
 									<span className="text-xs">{selectedDevice.name}</span>
 								</>
@@ -83,9 +82,9 @@ export const Header: React.FC<HeaderProps> = ({
 									className="text-xs hover:bg-[#2a2a2a] cursor-pointer flex items-center gap-2"
 								>
 									{device.platform === 'ios' ? (
-										<IoLogoApple className="h-4 w-4" />
+										<IosIcon className="h-4 w-4" />
 									) : (
-										<IoLogoAndroid className="h-4 w-4" />
+										<AndroidIcon className="h-4 w-4" />
 									)}
 									<div className="flex flex-col">
 										<span>{device.name}</span>

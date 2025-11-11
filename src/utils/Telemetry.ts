@@ -3,13 +3,30 @@ import * as os from 'node:os';
 import { PostHog } from 'posthog-node';
 
 export class Telemetry {
-	private client: PostHog;
+	private static client: PostHog;
 
 	constructor(private distinctId: string) {
-		this.client = new PostHog('phc_3IL723l6xo0k7ANkMYpi4G0OaGIrodLuZjbvn6iGXHx', {
-			host: 'https://us.i.posthog.com',
-			disableGeoip: false,
-		});
+		if (!Telemetry.client) {
+			Telemetry.client = new PostHog('phc_3IL723l6xo0k7ANkMYpi4G0OaGIrodLuZjbvn6iGXHx', {
+				host: 'https://us.i.posthog.com',
+				disableGeoip: false,
+			});
+
+			process.on("uncaughtException", (error: Error) => {
+				if (this.shouldCaptureException(error)) {
+					Telemetry.client.captureException(error, distinctId);
+				}
+			});
+		}
+	}
+
+	private shouldCaptureException(error: Error): boolean {
+		// only capture exceptions if the stack trace contains "mobilenext" in any file path
+		if (!error.stack) {
+			return false;
+		}
+
+		return error.stack.includes('mobilenext');
 	}
 
 	private getExtensionVersion(): string {
@@ -20,6 +37,10 @@ export class Telemetry {
 			console.debug('Error getting extension version:', error);
 			return 'unknown';
 		}
+	}
+
+	private client(): PostHog {
+		return Telemetry.client;
 	}
 
 	public async sendEvent(event: string, properties?: Record<string, any>): Promise<void> {
@@ -35,7 +56,7 @@ export class Telemetry {
 				EditorName: vscode.env.appName,
 			};
 
-			this.client.capture({
+			this.client().capture({
 				distinctId: this.distinctId,
 				event,
 				properties: {
@@ -51,7 +72,7 @@ export class Telemetry {
 
 	public async flush() {
 		try {
-			await this.client.shutdown();
+			await this.client().shutdown();
 		} catch (error) {
 			console.debug('Error shutting down telemetry:', error);
 		}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight } from "lucide-react";
 import vscode from '../vscode';
 import { JsonRpcClient } from '../JsonRpcClient';

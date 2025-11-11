@@ -6,7 +6,7 @@ export interface DeviceSkinProps {
 	skinOverlayUri: string;
 	deviceSkin: DeviceSkinType;
 	skinRatio: number;
-	deviceSkinRef: RefObject<HTMLImageElement>;
+	deviceSkinRef: RefObject<HTMLImageElement | null>;
 	onSkinLoad: () => void;
 	children: React.ReactNode;
 }
