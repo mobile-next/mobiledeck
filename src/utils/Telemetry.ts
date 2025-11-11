@@ -10,9 +10,23 @@ export class Telemetry {
 			Telemetry.client = new PostHog('phc_3IL723l6xo0k7ANkMYpi4G0OaGIrodLuZjbvn6iGXHx', {
 				host: 'https://us.i.posthog.com',
 				disableGeoip: false,
-				enableExceptionAutocapture: true,
+			});
+
+			process.on("uncaughtException", (error: Error) => {
+				if (this.shouldCaptureException(error)) {
+					Telemetry.client.captureException(error, distinctId);
+				}
 			});
 		}
+	}
+
+	private shouldCaptureException(error: Error): boolean {
+		// only capture exceptions if the stack trace contains "mobilenext" in any file path
+		if (!error.stack) {
+			return false;
+		}
+
+		return error.stack.includes('mobilenext');
 	}
 
 	private getExtensionVersion(): string {
