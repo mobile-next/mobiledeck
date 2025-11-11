@@ -1,6 +1,6 @@
 import React from 'react';
-import vscode from './vscode';
-import { GoogleIcon, AzureIcon, GitHubIcon } from './CustomIcons';
+import vscode from '../vscode';
+import { GoogleIcon, AzureIcon, GitHubIcon } from '../CustomIcons';
 
 // styles for the login page
 const styles = {
