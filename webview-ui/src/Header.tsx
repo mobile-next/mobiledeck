@@ -13,7 +13,7 @@ import {
 
 import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Power } from "lucide-react";
 import { DeviceDescriptor } from "./models";
-import { AppSwitchIcon } from "./CustomIcons";
+import { AppSwitchIcon, MobileDeckIcon } from "./CustomIcons";
 
 export interface HeaderProps {
 	selectedDevice: DeviceDescriptor | null;
@@ -181,17 +181,24 @@ export const Header: React.FC<HeaderProps> = ({
 					<Camera className={`h-3.5 w-3.5`} />
 				</Button>
 			</div>
+			<div className="flex items-center gap-2">
+				{/* Mobile Deck branding */}
+				<div className="flex items-center gap-2">
+					<MobileDeckIcon className="h-6 w-6 text-[#cccccc]" />
+					<span className="text-sm font-medium text-[#cccccc]">Mobile Deck</span>
+				</div>
 
-			{/* Kebab menu */}
-			{/* <DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#2a2a2a]">
-						<MoreVertical className="h-3.5 w-3.5" />
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[200px]">
-				</DropdownMenuContent>
-			</DropdownMenu> */}
+				{/* Kebab menu */}
+				{/* <DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-[#2a2a2a]">
+							<MoreVertical className="h-3.5 w-3.5" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[200px]">
+					</DropdownMenuContent>
+				</DropdownMenu> */}
+			</div>
 		</div>
 	);
 };
