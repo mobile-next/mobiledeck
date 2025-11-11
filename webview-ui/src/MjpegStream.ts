@@ -114,7 +114,7 @@ export class MjpegStream {
 
 	private displayMjpegImage(imageData: Uint8Array): void {
 		try {
-			const blob = new Blob([imageData], { type: 'image/jpeg' });
+			const blob = new Blob([imageData as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
 			const newImageUrl = URL.createObjectURL(blob);
 
 			// Clean up previous URL
