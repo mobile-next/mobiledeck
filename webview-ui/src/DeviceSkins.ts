@@ -1,4 +1,4 @@
-export interface DeviceSkinInsets {
+interface DeviceSkinInsets {
 	top: number;
 	left: number;
 	right: number;

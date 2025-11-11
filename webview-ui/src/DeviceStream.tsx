@@ -45,6 +45,14 @@ interface GestureState {
 	path: Array<[number, number]>;
 }
 
+const emptyGestureState: GestureState = {
+	isGesturing: false,
+	startTime: 0,
+	lastTimestamp: 0,
+	points: [],
+	path: []
+};
+
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
 	selectedDevice,
@@ -65,13 +73,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onTogglePower,
 }) => {
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
-	const [gestureState, setGestureState] = useState<GestureState>({
-		isGesturing: false,
-		startTime: 0,
-		lastTimestamp: 0,
-		points: [],
-		path: []
-	});
+	const [gestureState, setGestureState] = useState<GestureState>(emptyGestureState);
 	const [skinRatio, setSkinRatio] = useState<number>(1.0);
 	const deviceSkinRef = useRef<HTMLImageElement>(null);
 
@@ -99,7 +101,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		const y = clientY - rect.top;
 		const screenX = Math.floor((x / imgElement.width) * screenSize.width);
 		const screenY = Math.floor((y / imgElement.height) * screenSize.height);
-		console.log("=> converting clientX,clientY " + clientX + "," + clientY + " to " + "x,y " + x + ","+ y);
+		console.log("=> converting clientX,clientY " + clientX + "," + clientY + " to " + "x,y " + x + "," + y);
 		return { x, y, screenX, screenY };
 	};
 
@@ -111,7 +113,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 			isGesturing: false,
 			startTime: now,
 			lastTimestamp: now,
-			points: [{ x: coords.screenX, y: coords.screenY, duration: 0}],
+			points: [{ x: coords.screenX, y: coords.screenY, duration: 0 }],
 			path: [[coords.x, coords.y]]
 		});
 	};
@@ -188,7 +190,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	};
 
 	return (
-		<div className="relative flex-grow flex items-center justify-center overflow-visible focus:outline-none" style={{backgroundColor: "#202224", paddingTop: "24px", paddingBottom: "24px"}} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
+		<div className="relative flex-grow flex items-center justify-center overflow-visible focus:outline-none" style={{ backgroundColor: "#202224", paddingTop: "24px", paddingBottom: "24px" }} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			<>
 				{/* Simulated device stream */}
 				<div className={`relative overflow-visible`}>
@@ -209,14 +211,14 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 									</DeviceSkin>
 									{/* device controls positioned to the right */}
 									<DeviceControls
-										onRotateDevice={() => {}}
-										onTakeScreenshot={() => {}}
-										onDeviceHome={() => {}}
-										onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? () => {} : undefined}
-										onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? () => {} : undefined}
-										onIncreaseVolume={() => {}}
-										onDecreaseVolume={() => {}}
-										onTogglePower={() => {}}
+										onRotateDevice={() => { }}
+										onTakeScreenshot={() => { }}
+										onDeviceHome={() => { }}
+										onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? () => { } : undefined}
+										onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? () => { } : undefined}
+										onIncreaseVolume={() => { }}
+										onDecreaseVolume={() => { }}
+										onTogglePower={() => { }}
 									/>
 								</div>
 							) : (
@@ -261,14 +263,14 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 											{/* device controls positioned to the right */}
 											{selectedDevice && (
 												<DeviceControls
-													onRotateDevice={onRotateDevice || (() => {})}
+													onRotateDevice={onRotateDevice || (() => { })}
 													onTakeScreenshot={onTakeScreenshot}
 													onDeviceHome={onDeviceHome}
 													onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? onDeviceBack : undefined}
 													onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? onAppSwitch : undefined}
-													onIncreaseVolume={onIncreaseVolume || (() => {})}
-													onDecreaseVolume={onDecreaseVolume || (() => {})}
-													onTogglePower={onTogglePower || (() => {})}
+													onIncreaseVolume={onIncreaseVolume || (() => { })}
+													onDecreaseVolume={onDecreaseVolume || (() => { })}
+													onTogglePower={onTogglePower || (() => { })}
 												/>
 											)}
 										</div>
