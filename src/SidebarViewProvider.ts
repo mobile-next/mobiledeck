@@ -297,6 +297,20 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		});
 	}
 
+	// public method to update connected devices (called from extension when device tabs open/close)
+	public updateConnectedDevices(connectedDeviceIds: string[]): void {
+		if (!this.webviewView) {
+			this.logger.log('webview not available');
+			return;
+		}
+
+		this.logger.log('updating connected devices: ' + JSON.stringify(connectedDeviceIds));
+		this.webviewView.webview.postMessage({
+			command: 'updateConnectedDevices',
+			connectedDeviceIds: connectedDeviceIds
+		});
+	}
+
 	// update sign out button title with email
 	private async updateSignOutButtonTitle(email: string): Promise<void> {
 		try {

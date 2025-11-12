@@ -12,6 +12,7 @@ class MobiledeckExtension {
 	private sidebarProvider: SidebarViewProvider | null = null;
 	private telemetry: Telemetry = new Telemetry('');
 	private logger: Logger = new Logger('Mobiledeck');
+	private openDevicePanels: Map<string, vscode.WebviewPanel> = new Map();
 
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		this.logger.log('mobiledeck.connect command executed for device: ' + device.id);
@@ -29,13 +30,35 @@ class MobiledeckExtension {
 	private onOpenDevicePanel(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		this.logger.log('mobiledeck.openDevicePanel command executed for device: ' + device.id);
 		if (device) {
+			// check if a panel for this device already exists
+			const existingPanel = this.openDevicePanels.get(device.id);
+			if (existingPanel) {
+				this.logger.log('panel already exists for device: ' + device.id + ', revealing it');
+				existingPanel.reveal();
+				return;
+			}
+
 			this.telemetry.sendEvent('connect_to_local_device', {
 				DeviceType: device.type,
 				DevicePlatform: device.platform,
 			});
 
 			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
-			viewProvider.createWebviewPanel(device);
+			const panel = viewProvider.createWebviewPanel(device);
+
+			// track the panel
+			this.openDevicePanels.set(device.id, panel);
+
+			// notify sidebar that device is now connected
+			this.updateSidebarConnectedDevices();
+
+			// listen for panel disposal (when user closes the tab)
+			panel.onDidDispose(() => {
+				this.logger.log('panel disposed for device: ' + device.id);
+				this.openDevicePanels.delete(device.id);
+				// notify sidebar that device is now available again
+				this.updateSidebarConnectedDevices();
+			});
 		}
 	}
 
@@ -45,6 +68,14 @@ class MobiledeckExtension {
 		// send message to sidebar to refresh devices
 		if (this.sidebarProvider) {
 			this.sidebarProvider.refreshDevices();
+		}
+	}
+
+	private updateSidebarConnectedDevices() {
+		if (this.sidebarProvider) {
+			const connectedDeviceIds = Array.from(this.openDevicePanels.keys());
+			this.logger.log('updating sidebar with connected devices: ' + JSON.stringify(connectedDeviceIds));
+			this.sidebarProvider.updateConnectedDevices(connectedDeviceIds);
 		}
 	}
 

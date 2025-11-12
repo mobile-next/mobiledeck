@@ -5,6 +5,20 @@ import { JsonRpcClient } from '../JsonRpcClient';
 import { AndroidIcon, IosIcon } from '../CustomIcons';
 import { DeviceDescriptor, DevicePlatform, DeviceType, ListDevicesResponse } from '../models';
 
+interface DeviceCategoryProps {
+	label: string;
+}
+
+function DeviceCategory({ label }: DeviceCategoryProps) {
+	return (
+		<div className="flex items-center gap-2 my-3">
+			<hr className="flex-1 border-[#3e3e3e]" />
+			<span className="text-xs text-[#858585] px-2">{label}</span>
+			<hr className="flex-1 border-[#3e3e3e]" />
+		</div>
+	);
+}
+
 interface DeviceRowProps {
 	device: DeviceDescriptor;
 	onClick: (device: DeviceDescriptor) => void;
@@ -50,6 +64,7 @@ function SidebarPage({
 	const [isRefreshing, setIsRefreshing] = useState(true);
 	const [serverPort, setServerPort] = useState<number>(0);
 	const [userEmail, setUserEmail] = useState<string>('');
+	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 
@@ -121,6 +136,11 @@ function SidebarPage({
 			case 'refreshDevices':
 				console.log('sidebar: refresh devices message received');
 				fetchDevices();
+				break;
+
+			case 'updateConnectedDevices':
+				console.log('sidebar: connected devices updated:', message.connectedDeviceIds);
+				setConnectedDeviceIds(message.connectedDeviceIds || []);
 				break;
 
 			default:
@@ -204,9 +224,26 @@ function SidebarPage({
 									{isRefreshing ? 'Loading devices...' : 'No devices found'}
 								</div>
 							) : (
-								devices.map((device) => (
-									<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
-								))
+								<>
+									{/* connected devices section */}
+									{connectedDeviceIds.length > 0 && (
+										<>
+											<DeviceCategory label="Connected" />
+											{devices.filter(d => connectedDeviceIds.includes(d.id)).map((device) => (
+												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+											))}
+										</>
+									)}
+
+									{/* available devices section */}
+									<DeviceCategory label="Available" />
+									{devices.filter(d => !connectedDeviceIds.includes(d.id)).map((device) => (
+										<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+									))}
+
+									{/* offline devices section */}
+									<DeviceCategory label="Offline" />
+								</>
 							)}
 						</div>
 					)}
