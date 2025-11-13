@@ -96,7 +96,7 @@ function SidebarPage({
 			}
 
 			setIsRefreshing(true);
-			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
+			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', { includeOffline: true });
 			console.log('sidebar: devices list', result);
 
 			// sort devices: ios first, then android, each group sorted by name
@@ -237,12 +237,19 @@ function SidebarPage({
 
 									{/* available devices section */}
 									<DeviceCategory label="Available" />
-									{devices.filter(d => !connectedDeviceIds.includes(d.id)).map((device) => (
+									{devices.filter(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
 										<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
 									))}
 
 									{/* offline devices section */}
-									<DeviceCategory label="Offline" />
+									{devices.some(d => d.state === 'offline') && (
+										<>
+											<DeviceCategory label="Offline" />
+											{devices.filter(d => d.state === 'offline').map((device) => (
+												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+											))}
+										</>
+									)}
 								</>
 							)}
 						</div>
