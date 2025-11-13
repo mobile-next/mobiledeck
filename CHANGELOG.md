@@ -1,3 +1,9 @@
+## [0.0.14](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.14) (2025-11-12)
+
+- General: fixed race-condition where mobilecli starts after device list, causing a 2-seconds delay
+- General: show device with skin and control buttons while waiting for it connect
+- General: improved rightside device controls layout on big and small displays
+
 ## [0.0.13](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.13) (2025-11-06)
 
 - General: added basic telemetry for debugging
