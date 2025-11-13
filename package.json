@@ -56,12 +56,6 @@
         "enablement": "mobiledeck.isAuthenticated"
       },
       {
-        "command": "mobiledeck.addDevice",
-        "title": "Add Device",
-        "icon": "$(add)",
-        "enablement": "mobiledeck.isAuthenticated"
-      },
-      {
         "command": "mobiledeck.signOut",
         "title": "Sign Out from Mobile Deck",
         "enablement": "mobiledeck.isAuthenticated"

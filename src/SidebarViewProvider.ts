@@ -59,6 +59,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					vscode.commands.executeCommand('mobiledeck.openDevicePanel', message.device);
 					break;
 
+				case 'openGettingStarted':
+					this.logger.log('opening getting started guide');
+					this.telemetry.sendEvent('getting_started_clicked', {});
+					vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
+					break;
+
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					this.telemetry.sendEvent('login_clicked', {

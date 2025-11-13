@@ -19,6 +19,33 @@ function DeviceCategory({ label }: DeviceCategoryProps) {
 	);
 }
 
+function GettingStartedBanner() {
+	const handleGettingStartedClick = () => {
+		vscode.postMessage({
+			command: 'openGettingStarted'
+		});
+	};
+
+	return (
+		<div className="mt-4 p-3 bg-[#252526] border border-[#3e3e3e] rounded-md">
+			<div className="flex flex-col gap-2">
+				<p className="text-sm text-[#cccccc]">
+					No devices found? No worries, here is our getting started guide.
+				</p>
+				<p className="text-xs text-[#858585]">
+					You can start with a simulator or emulator within minutes.
+				</p>
+				<button
+					onClick={handleGettingStartedClick}
+					className="mt-1 px-3 py-1.5 bg-[#0e639c] hover:bg-[#1177bb] text-white text-sm rounded transition-colors w-fit"
+				>
+					Getting Started
+				</button>
+			</div>
+		</div>
+	);
+}
+
 interface DeviceRowProps {
 	device: DeviceDescriptor;
 	onClick: (device: DeviceDescriptor) => void;
@@ -236,10 +263,14 @@ function SidebarPage({
 									)}
 
 									{/* available devices section */}
-									<DeviceCategory label="Available" />
-									{devices.filter(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
-										<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
-									))}
+									{devices.some(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline') && (
+										<>
+											<DeviceCategory label="Available" />
+											{devices.filter(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
+												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+											))}
+										</>
+									)}
 
 									{/* offline devices section */}
 									{devices.some(d => d.state === 'offline') && (
@@ -252,6 +283,9 @@ function SidebarPage({
 									)}
 								</>
 							)}
+
+							{/* getting started banner - always visible */}
+							{!isRefreshing && <GettingStartedBanner />}
 						</div>
 					)}
 				</div>
