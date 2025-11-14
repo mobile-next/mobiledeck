@@ -39,3 +39,9 @@ export interface DeviceInfo {
 	type: string;
 	screenSize: ScreenSize;
 }
+
+export interface ScreenshotResponse {
+	data: string;
+}
+
+export type ButtonType = 'HOME' | 'BACK' | 'APP_SWITCH' | 'POWER' | 'VOLUME_UP' | 'VOLUME_DOWN';

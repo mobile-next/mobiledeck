@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, MoreVertical, Play } from "lucide-react";
 import vscode from '../vscode';
 import { JsonRpcClient } from '../JsonRpcClient';
+import { MobilecliClient } from '../MobilecliClient';
 import { AndroidIcon, IosIcon } from '../CustomIcons';
 import { DeviceDescriptor, DevicePlatform, DeviceType, ListDevicesResponse } from '../models';
-import { ContextMenu } from '../components/ContextMenu';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 
 interface DeviceCategoryProps {
 	label: string;
@@ -28,20 +34,22 @@ function GettingStartedBanner() {
 	};
 
 	return (
-		<div className="mt-4 p-3 bg-[#252526] border border-[#3e3e3e] rounded-md">
-			<div className="flex flex-col gap-2">
-				<p className="text-sm text-[#cccccc]">
-					No devices found? No worries, here is our getting started guide.
-				</p>
-				<p className="text-xs text-[#858585]">
-					You can start with a simulator or emulator within minutes.
-				</p>
-				<button
-					onClick={handleGettingStartedClick}
-					className="mt-1 px-3 py-1.5 bg-[#0e639c] hover:bg-[#1177bb] text-white text-sm rounded transition-colors w-fit"
-				>
-					Getting Started
-				</button>
+		<div className="px-3 py-4">
+			<div className="mt-4 p-3 bg-[#252526] border border-[#3e3e3e] rounded-md">
+				<div className="flex flex-col gap-2">
+					<p className="text-sm text-[#cccccc]">
+						No devices found? No worries, here is our getting started guide.
+					</p>
+					<p className="text-xs text-[#858585]">
+						You can start with a simulator or emulator within minutes.
+					</p>
+					<button
+						onClick={handleGettingStartedClick}
+						className="mt-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:border-[#00ff88] hover:bg-[#2a2a2a] text-[#888] hover:text-[#00ff88] text-sm transition-all w-fit"
+					>
+						Read our wiki 🚀
+					</button>
+				</div>
 			</div>
 		</div>
 	);
@@ -50,22 +58,25 @@ function GettingStartedBanner() {
 interface DeviceRowProps {
 	device: DeviceDescriptor;
 	onClick: (device: DeviceDescriptor) => void;
-	onContextMenu?: (device: DeviceDescriptor, x: number, y: number) => void;
+	isConnected: boolean;
+	onReboot?: (device: DeviceDescriptor) => void;
+	onShutdown?: (device: DeviceDescriptor) => void;
+	onConnect?: (device: DeviceDescriptor) => void;
 }
 
-function DeviceRow({ device, onClick, onContextMenu }: DeviceRowProps) {
-	const handleContextMenu = (e: React.MouseEvent) => {
-		if (onContextMenu) {
-			e.preventDefault();
-			onContextMenu(device, e.clientX, e.clientY);
-		}
+function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConnect }: DeviceRowProps) {
+	const isEmulatorOrSimulator = device.type === DeviceType.EMULATOR || device.type === DeviceType.SIMULATOR;
+	const isAvailable = device.state !== 'offline';
+
+	const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
+		e.stopPropagation();
+		action();
 	};
 
 	return (
 		<div
 			className="flex items-center gap-2 py-1.5 px-2 hover:bg-[#2d2d2d] rounded cursor-pointer group"
 			onClick={() => onClick(device)}
-			onContextMenu={handleContextMenu}
 		>
 			{/* device icon */}
 			<div className="flex-shrink-0">
@@ -81,9 +92,45 @@ function DeviceRow({ device, onClick, onContextMenu }: DeviceRowProps) {
 				</span>
 			</div>
 
-			{/* platform label */}
-			<div className="text-xs text-[#858585]">
-				{device.platform}
+			{/* action buttons */}
+			<div className="flex items-center gap-1">
+				{/* connect button - shown for all available and offline devices */}
+				{onConnect && (
+					<button
+						onClick={(e) => handleButtonClick(e, () => onConnect(device))}
+						className="p-1 hover:bg-[#3e3e3e] rounded transition-colors"
+						title="Connect"
+					>
+						<Play className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
+					</button>
+				)}
+
+				{/* kebab menu for reboot/shutdown - shown for connected/available devices */}
+				{isAvailable && (onReboot || onShutdown) && (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button
+								onClick={(e) => e.stopPropagation()}
+								className="p-1 hover:bg-[#3e3e3e] rounded transition-colors"
+								title="More actions"
+							>
+								<MoreVertical className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="bg-[#252526] border-[#3e3e3e]">
+							{onReboot && (
+								<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReboot(device); }}>
+									Reboot device
+								</DropdownMenuItem>
+							)}
+							{isEmulatorOrSimulator && onShutdown && (
+								<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShutdown(device); }}>
+									Shutdown device
+								</DropdownMenuItem>
+							)}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</div>
 		</div>
 	);
@@ -103,12 +150,13 @@ function SidebarPage({
 	const [serverPort, setServerPort] = useState<number>(0);
 	const [userEmail, setUserEmail] = useState<string>('');
 	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
-	const [contextMenu, setContextMenu] = useState<{ device: DeviceDescriptor; x: number; y: number } | null>(null);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
+	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
 
 	useEffect(() => {
 		jsonRpcClientRef.current = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+		mobilecliClientRef.current = new MobilecliClient(jsonRpcClientRef.current);
 
 		// fetch devices when serverPort changes
 		fetchDevices();
@@ -123,7 +171,7 @@ function SidebarPage({
 		};
 	}, [serverPort]);
 
-	const getJsonRpcClient = () => jsonRpcClientRef.current;
+	const getMobilecliClient = () => mobilecliClientRef.current;
 
 	const fetchDevices = async () => {
 		try {
@@ -135,7 +183,7 @@ function SidebarPage({
 			}
 
 			setIsRefreshing(true);
-			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', { includeOffline: true });
+			const result = await getMobilecliClient().listDevices(true);
 			console.log('sidebar: devices list', result);
 
 			// sort devices: ios first, then android, each group sorted by name
@@ -234,11 +282,9 @@ function SidebarPage({
 		onDeviceClicked(device);
 	};
 
-	const handleDeviceContextMenu = (device: DeviceDescriptor, x: number, y: number) => {
-		// show context menu for all devices that are not offline
-		if (device.state !== 'offline') {
-			setContextMenu({ device, x, y });
-		}
+	const handleConnectDevice = (device: DeviceDescriptor) => {
+		// connect to device - same as clicking on it
+		handleDeviceClick(device);
 	};
 
 	const handleRebootDevice = async (device: DeviceDescriptor) => {
@@ -250,7 +296,7 @@ function SidebarPage({
 			});
 
 			console.log('sidebar: rebooting device', device.id);
-			await getJsonRpcClient().sendJsonRpcRequest('device_reboot', { deviceId: device.id });
+			await getMobilecliClient().rebootDevice(device.id);
 			console.log('sidebar: device reboot initiated');
 		} catch (error) {
 			console.error('sidebar: error rebooting device:', error);
@@ -266,7 +312,7 @@ function SidebarPage({
 			});
 
 			console.log('sidebar: shutting down device', device.id);
-			await getJsonRpcClient().sendJsonRpcRequest('device_shutdown', { deviceId: device.id });
+			await getMobilecliClient().shutdownDevice(device.id);
 			console.log('sidebar: device shutdown initiated');
 		} catch (error) {
 			console.error('sidebar: error shutting down device:', error);
@@ -310,7 +356,15 @@ function SidebarPage({
 										<>
 											<DeviceCategory label="Connected" />
 											{devices.filter(d => connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
-												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} onContextMenu={handleDeviceContextMenu} />
+												<DeviceRow
+													key={device.id}
+													device={device}
+													onClick={handleDeviceClick}
+													isConnected={true}
+													onReboot={handleRebootDevice}
+													onShutdown={handleShutdownDevice}
+													onConnect={handleConnectDevice}
+												/>
 											))}
 										</>
 									)}
@@ -320,7 +374,15 @@ function SidebarPage({
 										<>
 											<DeviceCategory label="Available" />
 											{devices.filter(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
-												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} onContextMenu={handleDeviceContextMenu} />
+												<DeviceRow
+													key={device.id}
+													device={device}
+													onClick={handleDeviceClick}
+													isConnected={false}
+													onReboot={handleRebootDevice}
+													onShutdown={handleShutdownDevice}
+													onConnect={handleConnectDevice}
+												/>
 											))}
 										</>
 									)}
@@ -330,40 +392,25 @@ function SidebarPage({
 										<>
 											<DeviceCategory label="Offline" />
 											{devices.filter(d => d.state === 'offline').map((device) => (
-												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+												<DeviceRow
+													key={device.id}
+													device={device}
+													onClick={handleDeviceClick}
+													isConnected={false}
+													onConnect={handleConnectDevice}
+												/>
 											))}
 										</>
 									)}
 								</>
 							)}
-
-							{/* getting started banner - always visible after initial load */}
-							{hasInitiallyLoaded && <GettingStartedBanner />}
 						</div>
 					)}
 				</div>
 			</div>
 
-			{/* context menu */}
-			{contextMenu && (
-				<ContextMenu
-					x={contextMenu.x}
-					y={contextMenu.y}
-					items={[
-						{
-							label: 'Reboot',
-							onClick: () => handleRebootDevice(contextMenu.device)
-						},
-						...(contextMenu.device.type === DeviceType.EMULATOR || contextMenu.device.type === DeviceType.SIMULATOR
-							? [{
-								label: 'Shutdown',
-								onClick: () => handleShutdownDevice(contextMenu.device)
-							}]
-							: [])
-					]}
-					onClose={() => setContextMenu(null)}
-				/>
-			)}
+			{/* getting started banner - always visible after initial load */}
+			{hasInitiallyLoaded && /*devices.length === 0 &&*/ <GettingStartedBanner />}
 		</div>
 	);
 }
