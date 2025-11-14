@@ -71,6 +71,14 @@ class MobiledeckExtension {
 		}
 	}
 
+	private onCloseDevicePanel(deviceId: string) {
+		this.logger.log('mobiledeck.closeDevicePanel command executed for device: ' + deviceId);
+		const panel = this.openDevicePanels.get(deviceId);
+		if (panel) {
+			panel.dispose();
+		}
+	}
+
 	private updateSidebarConnectedDevices() {
 		if (this.sidebarProvider) {
 			const connectedDeviceIds = Array.from(this.openDevicePanels.keys());
@@ -162,6 +170,7 @@ class MobiledeckExtension {
 
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
+		this.registerCommand(context, 'mobiledeck.closeDevicePanel', (deviceId) => this.onCloseDevicePanel(deviceId));
 
 		this.telemetry.sendEvent('panel_activated', {
 			IsLoggedIn: !!email

@@ -46,6 +46,8 @@ function DeviceViewPage() {
 	const [serverPort, setServerPort] = useState<number>(12000);
 	const [mediaSkinsUri, setMediaSkinsUri] = useState<string>("skins");
 	const [deviceSkin, setDeviceSkin] = useState<DeviceSkin>(NoDeviceSkin);
+	const [isBooting, setIsBooting] = useState(false);
+	const bootPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -151,17 +153,87 @@ function DeviceViewPage() {
 		}
 	};
 
+	const bootDevice = async (deviceId: string) => {
+		try {
+			console.log('mobiledeck: booting device', deviceId);
+			setIsBooting(true);
+			await getJsonRpcClient().sendJsonRpcRequest('device_boot', { deviceId: deviceId });
+			console.log('mobiledeck: device_boot called successfully');
+		} catch (error) {
+			console.error('mobiledeck: error booting device:', error);
+			setIsBooting(false);
+			throw error;
+		}
+	};
+
+	const pollDeviceUntilAvailable = (deviceId: string) => {
+		// clear any existing poll interval
+		if (bootPollIntervalRef.current) {
+			clearInterval(bootPollIntervalRef.current);
+			bootPollIntervalRef.current = null;
+		}
+
+		// poll every 1 second to check if device is available
+		bootPollIntervalRef.current = setInterval(async () => {
+			try {
+				const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', { includeOffline: true });
+				const device = result.devices.find(d => d.id === deviceId);
+
+				if (device && device.state !== 'offline') {
+					console.log('mobiledeck: device is now available:', device);
+					setIsBooting(false);
+
+					// clear the interval
+					if (bootPollIntervalRef.current) {
+						clearInterval(bootPollIntervalRef.current);
+						bootPollIntervalRef.current = null;
+					}
+
+					// update the selected device with the new state
+					setSelectedDevice(device);
+
+					// start the mjpeg stream
+					await startMjpegStream(device.id);
+					await requestDeviceInfo(device.id);
+
+					// set device skin based on device platform/model
+					setDeviceSkin(getDeviceSkinForDevice(device));
+				}
+			} catch (error) {
+				console.error('mobiledeck: error polling device status:', error);
+			}
+		}, 1000);
+	};
+
 	useEffect(() => {
 		console.log('mobiledeck: selectDevice called with device:', selectedDevice);
 		stopMjpegStream();
 
-		if (selectedDevice !== null) {
-			console.log('mobiledeck: starting mjpeg stream with port', serverPort);
-			startMjpegStream(selectedDevice.id);
-			requestDeviceInfo(selectedDevice.id).then();
+		// clear any existing boot polling
+		if (bootPollIntervalRef.current) {
+			clearInterval(bootPollIntervalRef.current);
+			bootPollIntervalRef.current = null;
+		}
 
-			// set device skin based on device platform/model
-			setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
+		if (selectedDevice !== null) {
+			// check if device is offline
+			if (selectedDevice.state === 'offline') {
+				console.log('mobiledeck: device is offline, booting first');
+				bootDevice(selectedDevice.id).then(() => {
+					// start polling to check when device becomes available
+					pollDeviceUntilAvailable(selectedDevice.id);
+				}).catch(error => {
+					console.error('mobiledeck: failed to boot device:', error);
+					setIsBooting(false);
+				});
+			} else {
+				console.log('mobiledeck: device is available, starting mjpeg stream with port', serverPort);
+				startMjpegStream(selectedDevice.id);
+				requestDeviceInfo(selectedDevice.id).then();
+
+				// set device skin based on device platform/model
+				setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
+			}
 		}
 	}, [selectedDevice]);
 
@@ -369,6 +441,12 @@ function DeviceViewPage() {
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);
 			}
+
+			// clear boot polling interval if exists
+			if (bootPollIntervalRef.current) {
+				clearInterval(bootPollIntervalRef.current);
+				bootPollIntervalRef.current = null;
+			}
 		};
 	}, []);
 
@@ -409,6 +487,7 @@ function DeviceViewPage() {
 			{/* Device stream area */}
 			<DeviceStream
 				isConnecting={isConnecting}
+				isBooting={isBooting}
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}

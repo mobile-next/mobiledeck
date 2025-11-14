@@ -13,6 +13,7 @@ export interface GesturePoint {
 
 export interface DeviceStreamProps {
 	isConnecting: boolean;
+	isBooting?: boolean;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
 	imageUrl: string;
@@ -55,6 +56,7 @@ const emptyGestureState: GestureState = {
 
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
+	isBooting = false,
 	selectedDevice,
 	screenSize,
 	imageUrl,
@@ -196,7 +198,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 				<div className={`relative overflow-visible`}>
 					<div className="w-full h-full overflow-visible">
 						<div className="flex flex-col items-center justify-center h-full text-white">
-							{isConnecting && selectedDevice ? (
+							{(isConnecting || isBooting) && selectedDevice ? (
 								<div className="relative flex items-center">
 									<DeviceSkin
 										skinOverlayUri={skinOverlayUri}
@@ -206,7 +208,11 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 										onSkinLoad={calculateSkinRatio}
 									>
 										<div className="w-full h-full flex items-center justify-center text-center text-black bg-white">
-											Connecting to <br /> {selectedDevice.name}...
+											{isBooting ? (
+												<>Booting <br /> {selectedDevice.name}...</>
+											) : (
+												<>Connecting to <br /> {selectedDevice.name}...</>
+											)}
 										</div>
 									</DeviceSkin>
 									{/* device controls positioned to the right */}

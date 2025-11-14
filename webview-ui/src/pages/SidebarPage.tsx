@@ -4,6 +4,7 @@ import vscode from '../vscode';
 import { JsonRpcClient } from '../JsonRpcClient';
 import { AndroidIcon, IosIcon } from '../CustomIcons';
 import { DeviceDescriptor, DevicePlatform, DeviceType, ListDevicesResponse } from '../models';
+import { ContextMenu } from '../components/ContextMenu';
 
 interface DeviceCategoryProps {
 	label: string;
@@ -49,13 +50,22 @@ function GettingStartedBanner() {
 interface DeviceRowProps {
 	device: DeviceDescriptor;
 	onClick: (device: DeviceDescriptor) => void;
+	onContextMenu?: (device: DeviceDescriptor, x: number, y: number) => void;
 }
 
-function DeviceRow({ device, onClick }: DeviceRowProps) {
+function DeviceRow({ device, onClick, onContextMenu }: DeviceRowProps) {
+	const handleContextMenu = (e: React.MouseEvent) => {
+		if (onContextMenu) {
+			e.preventDefault();
+			onContextMenu(device, e.clientX, e.clientY);
+		}
+	};
+
 	return (
 		<div
 			className="flex items-center gap-2 py-1.5 px-2 hover:bg-[#2d2d2d] rounded cursor-pointer group"
 			onClick={() => onClick(device)}
+			onContextMenu={handleContextMenu}
 		>
 			{/* device icon */}
 			<div className="flex-shrink-0">
@@ -89,9 +99,11 @@ function SidebarPage({
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(true);
+	const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 	const [serverPort, setServerPort] = useState<number>(0);
 	const [userEmail, setUserEmail] = useState<string>('');
 	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
+	const [contextMenu, setContextMenu] = useState<{ device: DeviceDescriptor; x: number; y: number } | null>(null);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 
@@ -137,9 +149,11 @@ function SidebarPage({
 			const sortedDevices = [...iosDevices, ...androidDevices];
 			setDevices(sortedDevices);
 			setIsRefreshing(false);
+			setHasInitiallyLoaded(true);
 		} catch (error) {
 			console.error('sidebar: error fetching devices:', error);
 			setIsRefreshing(false);
+			setHasInitiallyLoaded(true);
 		}
 	};
 
@@ -220,6 +234,45 @@ function SidebarPage({
 		onDeviceClicked(device);
 	};
 
+	const handleDeviceContextMenu = (device: DeviceDescriptor, x: number, y: number) => {
+		// show context menu for all devices that are not offline
+		if (device.state !== 'offline') {
+			setContextMenu({ device, x, y });
+		}
+	};
+
+	const handleRebootDevice = async (device: DeviceDescriptor) => {
+		try {
+			// close the device tab first
+			vscode.postMessage({
+				command: 'closeDeviceTab',
+				deviceId: device.id
+			});
+
+			console.log('sidebar: rebooting device', device.id);
+			await getJsonRpcClient().sendJsonRpcRequest('device_reboot', { deviceId: device.id });
+			console.log('sidebar: device reboot initiated');
+		} catch (error) {
+			console.error('sidebar: error rebooting device:', error);
+		}
+	};
+
+	const handleShutdownDevice = async (device: DeviceDescriptor) => {
+		try {
+			// close the device tab first
+			vscode.postMessage({
+				command: 'closeDeviceTab',
+				deviceId: device.id
+			});
+
+			console.log('sidebar: shutting down device', device.id);
+			await getJsonRpcClient().sendJsonRpcRequest('device_shutdown', { deviceId: device.id });
+			console.log('sidebar: device shutdown initiated');
+		} catch (error) {
+			console.error('sidebar: error shutting down device:', error);
+		}
+	};
+
 
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
@@ -248,16 +301,16 @@ function SidebarPage({
 						<div className="ml-6">
 							{devices.length === 0 ? (
 								<div className="text-xs text-[#858585] py-2">
-									{isRefreshing ? 'Loading devices...' : 'No devices found'}
+									{(!hasInitiallyLoaded && isRefreshing) ? 'Loading devices...' : 'No devices found'}
 								</div>
 							) : (
 								<>
 									{/* connected devices section */}
-									{connectedDeviceIds.length > 0 && (
+									{devices.some(d => connectedDeviceIds.includes(d.id) && d.state !== 'offline') && (
 										<>
 											<DeviceCategory label="Connected" />
-											{devices.filter(d => connectedDeviceIds.includes(d.id)).map((device) => (
-												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+											{devices.filter(d => connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
+												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} onContextMenu={handleDeviceContextMenu} />
 											))}
 										</>
 									)}
@@ -267,7 +320,7 @@ function SidebarPage({
 										<>
 											<DeviceCategory label="Available" />
 											{devices.filter(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
-												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} />
+												<DeviceRow key={device.id} device={device} onClick={handleDeviceClick} onContextMenu={handleDeviceContextMenu} />
 											))}
 										</>
 									)}
@@ -284,12 +337,33 @@ function SidebarPage({
 								</>
 							)}
 
-							{/* getting started banner - always visible */}
-							{!isRefreshing && <GettingStartedBanner />}
+							{/* getting started banner - always visible after initial load */}
+							{hasInitiallyLoaded && <GettingStartedBanner />}
 						</div>
 					)}
 				</div>
 			</div>
+
+			{/* context menu */}
+			{contextMenu && (
+				<ContextMenu
+					x={contextMenu.x}
+					y={contextMenu.y}
+					items={[
+						{
+							label: 'Reboot',
+							onClick: () => handleRebootDevice(contextMenu.device)
+						},
+						...(contextMenu.device.type === DeviceType.EMULATOR || contextMenu.device.type === DeviceType.SIMULATOR
+							? [{
+								label: 'Shutdown',
+								onClick: () => handleShutdownDevice(contextMenu.device)
+							}]
+							: [])
+					]}
+					onClose={() => setContextMenu(null)}
+				/>
+			)}
 		</div>
 	);
 }

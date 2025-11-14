@@ -59,6 +59,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					vscode.commands.executeCommand('mobiledeck.openDevicePanel', message.device);
 					break;
 
+				case 'closeDeviceTab':
+					this.logger.log('close device tab requested: ' + message.deviceId);
+					vscode.commands.executeCommand('mobiledeck.closeDevicePanel', message.deviceId);
+					break;
+
 				case 'openGettingStarted':
 					this.logger.log('opening getting started guide');
 					this.telemetry.sendEvent('getting_started_clicked', {});
