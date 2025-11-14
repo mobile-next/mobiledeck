@@ -84,11 +84,17 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 			</div>
 
 			{/* device name and type */}
-			<div className="flex-1 min-w-0">
-				<span className="text-sm text-[#cccccc]">
+			<div className="flex-1 min-w-0 flex flex-col">
+				<span className="text-sm text-white">
 					{device.name}
-					{device.type === DeviceType.EMULATOR && ' (Emulator)'}
-					{device.type === DeviceType.SIMULATOR && ' (Simulator)'}
+				</span>
+				<span className="text-xs text-[#858585]">
+					{device.platform === DevicePlatform.IOS ? 'iOS' : 'Android'}
+					{device.version && ` ${device.version}`}
+					{' • '}
+					{device.type === DeviceType.EMULATOR && 'Emulator'}
+					{device.type === DeviceType.SIMULATOR && 'Simulator'}
+					{device.type === DeviceType.REAL && 'Real Device'}
 				</span>
 			</div>
 
