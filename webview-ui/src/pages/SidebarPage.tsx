@@ -16,6 +16,7 @@ function SidebarPage({
 	onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`)
 }: SidebarPageProps) {
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
+	const [isOfflineExpanded, setIsOfflineExpanded] = useState(false);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(true);
 	const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
@@ -262,8 +263,13 @@ function SidebarPage({
 									{/* offline devices section */}
 									{devices.some(d => d.state === 'offline') && (
 										<>
-											<DeviceCategory label="Offline" />
-											{devices.filter(d => d.state === 'offline').map((device) => (
+											<DeviceCategory
+												label="Offline"
+												isCollapsible={true}
+												isExpanded={isOfflineExpanded}
+												onToggle={() => setIsOfflineExpanded(!isOfflineExpanded)}
+											/>
+											{isOfflineExpanded && devices.filter(d => d.state === 'offline').map((device) => (
 												<DeviceRow
 													key={device.id}
 													device={device}
