@@ -218,6 +218,10 @@ function DeviceViewPage() {
 			// check if device is offline
 			if (selectedDevice.state === 'offline') {
 				console.log('mobiledeck: device is offline, booting first');
+
+				// set device skin immediately, even before booting
+				setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
+
 				bootDevice(selectedDevice.id).then(() => {
 					// start polling to check when device becomes available
 					pollDeviceUntilAvailable(selectedDevice.id);
