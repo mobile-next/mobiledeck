@@ -137,7 +137,7 @@ class MobiledeckExtension {
 
 		this.telemetry = new Telemetry(distinctId);
 
-		this.cliServer = new MobileCliServer(context);
+		this.cliServer = new MobileCliServer(context, this.telemetry);
 		await this.cliServer.launchMobilecliServer()
 			.catch(error => {
 				this.logger.log('failed to launch mobilecli server: ' + error.message);
