@@ -1,3 +1,5 @@
+import { DeviceDescriptor } from "./models";
+
 interface DeviceSkinInsets {
 	top: number;
 	left: number;
@@ -59,11 +61,24 @@ export const AndroidDeviceSkin: DeviceSkin = {
 	borderRadius: 170,
 };
 
+// ipad skin (ipad devices)
+export const iPadSkin: DeviceSkin = {
+	imageFilename: 'iPad_Pro_11.png',
+	insets: {
+		top: 110,
+		left: 115,
+		right: 115,
+		bottom: 110,
+	},
+	borderRadius: 35,
+};
+
 // allowed skin filenames
 const ALLOWED_SKIN_FILES = [
 	'iPhone_with_island.png',
 	'iPhone_with_notch.png',
-	'android.png'
+	'android.png',
+	'iPad_Pro_11.png'
 ];
 
 export const isSanitizedSkinOverlayUri = (uriPrefix: string): boolean => {
@@ -110,32 +125,41 @@ export const isSanitizedSkinOverlayUri = (uriPrefix: string): boolean => {
 	return true;
 };
 
-export function getDeviceSkinForDevice(device: { platform: string; name: string }): DeviceSkin {
+export function getDeviceSkinForDevice(device: DeviceDescriptor): DeviceSkin {
 	// android devices use android skin
 	if (device.platform === 'android') {
 		return AndroidDeviceSkin;
 	}
 
-	// extract iphone model number
-	const m = device.name.match(/iPhone (\d+)/);
-	if (m) {
-		const modelNumber = parseInt(m[1]);
+	if (device.platform === 'ios') {
 
-		if (modelNumber >= 15) {
-			// iphone 15+ have dynamic island
-			return iPhoneWithIslandSkin;
+		// ipad devices use ipad skin
+		if (device.name.includes('iPad')) {
+			return iPadSkin;
 		}
 
-		if (modelNumber >= 12) {
-			// iphone 12-14 have notch
+		// iphone x has notch (special case without numeric model)
+		if (device.name.startsWith('iPhone X')) {
 			return iPhoneWithNotchSkin;
 		}
 
-		// fall through, older iphones have no skin
-	}
+		const m = device.name.match(/iPhone (\d+)/);
+		if (m) {
+			const modelNumber = parseInt(m[1]);
 
-	// iphone x has notch (special case without numeric model)
-	if (device.name.startsWith('iPhone X')) {
+			if (modelNumber >= 15) {
+				// iphone 15+ have dynamic island
+				return iPhoneWithIslandSkin;
+			}
+
+			if (modelNumber >= 12) {
+				// iphone 12-14 have notch
+				return iPhoneWithNotchSkin;
+			}
+		}
+
+		// fallthrough: we choose a device with a notch. this is a bug.
+		// TODO: `xcrun simctl list devices -j | jq '.devices[][]'` lists deviceTypeIdentifier like "com.apple.CoreSimulator.SimDeviceType.iPad-mini-A17-Pro"
 		return iPhoneWithNotchSkin;
 	}
 

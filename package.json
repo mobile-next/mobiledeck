@@ -56,12 +56,6 @@
         "enablement": "mobiledeck.isAuthenticated"
       },
       {
-        "command": "mobiledeck.addDevice",
-        "title": "Add Device",
-        "icon": "$(add)",
-        "enablement": "mobiledeck.isAuthenticated"
-      },
-      {
         "command": "mobiledeck.signOut",
         "title": "Sign Out from Mobile Deck",
         "enablement": "mobiledeck.isAuthenticated"
@@ -133,7 +127,7 @@
     "@typescript-eslint/parser": "^8.28.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "@vscode/vsce": "3.6.2",
+    "@vscode/vsce": "3.7.0",
     "eslint": "^9.23.0",
     "husky": "<=9.1.7",
     "ts-loader": "^9.5.2",
@@ -142,7 +136,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.31",
+    "@mobilenext/mobilecli": "0.0.38",
     "jsonwebtoken": "9.0.2",
     "jwks-rsa": "3.2.0",
     "oidc-client-ts": "3.3.0",

@@ -59,6 +59,17 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					vscode.commands.executeCommand('mobiledeck.openDevicePanel', message.device);
 					break;
 
+				case 'closeDeviceTab':
+					this.logger.log('close device tab requested: ' + message.deviceId);
+					vscode.commands.executeCommand('mobiledeck.closeDevicePanel', message.deviceId);
+					break;
+
+				case 'openGettingStarted':
+					this.logger.log('opening getting started guide');
+					this.telemetry.sendEvent('getting_started_clicked', {});
+					vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
+					break;
+
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					this.telemetry.sendEvent('login_clicked', {
@@ -294,6 +305,20 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		this.logger.log('refreshing devices');
 		this.webviewView.webview.postMessage({
 			command: 'refreshDevices'
+		});
+	}
+
+	// public method to update connected devices (called from extension when device tabs open/close)
+	public updateConnectedDevices(connectedDeviceIds: string[]): void {
+		if (!this.webviewView) {
+			this.logger.log('webview not available');
+			return;
+		}
+
+		this.logger.log('updating connected devices: ' + JSON.stringify(connectedDeviceIds));
+		this.webviewView.webview.postMessage({
+			command: 'updateConnectedDevices',
+			connectedDeviceIds: connectedDeviceIds
 		});
 	}
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../Header';
 import { DeviceStream, GesturePoint } from '../DeviceStream';
 import { JsonRpcClient } from '../JsonRpcClient';
+import { MobilecliClient } from '../MobilecliClient';
 import { MjpegStream } from '../MjpegStream';
 import vscode from '../vscode';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
@@ -11,10 +12,6 @@ interface StatusBarProps {
 	isRefreshing: boolean;
 	selectedDevice: DeviceDescriptor | null;
 	fpsCount: number;
-}
-
-interface ScreenshotResponse {
-	data: string;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
@@ -46,18 +43,22 @@ function DeviceViewPage() {
 	const [serverPort, setServerPort] = useState<number>(12000);
 	const [mediaSkinsUri, setMediaSkinsUri] = useState<string>("skins");
 	const [deviceSkin, setDeviceSkin] = useState<DeviceSkin>(NoDeviceSkin);
+	const [isBooting, setIsBooting] = useState(false);
+	const bootPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
 	const isFlushingKeys = useRef(false);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
+	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
 
 	useEffect(() => {
 		jsonRpcClientRef.current = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+		mobilecliClientRef.current = new MobilecliClient(jsonRpcClientRef.current);
 	}, [serverPort]);
 
-	const getJsonRpcClient = () => jsonRpcClientRef.current;
+	const getMobilecliClient = () => mobilecliClientRef.current;
 
 	const startMjpegStream = async (deviceId: string) => {
 		try {
@@ -130,7 +131,7 @@ function DeviceViewPage() {
 	};
 
 	const requestDeviceInfo = async (deviceId: string) => {
-		const result = await getJsonRpcClient().sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId: deviceId });
+		const result = await getMobilecliClient().getDeviceInfo(deviceId);
 		console.log('mobiledeck: device info', result);
 		if (result && result.device) {
 			// TODO: get device info should not call a setter
@@ -141,7 +142,7 @@ function DeviceViewPage() {
 	const fetchDevices = async () => {
 		try {
 			setIsRefreshing(true);
-			const result = await getJsonRpcClient().sendJsonRpcRequest<ListDevicesResponse>('devices', {});
+			const result = await getMobilecliClient().listDevices();
 			console.log('mobiledeck: devices list', result);
 			setAvailableDevices(result.devices);
 		} catch (error) {
@@ -151,22 +152,96 @@ function DeviceViewPage() {
 		}
 	};
 
+	const bootDevice = async (deviceId: string) => {
+		try {
+			console.log('mobiledeck: booting device', deviceId);
+			setIsBooting(true);
+			await getMobilecliClient().bootDevice(deviceId);
+			console.log('mobiledeck: device_boot called successfully');
+		} catch (error) {
+			console.error('mobiledeck: error booting device:', error);
+			setIsBooting(false);
+			throw error;
+		}
+	};
+
+	const pollDeviceUntilAvailable = (deviceId: string) => {
+		// clear any existing poll interval
+		if (bootPollIntervalRef.current) {
+			clearInterval(bootPollIntervalRef.current);
+			bootPollIntervalRef.current = null;
+		}
+
+		// poll every 1 second to check if device is available
+		bootPollIntervalRef.current = setInterval(async () => {
+			try {
+				const result = await getMobilecliClient().listDevices(true);
+				const device = result.devices.find(d => d.id === deviceId);
+
+				if (device && device.state !== 'offline') {
+					console.log('mobiledeck: device is now available:', device);
+					setIsBooting(false);
+
+					// clear the interval
+					if (bootPollIntervalRef.current) {
+						clearInterval(bootPollIntervalRef.current);
+						bootPollIntervalRef.current = null;
+					}
+
+					// update the selected device with the new state
+					setSelectedDevice(device);
+
+					// start the mjpeg stream
+					await startMjpegStream(device.id);
+					await requestDeviceInfo(device.id);
+
+					// set device skin based on device platform/model
+					setDeviceSkin(getDeviceSkinForDevice(device));
+				}
+			} catch (error) {
+				console.error('mobiledeck: error polling device status:', error);
+			}
+		}, 1000);
+	};
+
 	useEffect(() => {
 		console.log('mobiledeck: selectDevice called with device:', selectedDevice);
 		stopMjpegStream();
 
-		if (selectedDevice !== null) {
-			console.log('mobiledeck: starting mjpeg stream with port', serverPort);
-			startMjpegStream(selectedDevice.id);
-			requestDeviceInfo(selectedDevice.id).then();
+		// clear any existing boot polling
+		if (bootPollIntervalRef.current) {
+			clearInterval(bootPollIntervalRef.current);
+			bootPollIntervalRef.current = null;
+		}
 
-			// set device skin based on device platform/model
-			setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
+		if (selectedDevice !== null) {
+			// check if device is offline
+			if (selectedDevice.state === 'offline') {
+				console.log('mobiledeck: device is offline, booting first');
+
+				// set device skin immediately, even before booting
+				setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
+
+				bootDevice(selectedDevice.id).then(() => {
+					// start polling to check when device becomes available
+					pollDeviceUntilAvailable(selectedDevice.id);
+				}).catch(error => {
+					console.error('mobiledeck: failed to boot device:', error);
+					setIsBooting(false);
+				});
+			} else {
+				console.log('mobiledeck: device is available, starting mjpeg stream with port', serverPort);
+				startMjpegStream(selectedDevice.id);
+				requestDeviceInfo(selectedDevice.id).then();
+
+				// set device skin based on device platform/model
+				setDeviceSkin(getDeviceSkinForDevice(selectedDevice));
+			}
 		}
 	}, [selectedDevice]);
 
 	const handleTap = async (x: number, y: number) => {
-		await getJsonRpcClient().sendJsonRpcRequest('io_tap', { x, y, deviceId: selectedDevice?.id });
+		await getMobilecliClient().tap(selectedDevice?.id!, x, y);
 	};
 
 	const handleGesture = async (points: Array<GesturePoint>) => {
@@ -206,10 +281,7 @@ function DeviceViewPage() {
 			});
 		}
 
-		await getJsonRpcClient().sendJsonRpcRequest('io_gesture', {
-			deviceId: selectedDevice?.id,
-			actions
-		});
+		await getMobilecliClient().gesture(selectedDevice?.id!, actions);
 	};
 
 	const flushPendingKeys = async () => {
@@ -227,7 +299,7 @@ function DeviceViewPage() {
 
 		pendingKeys.current = "";
 		try {
-			await getJsonRpcClient().sendJsonRpcRequest('io_text', { text: keys, deviceId: selectedDevice?.id }, 3000);
+			await getMobilecliClient().inputText(selectedDevice?.id!, keys, 3000);
 		} catch (error) {
 			console.error('mobiledeck: error flushing keys:', error);
 		} finally {
@@ -276,19 +348,19 @@ function DeviceViewPage() {
 	};
 
 	const onHome = () => {
-		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'HOME' }).then();
+		getMobilecliClient().pressButton(selectedDevice?.id!, 'HOME').then();
 	};
 
 	const onBack = () => {
-		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'BACK' }).then();
+		getMobilecliClient().pressButton(selectedDevice?.id!, 'BACK').then();
 	};
 
 	const onAppSwitch = () => {
-		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'APP_SWITCH' }).then();
+		getMobilecliClient().pressButton(selectedDevice?.id!, 'APP_SWITCH').then();
 	};
 
 	const onPower = () => {
-		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'POWER' }).then();
+		getMobilecliClient().pressButton(selectedDevice?.id!, 'POWER').then();
 	};
 
 	const onRotateDevice = () => {
@@ -298,11 +370,11 @@ function DeviceViewPage() {
 
 
 	const onIncreaseVolume = () => {
-		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'VOLUME_UP' }).then();
+		getMobilecliClient().pressButton(selectedDevice?.id!, 'VOLUME_UP').then();
 	};
 
 	const onDecreaseVolume = () => {
-		getJsonRpcClient().sendJsonRpcRequest('io_button', { deviceId: selectedDevice?.id, button: 'VOLUME_DOWN' }).then();
+		getMobilecliClient().pressButton(selectedDevice?.id!, 'VOLUME_DOWN').then();
 	};
 
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
@@ -315,7 +387,7 @@ function DeviceViewPage() {
 		}
 
 		try {
-			const response = await getJsonRpcClient().sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId: selectedDevice.id });
+			const response = await getMobilecliClient().takeScreenshot(selectedDevice.id);
 			const DATA_IMAGE_PNG = "data:image/png;base64,";
 
 			if (response.data && response.data.startsWith(DATA_IMAGE_PNG)) {
@@ -369,6 +441,12 @@ function DeviceViewPage() {
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);
 			}
+
+			// clear boot polling interval if exists
+			if (bootPollIntervalRef.current) {
+				clearInterval(bootPollIntervalRef.current);
+				bootPollIntervalRef.current = null;
+			}
 		};
 	}, []);
 
@@ -409,6 +487,7 @@ function DeviceViewPage() {
 			{/* Device stream area */}
 			<DeviceStream
 				isConnecting={isConnecting}
+				isBooting={isBooting}
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}

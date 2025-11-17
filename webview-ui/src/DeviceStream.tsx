@@ -4,6 +4,8 @@ import { DeviceSkin as DeviceSkinType } from "./DeviceSkins";
 import { DeviceSkin } from "./DeviceSkin";
 import { Polyline } from "./Polyline";
 import { DeviceControls } from "./DeviceControls";
+import { BootSequence  } from "./components/BootSequence";
+import { ConnectingSequence } from "./components/ConnectingSequence";
 
 export interface GesturePoint {
 	x: number;
@@ -13,6 +15,7 @@ export interface GesturePoint {
 
 export interface DeviceStreamProps {
 	isConnecting: boolean;
+	isBooting?: boolean;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
 	imageUrl: string;
@@ -55,6 +58,7 @@ const emptyGestureState: GestureState = {
 
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
+	isBooting = false,
 	selectedDevice,
 	screenSize,
 	imageUrl,
@@ -196,7 +200,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 				<div className={`relative overflow-visible`}>
 					<div className="w-full h-full overflow-visible">
 						<div className="flex flex-col items-center justify-center h-full text-white">
-							{isConnecting && selectedDevice ? (
+							{(isConnecting || isBooting) && selectedDevice ? (
 								<div className="relative flex items-center">
 									<DeviceSkin
 										skinOverlayUri={skinOverlayUri}
@@ -205,10 +209,15 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 										deviceSkinRef={deviceSkinRef}
 										onSkinLoad={calculateSkinRatio}
 									>
-										<div className="w-full h-full flex items-center justify-center text-center text-black bg-white">
-											Connecting to <br /> {selectedDevice.name}...
+										<div className="w-full h-full flex items-center justify-center text-center">
+											{isBooting ? (
+												<BootSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} />
+											) : (
+												<ConnectingSequence device={selectedDevice} />
+											)}
 										</div>
 									</DeviceSkin>
+
 									{/* device controls positioned to the right */}
 									<DeviceControls
 										onRotateDevice={() => { }}

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { Logger } from './utils/Logger';
 import { PortManager } from './managers/PortManager';
+import { Telemetry } from './utils/Telemetry';
 
 export class MobileCliServer {
 
@@ -16,7 +17,10 @@ export class MobileCliServer {
 	private serverPort: number = MobileCliServer.DEFAULT_SERVER_PORT;
 	private mobilecliServerProcess: ChildProcess | null = null;
 
-	constructor(private readonly context: vscode.ExtensionContext) {
+	constructor(
+		private readonly context: vscode.ExtensionContext,
+		private readonly telemetry: Telemetry
+	) {
 		this.mobilecliPath = this.findMobilecliPath();
 	}
 
@@ -98,6 +102,13 @@ export class MobileCliServer {
 		this.mobilecliServerProcess.on('close', (code: number) => {
 			this.verbose(`mobilecli server process exited with code ${code}`);
 			this.mobilecliServerProcess = null;
+
+			if (code !== 0) {
+				this.telemetry.sendEvent('mobilecli_server_exit_error', {
+					exitCode: code,
+					port: this.serverPort,
+				});
+			}
 		});
 
 		this.mobilecliServerProcess.on('error', (error: Error) => {
