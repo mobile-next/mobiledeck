@@ -31,10 +31,10 @@ function GettingStartedBanner() {
 				</button>
 				<div className="flex flex-col gap-2 pr-6">
 					<p className="text-sm text-[#cccccc]">
-						Can't find the device you were looking for? No worries, here is our getting started guide.
+						Can't find the device you were looking for?
 					</p>
 					<p className="text-xs text-[#858585]">
-						You can start with a simulator or emulator within minutes.
+						No worries, here is our getting started guide. You can start with a simulator or emulator within minutes.
 					</p>
 					<button
 						onClick={handleGettingStartedClick}
