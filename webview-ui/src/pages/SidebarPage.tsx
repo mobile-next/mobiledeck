@@ -23,6 +23,7 @@ function SidebarPage({
 	const [serverPort, setServerPort] = useState<number>(0);
 	const [userEmail, setUserEmail] = useState<string>('');
 	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
+	const [operatingDeviceIds, setOperatingDeviceIds] = useState<Set<string>>(new Set());
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
@@ -51,7 +52,7 @@ function SidebarPage({
 			if (serverPort === 0) {
 				// server port not yet set, probably still launching mobilecli server
 				// return;
-				console.log("gilm: server port not set yet");
+				console.log("mobiledeck: notice: server port not set yet");
 				return;
 			}
 
@@ -103,6 +104,15 @@ function SidebarPage({
 			case 'updateConnectedDevices':
 				console.log('sidebar: connected devices updated:', message.connectedDeviceIds);
 				setConnectedDeviceIds(message.connectedDeviceIds || []);
+
+				// clear operating state for any devices that are now connected
+				setOperatingDeviceIds(prev => {
+					const newSet = new Set(prev);
+					(message.connectedDeviceIds || []).forEach((deviceId: string) => {
+						newSet.delete(deviceId);
+					});
+					return newSet;
+				});
 				break;
 
 			default:
@@ -156,12 +166,18 @@ function SidebarPage({
 	};
 
 	const handleConnectDevice = (device: DeviceDescriptor) => {
+		// set operating state
+		setOperatingDeviceIds(prev => new Set(prev).add(device.id));
+
 		// connect to device - same as clicking on it
 		handleDeviceClick(device);
 	};
 
 	const handleRebootDevice = async (device: DeviceDescriptor) => {
 		try {
+			// set operating state
+			setOperatingDeviceIds(prev => new Set(prev).add(device.id));
+
 			// close the device tab first
 			vscode.postMessage({
 				command: 'closeDeviceTab',
@@ -178,6 +194,16 @@ function SidebarPage({
 
 	const handleShutdownDevice = async (device: DeviceDescriptor) => {
 		try {
+			// set operating state
+			setOperatingDeviceIds(prev => new Set(prev).add(device.id));
+
+			// optimistically update device state to offline
+			setDevices(prevDevices =>
+				prevDevices.map(d =>
+					d.id === device.id ? { ...d, state: 'offline' } : d
+				)
+			);
+
 			// close the device tab first
 			vscode.postMessage({
 				command: 'closeDeviceTab',
@@ -187,8 +213,22 @@ function SidebarPage({
 			console.log('sidebar: shutting down device', device.id);
 			await getMobilecliClient().shutdownDevice(device.id);
 			console.log('sidebar: device shutdown initiated');
+
+			// clear operating state after shutdown completes
+			setOperatingDeviceIds(prev => {
+				const newSet = new Set(prev);
+				newSet.delete(device.id);
+				return newSet;
+			});
 		} catch (error) {
 			console.error('sidebar: error shutting down device:', error);
+
+			// clear operating state on error as well
+			setOperatingDeviceIds(prev => {
+				const newSet = new Set(prev);
+				newSet.delete(device.id);
+				return newSet;
+			});
 		}
 	};
 
@@ -237,6 +277,7 @@ function SidebarPage({
 													onReboot={handleRebootDevice}
 													onShutdown={handleShutdownDevice}
 													onConnect={handleConnectDevice}
+													isOperating={operatingDeviceIds.has(device.id)}
 												/>
 											))}
 										</>
@@ -255,6 +296,7 @@ function SidebarPage({
 													onReboot={handleRebootDevice}
 													onShutdown={handleShutdownDevice}
 													onConnect={handleConnectDevice}
+													isOperating={operatingDeviceIds.has(device.id)}
 												/>
 											))}
 										</>
@@ -276,6 +318,7 @@ function SidebarPage({
 													onClick={handleDeviceClick}
 													isConnected={false}
 													onConnect={handleConnectDevice}
+													isOperating={operatingDeviceIds.has(device.id)}
 												/>
 											))}
 										</>
