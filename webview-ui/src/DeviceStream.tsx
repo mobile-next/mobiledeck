@@ -209,7 +209,15 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 									>
 										<div className="w-full h-full flex items-center justify-center text-center text-black bg-white">
 											{isBooting ? (
-												<>Booting <br /> {selectedDevice.name}...</>
+												selectedDevice.platform === DevicePlatform.ANDROID ? (
+													<img
+														src={skinOverlayUri.substring(0, skinOverlayUri.lastIndexOf('/skins/')) + '/boot/android-boot-animation.gif'}
+														alt="Booting"
+														style={{ maxWidth: '80%', maxHeight: '80%' }}
+													/>
+												) : (
+													<>Booting <br /> {selectedDevice.name}...</>
+												)
 											) : (
 												<>Connecting to <br /> {selectedDevice.name}...</>
 											)}

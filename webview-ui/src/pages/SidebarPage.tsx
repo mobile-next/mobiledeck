@@ -16,7 +16,7 @@ function SidebarPage({
 	onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`)
 }: SidebarPageProps) {
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
-	const [isOfflineExpanded, setIsOfflineExpanded] = useState(false);
+	const [isOfflineExpanded, setIsOfflineExpanded] = useState(true);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(true);
 	const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
