@@ -136,7 +136,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.37",
+    "@mobilenext/mobilecli": "0.0.38",
     "jsonwebtoken": "9.0.2",
     "jwks-rsa": "3.2.0",
     "oidc-client-ts": "3.3.0",
