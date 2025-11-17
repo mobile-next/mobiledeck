@@ -1,5 +1,5 @@
 import React from 'react';
-import { MoreVertical, Play, Loader2 } from "lucide-react";
+import { MoreVertical, Play, Loader2, RotateCw, Power } from "lucide-react";
 import { AndroidIcon, IosIcon } from '../CustomIcons';
 import { DeviceDescriptor, DevicePlatform, DeviceType } from '../models';
 import {
@@ -95,11 +95,13 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 								<DropdownMenuContent align="end" className="bg-[#252526] border-[#3e3e3e]">
 									{onReboot && (
 										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReboot(device); }} className="cursor-pointer">
+											<RotateCw className="h-4 w-4 mr-2" />
 											Reboot device
 										</DropdownMenuItem>
 									)}
 									{isEmulatorOrSimulator && onShutdown && (
 										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShutdown(device); }} className="cursor-pointer">
+											<Power className="h-4 w-4 mr-2" />
 											Shutdown device
 										</DropdownMenuItem>
 									)}
