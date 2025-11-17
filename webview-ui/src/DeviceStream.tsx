@@ -37,22 +37,31 @@ const AppleIcon: React.FC = () => (
 
 const IosBootSequence: React.FC = () => {
 	const [progress, setProgress] = useState(0);
+	const [showProgressBar, setShowProgressBar] = useState(false);
 
 	useEffect(() => {
-		const startTime = Date.now();
-		const duration = 15 * 1000;
+		// wait 2 seconds before starting the progress bar
+		const delayTimeout = setTimeout(() => {
+			const startTime = Date.now();
+			const duration = 15 * 1000;
 
-		const timer = setInterval(() => {
-			const elapsed = Date.now() - startTime;
-			const newProgress = Math.min((elapsed / duration) * 100, 100);
-			setProgress(newProgress);
+			// progress bar appears after 2 seconds
+			setShowProgressBar(true);
 
-			if (newProgress >= 100) {
-				clearInterval(timer);
-			}
-		}, 1000 / 30);
+			const timer = setInterval(() => {
+				const elapsed = Date.now() - startTime;
+				const newProgress = Math.min((elapsed / duration) * 100, 100);
+				setProgress(newProgress);
 
-		return () => clearInterval(timer);
+				if (newProgress >= 100) {
+					clearInterval(timer);
+				}
+			}, 1000 / 30);
+
+			return () => clearInterval(timer);
+		}, 2000);
+
+		return () => clearTimeout(delayTimeout);
 	}, []);
 
 	return (
@@ -60,11 +69,12 @@ const IosBootSequence: React.FC = () => {
 			<AppleIcon />
 			<div
 				style={{
-					width: '75%',
+					width: '25%',
 					height: '6px',
 					border: '1px solid #ffffff',
 					overflow: 'hidden',
-					backgroundColor: '#000000'
+					backgroundColor: '#000000',
+					visibility: showProgressBar ? "visible" : "hidden",
 				}}
 			>
 				<div

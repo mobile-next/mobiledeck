@@ -65,12 +65,12 @@ export const AndroidDeviceSkin: DeviceSkin = {
 export const iPadSkin: DeviceSkin = {
 	imageFilename: 'iPad_Pro_11.png',
 	insets: {
-		top: 70,
-		left: 70,
-		right: 70,
-		bottom: 70,
+		top: 110,
+		left: 115,
+		right: 115,
+		bottom: 110,
 	},
-	borderRadius: 170,
+	borderRadius: 35,
 };
 
 // allowed skin filenames
