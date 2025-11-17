@@ -1,3 +1,13 @@
+## [0.0.15](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.15) (2025-11-17)
+
+- General: Show 3 sections: Connected, Available and Offline devices
+- iOS: Added default device skin for all iPhone models
+- iOS: Added device skin for portrait iPads
+- iOS: Support booting, rebooting and shutting down simulators
+- iOS: Added boot sequence animation for iOS devices
+- Android: Support booting, rebooting, and shutting down emulators
+- Android: Added boot sequence animation for Android devices
+
 ## [0.0.14](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.14) (2025-11-12)
 
 - General: fixed race-condition where mobilecli starts after device list, causing a 2-seconds delay
