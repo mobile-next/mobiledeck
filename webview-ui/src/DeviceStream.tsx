@@ -5,7 +5,7 @@ import { DeviceSkin } from "./DeviceSkin";
 import { Polyline } from "./Polyline";
 import { DeviceControls } from "./DeviceControls";
 import { BootSequence  } from "./components/BootSequence";
-import { ConnectingSequence } from "./components/ConnectingSequence";
+import { ConnectSequence } from "./components/ConnectSequence";
 
 export interface GesturePoint {
 	x: number;
@@ -213,7 +213,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 											{isBooting ? (
 												<BootSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} />
 											) : (
-												<ConnectingSequence device={selectedDevice} />
+												<ConnectSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} message="Connecting" />
 											)}
 										</div>
 									</DeviceSkin>
