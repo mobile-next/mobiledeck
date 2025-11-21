@@ -109,6 +109,10 @@ export class DeviceViewProvider {
 			}
 		);
 
+		// set icon based on device platform
+		const iconFileName = this.selectedDevice.platform.toLowerCase() === 'ios' ? 'ios-icon.svg' : 'android-icon.svg';
+		panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', iconFileName);
+
 		panel.webview.onDidReceiveMessage(message => this.handleMessage(panel, message), undefined, this.context.subscriptions);
 
 		panel.webview.html = this.getHtml(panel, page);

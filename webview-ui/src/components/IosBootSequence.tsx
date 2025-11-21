@@ -41,9 +41,9 @@ export const IosBootSequence: React.FC = () => {
 				style={{
 					width: '25%',
 					height: '6px',
-					border: '1px solid #ffffff',
 					overflow: 'hidden',
-					backgroundColor: '#000000',
+					borderRadius: '2px',
+					backgroundColor: '#888',
 					visibility: showProgressBar ? "visible" : "hidden",
 				}}
 			>
