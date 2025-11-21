@@ -20,6 +20,13 @@ interface JWTPayload {
 	exp: number;
 }
 
+export interface OAuthStateParams {
+	agent: string;
+	agentVersion: string;
+	redirectUri: string;
+	csrf: string;
+};
+
 export class OAuthCallbackServer {
 	private static readonly OAUTH_SERVER_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -27,6 +34,75 @@ export class OAuthCallbackServer {
 	private port: number = 0;
 	private timeoutId: NodeJS.Timeout | null = null;
 	private logger: Logger = new Logger('Mobiledeck');
+
+	private AUTHENTICATION_SUCCESSFUL_HTML = `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Mobile Next - OAuth Callback</title>
+		<style>
+		* {
+		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+		}
+
+		body {
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 100vh;
+		background: #000000;
+		color: #ffffff;
+		}
+
+		.container {
+		text-align: center;
+		max-width: 500px;
+		padding: 20px;
+		}
+
+		.logo {
+		width: 80px;
+		height: 80px;
+		margin: 0 auto 32px;
+		border-radius: 12px;
+		}
+
+		h1 {
+		font-size: 32px;
+		color: #10b981;
+		margin-bottom: 16px;
+		font-weight: 600;
+		}
+
+		p {
+		font-size: 16px;
+		color: #9ca3af;
+		line-height: 1.6;
+		}
+
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<img src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4" alt="" class="logo">
+			<h1>Mobile Next</h1>
+			<p>You are now logged in.</p>
+			<p>You can close this tab and go back to Visual Studio Code.</p>
+		</div>
+
+		<script>
+			// remove parameters so it's human readable
+			const urlWithoutParams = window.location.origin + window.location.pathname;
+			window.history.replaceState({}, document.title, urlWithoutParams);
+		</script>
+	</body>
+	</html>
+	`;
 
 	// callback for when auth code is received
 	onAuthCodeReceived: (code: string) => void = () => { };
@@ -256,6 +332,11 @@ export class OAuthCallbackServer {
 		return tokens as OAuthTokens;
 	}
 
+	private writeHtmlResponse(res: http.ServerResponse, statusCode: number, message: string): void {
+		res.writeHead(statusCode, { 'Content-Type': 'text/html' });
+		res.end(message);
+	}
+
 	private writeSimpleResponse(res: http.ServerResponse, statusCode: number, message: string): void {
 		res.writeHead(statusCode, { 'Content-Type': 'text/plain' });
 		res.end(message);
@@ -287,7 +368,8 @@ export class OAuthCallbackServer {
 		// decode the state parameter to extract csrf token
 		let csrfState: string;
 		try {
-			const decodedState = JSON.parse(Buffer.from(receivedState, 'base64').toString('utf-8'));
+			const buffer = Buffer.from(receivedState, 'base64').toString('utf-8');
+			const decodedState: OAuthStateParams = JSON.parse(buffer);
 			csrfState = decodedState.csrf;
 		} catch (error) {
 			this.logger.log('error decoding state parameter: ' + (error instanceof Error ? error.message : String(error)));
@@ -334,7 +416,7 @@ export class OAuthCallbackServer {
 				this.onTokensReceived(tokens, email);
 
 				// send success response to user
-				this.writeSimpleResponse(res, 200, 'Authentication Successful');
+				this.writeHtmlResponse(res, 200, this.AUTHENTICATION_SUCCESSFUL_HTML);
 
 				// stop the server after response is fully sent
 				res.on('finish', () => {

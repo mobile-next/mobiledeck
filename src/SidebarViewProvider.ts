@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
-import { OAuthCallbackServer, OAuthTokens } from './OAuthCallbackServer';
+import { OAuthCallbackServer, OAuthTokens, OAuthStateParams } from './OAuthCallbackServer';
 import { OAUTH_CONFIG } from './config/oauth';
 import { Telemetry } from './utils/Telemetry';
 import { Logger } from './utils/Logger';
+import { ExtensionUtils } from './utils/ExtensionUtils';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -149,10 +150,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		this.oauthServer.setStoredState(csrfState);
 
 		// use the dynamic port for the redirect uri and include the csrf state
-		const state = btoa(JSON.stringify({
+		const state: OAuthStateParams = {
+			agent: "mobile-deck",
+			agentVersion: ExtensionUtils.getExtensionVersion(),
 			redirectUri: `http://localhost:${port}/oauth/callback`,
 			csrf: csrfState,
-		}));
+		};
 
 		// construct the oauth url with identity provider
 		const params = new URLSearchParams({
@@ -161,7 +164,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			response_type: OAUTH_CONFIG.response_type,
 			client_id: OAUTH_CONFIG.client_id,
 			scope: OAUTH_CONFIG.scope,
-			state: state,
+			state: btoa(JSON.stringify(state)),
 			prompt: 'select_account',
 		});
 
