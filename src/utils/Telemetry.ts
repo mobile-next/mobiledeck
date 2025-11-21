@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as os from 'node:os';
 import { PostHog } from 'posthog-node';
+import { ExtensionUtils } from './ExtensionUtils';
 
 export class Telemetry {
 	private static client: PostHog;
@@ -29,16 +30,6 @@ export class Telemetry {
 		return error.stack.includes('mobilenext');
 	}
 
-	private getExtensionVersion(): string {
-		try {
-			const extension = vscode.extensions.getExtension('mobilenext.mobiledeck');
-			return extension?.packageJSON?.version || 'unknown';
-		} catch (error: any) {
-			console.debug('Error getting extension version:', error);
-			return 'unknown';
-		}
-	}
-
 	private client(): PostHog {
 		return Telemetry.client;
 	}
@@ -51,9 +42,9 @@ export class Telemetry {
 
 			const systemProps: Record<string, string> = {
 				Platform: os.platform(),
-				Version: this.getExtensionVersion(),
 				NodeVersion: process.version,
-				EditorName: vscode.env.appName,
+				EditorName: ExtensionUtils.getAppName(),
+				Version: ExtensionUtils.getExtensionVersion(),
 			};
 
 			this.client().capture({
