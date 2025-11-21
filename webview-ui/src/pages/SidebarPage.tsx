@@ -7,6 +7,25 @@ import { DeviceDescriptor, DevicePlatform } from '../models';
 import DeviceCategory from '../components/DeviceCategory';
 import GettingStartedBanner from '../components/GettingStartedBanner';
 import DeviceRow from '../components/DeviceRow';
+import { MessageRouter } from '../MessageRouter';
+
+// message type definitions
+interface ConfigureMessage {
+	command: 'configure';
+	serverPort?: number;
+	email?: string;
+}
+
+interface RefreshDevicesMessage {
+	command: 'refreshDevices';
+}
+
+interface UpdateConnectedDevicesMessage {
+	command: 'updateConnectedDevices';
+	connectedDeviceIds?: string[];
+}
+
+type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage;
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
@@ -79,51 +98,44 @@ function SidebarPage({
 		}
 	};
 
-	const handleMessage = (event: MessageEvent) => {
-		const message = event.data;
-		console.log('sidebar: received message:', message);
+	const handleConfigure = (message: ConfigureMessage) => {
+		if (message.serverPort) {
+			console.log('sidebar: configure message received, port:', message.serverPort);
+			setServerPort(message.serverPort);
+		}
 
-		switch (message.command) {
-			case 'configure':
-				if (message.serverPort) {
-					console.log('sidebar: configure message received, port:', message.serverPort);
-					setServerPort(message.serverPort);
-				}
-
-				if (message.email) {
-					console.log('sidebar: email received:', message.email);
-					setUserEmail(message.email);
-				}
-				break;
-
-			case 'refreshDevices':
-				console.log('sidebar: refresh devices message received');
-				fetchDevices();
-				break;
-
-			case 'updateConnectedDevices':
-				console.log('sidebar: connected devices updated:', message.connectedDeviceIds);
-				setConnectedDeviceIds(message.connectedDeviceIds || []);
-
-				// clear operating state for any devices that are now connected
-				setOperatingDeviceIds(prev => {
-					const newSet = new Set(prev);
-					(message.connectedDeviceIds || []).forEach((deviceId: string) => {
-						newSet.delete(deviceId);
-					});
-					return newSet;
-				});
-				break;
-
-			default:
-				console.log('sidebar: unknown message', message);
-				break;
+		if (message.email) {
+			console.log('sidebar: email received:', message.email);
+			setUserEmail(message.email);
 		}
 	};
 
+	const handleRefreshDevices = (message: RefreshDevicesMessage) => {
+		console.log('sidebar: refresh devices message received');
+		fetchDevices();
+	};
+
+	const handleUpdateConnectedDevices = (message: UpdateConnectedDevicesMessage) => {
+		console.log('sidebar: connected devices updated:', message.connectedDeviceIds);
+		setConnectedDeviceIds(message.connectedDeviceIds || []);
+
+		// clear operating state for any devices that are now connected
+		setOperatingDeviceIds(prev => {
+			const newSet = new Set(prev);
+			(message.connectedDeviceIds || []).forEach((deviceId: string) => {
+				newSet.delete(deviceId);
+			});
+			return newSet;
+		});
+	};
+
 	useEffect(() => {
-		const messageHandler = (event: MessageEvent) => handleMessage(event);
-		window.addEventListener('message', messageHandler);
+		const router = new MessageRouter(window);
+
+		// register message handlers
+		router.register('configure', handleConfigure);
+		router.register('refreshDevices', handleRefreshDevices);
+		router.register('updateConnectedDevices', handleUpdateConnectedDevices);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({
@@ -131,7 +143,7 @@ function SidebarPage({
 		});
 
 		return () => {
-			window.removeEventListener('message', messageHandler);
+			router.destroy();
 		};
 	}, []);
 
