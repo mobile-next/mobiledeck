@@ -7,4 +7,4 @@ export const OAUTH_CONFIG = {
 	scope: "email openid",
 	token_endpoint: "https://auth.mobilenexthq.com/oauth2/token",
 	cognito_domain: "https://auth.mobilenexthq.com"
-} as const;
+};
