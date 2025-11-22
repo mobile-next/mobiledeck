@@ -8,6 +8,8 @@ import vscode from '../vscode';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
 import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from '../models';
 
+const DEVICE_BOOT_UPDATE_INTERVAL_MS = 1000;
+
 interface StatusBarProps {
 	isRefreshing: boolean;
 	selectedDevice: DeviceDescriptor | null;
@@ -178,7 +180,7 @@ function DeviceViewPage() {
 				const result = await getMobilecliClient().listDevices(true);
 				const device = result.devices.find(d => d.id === deviceId);
 
-				if (device && device.state !== 'offline') {
+				if (device && device.state === 'online') {
 					console.log('mobiledeck: device is now available:', device);
 					setIsBooting(false);
 
@@ -188,20 +190,14 @@ function DeviceViewPage() {
 						bootPollIntervalRef.current = null;
 					}
 
-					// update the selected device with the new state
+					// update the selected device with the new state. this will
+					// create an mjpeg stream connection
 					setSelectedDevice(device);
-
-					// start the mjpeg stream
-					await startMjpegStream(device.id);
-					await requestDeviceInfo(device.id);
-
-					// set device skin based on device platform/model
-					setDeviceSkin(getDeviceSkinForDevice(device));
 				}
 			} catch (error) {
 				console.error('mobiledeck: error polling device status:', error);
 			}
-		}, 1000);
+		}, DEVICE_BOOT_UPDATE_INTERVAL_MS);
 	};
 
 	useEffect(() => {
