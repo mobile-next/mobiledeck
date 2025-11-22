@@ -15,7 +15,7 @@ export interface DeviceDescriptor {
 	platform: DevicePlatform;
 	type: DeviceType;
 	version?: string;
-	state?: string;
+	state?: "online" | "offline";
 }
 
 export interface ListDevicesResponse {
