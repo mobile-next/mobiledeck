@@ -95,6 +95,12 @@ class MobiledeckExtension {
 		vscode.window.showInformationMessage('Add device functionality coming soon');
 	}
 
+	private onDocumentation() {
+		this.logger.log('mobiledeck.documentation command executed');
+		this.telemetry.sendEvent('documentation_clicked');
+		vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
+	}
+
 	private async onSignOut(context: vscode.ExtensionContext) {
 		this.logger.log('mobiledeck.signOut command executed');
 
@@ -164,6 +170,7 @@ class MobiledeckExtension {
 		}
 
 		// menu commands
+		this.registerCommand(context, 'mobiledeck.documentation', () => this.onDocumentation());
 		this.registerCommand(context, 'mobiledeck.signOut', () => this.onSignOut(context));
 		this.registerCommand(context, 'mobiledeck.addDevice', () => this.onAddDevice());
 		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices());
