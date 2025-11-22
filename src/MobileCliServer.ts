@@ -24,18 +24,14 @@ export class MobileCliServer {
 		this.mobilecliPath = this.findMobilecliPath();
 	}
 
-	private verbose(message: string) {
-		this.logger.log(message);
-	}
-
 	private findMobilecliPath(): string {
 		const basePath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilecli').fsPath;
 		const mobilecliPath = process.platform === 'win32' ? `${basePath}.exe` : basePath;
 
-		this.verbose("mobilecli path: " + mobilecliPath);
+		this.logger.log("mobilecli path: " + mobilecliPath);
 
 		const text = execFileSync(mobilecliPath, ['--version']).toString().trim();
-		this.verbose("mobilecli version: " + text);
+		this.logger.log("mobilecli version: " + text);
 
 		return mobilecliPath;
 	}
@@ -57,7 +53,7 @@ export class MobileCliServer {
 		while (Date.now() - startTime < timeoutMs) {
 			const isHealthy = await this.portManager.checkServerHealth(port);
 			if (isHealthy) {
-				this.verbose(`mobilecli server is ready on port ${port}`);
+				this.logger.log(`mobilecli server is ready on port ${port}`);
 				return;
 			}
 
@@ -71,12 +67,12 @@ export class MobileCliServer {
 	public async launchMobilecliServer(): Promise<void> {
 		const isRunning = await this.checkMobilecliServerRunning();
 		if (isRunning) {
-			this.verbose(`mobilecli server is already running on default port`);
+			this.logger.log(`mobilecli server is already running on default port`);
 			return;
 		}
 
 		if (this.mobilecliServerProcess) {
-			this.verbose('mobilecli server process already exists');
+			this.logger.log('mobilecli server process already exists');
 			return;
 		}
 
@@ -84,7 +80,7 @@ export class MobileCliServer {
 		const minPort = MobileCliServer.DEFAULT_SERVER_PORT + 1;
 		const maxPort = MobileCliServer.DEFAULT_SERVER_PORT + 100;
 		this.serverPort = await this.portManager.findAvailablePort(minPort, maxPort);
-		this.verbose(`Launching mobilecli server on port ${this.serverPort}...`);
+		this.logger.log(`Launching mobilecli server on port ${this.serverPort}...`);
 
 		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {
 			detached: false,
@@ -92,15 +88,15 @@ export class MobileCliServer {
 		});
 
 		this.mobilecliServerProcess.stdout?.on('data', (data: Buffer) => {
-			this.verbose(`mobilecli server stdout: ${data.toString().trimEnd()}`);
+			this.logger.log(`mobilecli server stdout: ${data.toString().trimEnd()}`);
 		});
 
 		this.mobilecliServerProcess.stderr?.on('data', (data: Buffer) => {
-			this.verbose(`mobilecli server stderr: ${data.toString().trimEnd()}`);
+			this.logger.log(`mobilecli server stderr: ${data.toString().trimEnd()}`);
 		});
 
 		this.mobilecliServerProcess.on('close', (code: number) => {
-			this.verbose(`mobilecli server process exited with code ${code}`);
+			this.logger.log(`mobilecli server process exited with code ${code}`);
 			this.mobilecliServerProcess = null;
 
 			if (code !== 0) {
@@ -112,7 +108,7 @@ export class MobileCliServer {
 		});
 
 		this.mobilecliServerProcess.on('error', (error: Error) => {
-			this.verbose(`mobilecli server error: ${error.message}`);
+			this.logger.log(`mobilecli server error: ${error.message}`);
 			this.mobilecliServerProcess = null;
 		});
 
