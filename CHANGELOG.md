@@ -1,3 +1,10 @@
+## [0.0.16](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.16) (2025-11-22)
+
+- General: improved device connection with platform-specific animations
+- General: fixed duplicate mjpeg stream start calls when device becomes available
+- General: fixed localhost warning in Chrome after OAuth login
+- General: updated glob package dependency
+
 ## [0.0.15](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.15) (2025-11-17)
 
 - General: Show 3 sections: Connected, Available and Offline devices
