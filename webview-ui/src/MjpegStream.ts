@@ -27,6 +27,7 @@ export class MjpegStream {
 		let inImage = false;
 		let imageData = new Uint8Array();
 		let contentLength = 0;
+		let contentType = '';
 		let bytesRead = 0;
 
 		console.log("mobiledeck: starting mjpeg stream");
@@ -65,6 +66,9 @@ export class MjpegStream {
 							contentLength = parseInt(contentLengthMatch[1]);
 						}
 
+						const contentTypeMatch = headers.match(/Content-Type:\s*([^\r\n]+)/i);
+						contentType = contentTypeMatch ? contentTypeMatch[1].trim() : '';
+
 						const headerEndBytes = headerEndIndex + 4;
 						buffer = buffer.slice(headerEndBytes);
 						inImage = true;
@@ -91,7 +95,14 @@ export class MjpegStream {
 						processedData = true;
 
 						if (bytesRead >= contentLength) {
-							this.displayMjpegImage(imageData);
+							if (contentType === 'image/jpeg') {
+								this.displayMjpegImage(imageData);
+							} else {
+								// non-jpeg mime type, this will later be shown as connection progresses
+								const bodyText = new TextDecoder().decode(imageData);
+								console.log('non-jpeg frame received, content-type:', contentType, 'body:', bodyText);
+							}
+
 							inImage = false;
 							imageData = new Uint8Array();
 							bytesRead = 0;
