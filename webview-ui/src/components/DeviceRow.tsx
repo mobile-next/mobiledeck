@@ -1,7 +1,7 @@
 import React from 'react';
 import { MoreVertical, Play, Loader2, RotateCw, Power } from "lucide-react";
 import { AndroidIcon, IosIcon } from '../CustomIcons';
-import { DeviceDescriptor, DevicePlatform, DeviceType } from '../models';
+import { DeviceDescriptor, DevicePlatform, DeviceType } from '@shared/models';
 import {
 	DropdownMenu,
 	DropdownMenuContent,

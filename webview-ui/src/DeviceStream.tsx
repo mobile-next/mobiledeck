@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { DeviceDescriptor, DevicePlatform, ScreenSize } from "./models";
+import { DeviceDescriptor, DevicePlatform, ScreenSize } from "@shared/models";
 import { DeviceSkin as DeviceSkinType } from "./DeviceSkins";
 import { DeviceSkin } from "./DeviceSkin";
 import { Polyline } from "./Polyline";

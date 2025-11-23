@@ -112,6 +112,12 @@ class MobiledeckExtension {
 		}
 	}
 
+	private onDocumentation() {
+		this.logger.log('mobiledeck.documentation command executed');
+		this.telemetry.sendEvent('documentation_opened');
+		vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
+	}
+
 	private async onSignOut(context: vscode.ExtensionContext) {
 		this.logger.log('mobiledeck.signOut command executed');
 

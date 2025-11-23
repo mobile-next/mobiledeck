@@ -1,4 +1,4 @@
-import { DeviceDescriptor } from "./models";
+import { DeviceDescriptor } from "@shared/models";
 
 interface DeviceSkinInsets {
 	top: number;

@@ -144,7 +144,7 @@ function LoginPage() {
 					/>
 				</div>
 
-				<h1 style={styles.h1}>Welcome to Mobiledeck</h1>
+				<h1 style={styles.h1}>Welcome to Mobile Deck</h1>
 				<p style={styles.subtitle}>
 					Making mobile development accessible to everyone.
 					<br />

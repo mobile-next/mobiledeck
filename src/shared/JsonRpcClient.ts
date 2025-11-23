@@ -25,8 +25,8 @@ export class JsonRpcClient {
 			params,
 		};
 
+		let timeoutId: any;
 		let controller: AbortController | undefined;
-		let timeoutId: NodeJS.Timeout | undefined;
 
 		if (timeoutMs !== undefined) {
 			controller = new AbortController();
@@ -47,7 +47,7 @@ export class JsonRpcClient {
 				clearTimeout(timeoutId);
 			}
 
-			const jsonResponse: JsonRpcResponse<T> = await response.json();
+			const jsonResponse = await response.json() as JsonRpcResponse<T>;
 			return jsonResponse.result;
 		} catch (error: any) {
 			if (timeoutId) {

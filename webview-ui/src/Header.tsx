@@ -11,7 +11,7 @@ import {
 } from "./components/ui/dropdown-menu";
 
 import { ChevronDown, House, MoreVertical, RefreshCw, Wifi, Smartphone, LinkIcon, Camera, ArrowBigLeft, Circle, Power } from "lucide-react";
-import { DeviceDescriptor } from "./models";
+import { DeviceDescriptor } from "@shared/models";
 import { AndroidIcon, AppSwitchIcon, IosIcon, MobileDeckIcon } from "./CustomIcons";
 
 export interface HeaderProps {

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../Header';
 import { DeviceStream, GesturePoint } from '../DeviceStream';
-import { JsonRpcClient } from '../JsonRpcClient';
-import { MobilecliClient } from '../MobilecliClient';
+import { JsonRpcClient } from '@shared/JsonRpcClient';
+import { MobilecliClient } from '@shared/MobilecliClient';
 import { MjpegStream } from '../MjpegStream';
 import vscode from '../vscode';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
-import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from '../models';
+import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from '@shared/models';
 
 const DEVICE_BOOT_UPDATE_INTERVAL_MS = 1000;
 
