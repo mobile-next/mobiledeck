@@ -144,7 +144,7 @@ function DeviceViewPage() {
 	const fetchDevices = async () => {
 		try {
 			setIsRefreshing(true);
-			const result = await getMobilecliClient().listDevices();
+			const result = await getMobilecliClient().listDevices(false);
 			console.log('mobiledeck: devices list', result);
 			setAvailableDevices(result.devices);
 		} catch (error) {
