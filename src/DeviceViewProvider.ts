@@ -88,7 +88,7 @@ export class DeviceViewProvider {
 		}
 	}
 
-	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
+	createWebviewPanel(_preselectedDevice?: DeviceDescriptor): vscode.WebviewPanel {
 		this.logger.log('createWebviewPanel called');
 
 		const panel = vscode.window.createWebviewPanel(
@@ -97,6 +97,7 @@ export class DeviceViewProvider {
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
+				retainContextWhenHidden: true,
 				localResourceRoots: [
 					// allow css and js files to be loaded
 					vscode.Uri.joinPath(this.context.extensionUri, 'assets'),
