@@ -106,9 +106,11 @@ export class DeviceViewProvider {
 			}
 		);
 
-		// set icon based on device platform
-		const iconFileName = this.selectedDevice.platform.toLowerCase() === 'ios' ? 'ios-icon.svg' : 'android-icon.svg';
-		panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', iconFileName);
+		// set mobile next icon for the tab (theme-aware)
+		panel.iconPath = {
+			light: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-light.svg'),
+			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg')
+		};
 
 		panel.webview.onDidReceiveMessage(message => this.handleMessage(panel, message), undefined, this.context.subscriptions);
 
@@ -124,8 +126,11 @@ export class DeviceViewProvider {
 	private updateWebviewTitle(webviewPanel: vscode.WebviewPanel, device: string) {
 		webviewPanel.title = device;
 
-		// add device icon
-		webviewPanel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobiledeck-icon.svg');
+		// add mobile next icon (theme-aware)
+		webviewPanel.iconPath = {
+			light: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-light.svg'),
+			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg')
+		};
 	}
 
 	private getHtml(webviewPanel: vscode.WebviewPanel, page: string = 'device'): string {
