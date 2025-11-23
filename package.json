@@ -60,6 +60,10 @@
         "title": "Documentation"
       },
       {
+        "command": "mobiledeck.sendFeedback",
+        "title": "Send Feedback"
+      },
+      {
         "command": "mobiledeck.signOut",
         "title": "Sign Out from Mobile Deck",
         "enablement": "mobiledeck.isAuthenticated"
@@ -71,6 +75,14 @@
           "command": "mobiledeck.refreshDevices",
           "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated",
           "group": "navigation"
+        },
+        {
+          "command": "mobiledeck.documentation",
+          "when": "view == mobiledeckDevices"
+        },
+        {
+          "command": "mobiledeck.sendFeedback",
+          "when": "view == mobiledeckDevices"
         },
         {
           "command": "mobiledeck.signOut",
