@@ -147,25 +147,6 @@ function SidebarPage({
 		};
 	}, []);
 
-	useEffect(() => {
-		// only start fetching devices after serverPort is configured
-		if (serverPort === 0) {
-			return;
-		}
-
-		// fetch devices on mount
-		fetchDevices();
-
-		// poll for devices every 2 seconds
-		const intervalId = setInterval(() => {
-			fetchDevices();
-		}, 2000);
-
-		return () => {
-			clearInterval(intervalId);
-		};
-	}, [serverPort]);
-
 	const handleDeviceClick = (device: DeviceDescriptor) => {
 		// send device click message to extension
 		vscode.postMessage({

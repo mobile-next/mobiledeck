@@ -1,6 +1,6 @@
 export interface DeviceDescriptor {
 	id: string;
 	name: string;
-	platform: string;
-	type: string;
+	platform: "ios" | "android";
+	type: "real" | "emulator" | "simulator";
 }

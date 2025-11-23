@@ -44,25 +44,21 @@ export class DeviceViewProvider {
 		private readonly context: vscode.ExtensionContext,
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
-	) { }
-
-	private verbose(message: string) {
-		this.logger.log(message);
-	}
+	) {}
 
 	async handleMessage(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
-		this.verbose('Received message: ' + JSON.stringify(message));
+		this.logger.log('Received message: ' + JSON.stringify(message));
 		switch (message.command) {
 			case 'alert':
 				vscode.window.showErrorMessage(message.text);
 				break;
 
 			case 'log':
-				this.verbose(message.text);
+				this.logger.log(message.text);
 				break;
 
 			case 'onInitialized':
-				this.verbose('Webview initialized');
+				this.logger.log('Webview initialized');
 
 				// convert media skins directory path to webview URI
 				const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
@@ -70,18 +66,19 @@ export class DeviceViewProvider {
 				);
 
 				// Send configure message with both device and server port
-				this.sendMessageToWebview(webviewPanel, {
+				const configureMessage: ConfigureMessage = {
 					command: 'configure',
 					device: this.selectedDevice,
 					serverPort: this.cliServer.getJsonRpcServerPort(),
 					mediaSkinsUri: mediaSkinsUri.toString(),
-				} as ConfigureMessage);
+				};
 
+				this.sendMessageToWebview(webviewPanel, configureMessage);
 				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
 				break;
 
 			case 'onDeviceSelected':
-				this.verbose('Device selected: ' + message.device.name);
+				this.logger.log('Device selected: ' + message.device.name);
 				this.updateWebviewTitle(webviewPanel, message.device.name);
 				break;
 
@@ -92,7 +89,7 @@ export class DeviceViewProvider {
 	}
 
 	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
-		this.verbose('createWebviewPanel called');
+		this.logger.log('createWebviewPanel called');
 
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',

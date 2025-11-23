@@ -73,15 +73,6 @@
           "group": "navigation"
         },
         {
-          "command": "mobiledeck.addDevice",
-          "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated",
-          "group": "navigation"
-        },
-        {
-          "command": "mobiledeck.documentation",
-          "when": "view == mobiledeckDevices"
-        },
-        {
           "command": "mobiledeck.signOut",
           "when": "view == mobiledeckDevices && mobiledeck.isAuthenticated"
         }
