@@ -6,13 +6,37 @@ import { MobileCliServer } from './MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
 import { Telemetry } from './utils/Telemetry';
 import { Logger } from './utils/Logger';
+import { AuthenticationManager } from './AuthenticationManager';
+
+const SIDEBAR_VIEW_ID = 'mobiledeckDevices';
+
+class DevicePanelManager {
+	private devicePanels: Map<string, vscode.WebviewPanel> = new Map();
+
+	public get(deviceId: string): vscode.WebviewPanel | undefined {
+		return this.devicePanels.get(deviceId);
+	}
+
+	public set(deviceId: string, panel: vscode.WebviewPanel) {
+		this.devicePanels.set(deviceId, panel);
+	}
+
+	public delete(deviceId: string) {
+		this.devicePanels.delete(deviceId);
+	}
+
+	public ids(): Array<string> {
+		return Array.from(this.devicePanels.keys());
+	}
+}
 
 class MobiledeckExtension {
 	private cliServer: MobileCliServer | null = null;
 	private sidebarProvider: SidebarViewProvider | null = null;
 	private telemetry: Telemetry = new Telemetry('');
 	private logger: Logger = new Logger('Mobiledeck');
-	private openDevicePanels: Map<string, vscode.WebviewPanel> = new Map();
+	private devicePanelManager = new DevicePanelManager();
+	private authenticationManager = new AuthenticationManager();
 
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		this.logger.log('mobiledeck.connect command executed for device: ' + device.id);
@@ -31,7 +55,7 @@ class MobiledeckExtension {
 		this.logger.log('mobiledeck.openDevicePanel command executed for device: ' + device.id);
 		if (device) {
 			// check if a panel for this device already exists
-			const existingPanel = this.openDevicePanels.get(device.id);
+			const existingPanel = this.devicePanelManager.get(device.id);
 			if (existingPanel) {
 				this.logger.log('panel already exists for device: ' + device.id + ', revealing it');
 				existingPanel.reveal();
@@ -47,7 +71,7 @@ class MobiledeckExtension {
 			const panel = viewProvider.createWebviewPanel(device);
 
 			// track the panel
-			this.openDevicePanels.set(device.id, panel);
+			this.devicePanelManager.set(device.id, panel);
 
 			// notify sidebar that device is now connected
 			this.updateSidebarConnectedDevices();
@@ -55,25 +79,26 @@ class MobiledeckExtension {
 			// listen for panel disposal (when user closes the tab)
 			panel.onDidDispose(() => {
 				this.logger.log('panel disposed for device: ' + device.id);
-				this.openDevicePanels.delete(device.id);
+				this.devicePanelManager.delete(device.id);
 				// notify sidebar that device is now available again
 				this.updateSidebarConnectedDevices();
 			});
 		}
 	}
 
-	private onRefreshDevices() {
+	private onRefreshDevices(_context: vscode.ExtensionContext) {
 		this.logger.log('mobiledeck.refreshDevices command executed');
 		this.telemetry.sendEvent('refresh_devices_clicked');
+
 		// send message to sidebar to refresh devices
 		if (this.sidebarProvider) {
 			this.sidebarProvider.refreshDevices();
 		}
 	}
 
-	private onCloseDevicePanel(deviceId: string) {
+	private onCloseDevicePanel(context: vscode.ExtensionContext, deviceId: string) {
 		this.logger.log('mobiledeck.closeDevicePanel command executed for device: ' + deviceId);
-		const panel = this.openDevicePanels.get(deviceId);
+		const panel = this.devicePanelManager.get(deviceId);
 		if (panel) {
 			panel.dispose();
 		}
@@ -81,18 +106,10 @@ class MobiledeckExtension {
 
 	private updateSidebarConnectedDevices() {
 		if (this.sidebarProvider) {
-			const connectedDeviceIds = Array.from(this.openDevicePanels.keys());
+			const connectedDeviceIds = this.devicePanelManager.ids();
 			this.logger.log('updating sidebar with connected devices: ' + JSON.stringify(connectedDeviceIds));
 			this.sidebarProvider.updateConnectedDevices(connectedDeviceIds);
 		}
-	}
-
-	private onAddDevice() {
-		this.logger.log('mobiledeck.addDevice command executed');
-		this.telemetry.sendEvent('add_device_clicked');
-
-		// TODO: implement add device functionality
-		vscode.window.showInformationMessage('Add device functionality coming soon');
 	}
 
 	private async onSignOut(context: vscode.ExtensionContext) {
@@ -100,18 +117,7 @@ class MobiledeckExtension {
 
 		this.telemetry.sendEvent('signed_out');
 
-		// clear all stored tokens
-		const keys = [
-			'mobiledeck.oauth.access_token',
-			'mobiledeck.oauth.id_token',
-			'mobiledeck.oauth.refresh_token',
-			'mobiledeck.oauth.expires_at',
-			'mobiledeck.oauth.email'
-		];
-
-		for (const key of keys) {
-			await context.secrets.delete(key);
-		}
+		await this.authenticationManager.clear(context);
 
 		// update context to hide the sign out button
 		await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', false);
@@ -123,7 +129,6 @@ class MobiledeckExtension {
 
 		vscode.window.showInformationMessage('Successfully signed out');
 	}
-
 
 	public async activate(context: vscode.ExtensionContext) {
 		this.logger.log('Mobiledeck extension is being activated');
@@ -145,13 +150,13 @@ class MobiledeckExtension {
 					Error: error.message || 'unknown error'
 				});
 
-				vscode.window.showErrorMessage('Failed to start Mobiledeck server');
+				vscode.window.showErrorMessage('Failed to start mobilecli server');
 			});
 
 		// register the sidebar webview provider
 		this.sidebarProvider = new SidebarViewProvider(context, this.cliServer, this.telemetry);
 		context.subscriptions.push(
-			vscode.window.registerWebviewViewProvider('mobiledeckDevices', this.sidebarProvider)
+			vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW_ID, this.sidebarProvider)
 		);
 
 		// set initial authentication context
@@ -165,12 +170,10 @@ class MobiledeckExtension {
 
 		// menu commands
 		this.registerCommand(context, 'mobiledeck.signOut', () => this.onSignOut(context));
-		this.registerCommand(context, 'mobiledeck.addDevice', () => this.onAddDevice());
-		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices());
-
+		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices(context));
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
-		this.registerCommand(context, 'mobiledeck.closeDevicePanel', (deviceId) => this.onCloseDevicePanel(deviceId));
+		this.registerCommand(context, 'mobiledeck.closeDevicePanel', (deviceId) => this.onCloseDevicePanel(context, deviceId));
 
 		this.telemetry.sendEvent('panel_activated', {
 			IsLoggedIn: !!email
