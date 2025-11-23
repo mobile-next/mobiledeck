@@ -169,6 +169,7 @@ class MobiledeckExtension {
 		}
 
 		// menu commands
+		this.registerCommand(context, 'mobiledeck.documentation', () => this.onDocumentation());
 		this.registerCommand(context, 'mobiledeck.signOut', () => this.onSignOut(context));
 		this.registerCommand(context, 'mobiledeck.refreshDevices', () => this.onRefreshDevices(context));
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));

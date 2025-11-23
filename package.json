@@ -56,6 +56,10 @@
         "enablement": "mobiledeck.isAuthenticated"
       },
       {
+        "command": "mobiledeck.documentation",
+        "title": "Documentation"
+      },
+      {
         "command": "mobiledeck.signOut",
         "title": "Sign Out from Mobile Deck",
         "enablement": "mobiledeck.isAuthenticated"
