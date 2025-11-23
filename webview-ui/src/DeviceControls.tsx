@@ -140,8 +140,6 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
 				text="Screenshot"
 			/>
 
-			<ControlSeparator />
-
 			<ControlButton
 				onClick={onDeviceHome}
 				icon={<HomeIcon />}

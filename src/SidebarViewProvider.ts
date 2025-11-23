@@ -6,6 +6,7 @@ import { OAUTH_CONFIG } from './config/oauth';
 import { Telemetry } from './utils/Telemetry';
 import { Logger } from './utils/Logger';
 import { ExtensionUtils } from './utils/ExtensionUtils';
+import { AuthenticationManager } from './AuthenticationManager';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -103,6 +104,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		return HtmlUtils.getHtml(this.context, webview, page);
 	}
 
+	private async storeTokens(tokens: OAuthTokens, email: string) {
+		const manager = new AuthenticationManager();
+		await manager.storeTokens(this.context, tokens, email);
+	}
+
 	private async handleOAuthLogin(provider: string, webviewView: vscode.WebviewView): Promise<void> {
 		try {
 			// start the oauth callback server
@@ -169,33 +175,6 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		});
 
 		return `${OAUTH_CONFIG.cognito_domain}/oauth2/authorize?${params.toString()}`;
-	}
-
-	// store tokens in secure storage
-	private async storeTokens(tokens: OAuthTokens, email: string): Promise<void> {
-		try {
-			await this.context.secrets.store('mobiledeck.oauth.access_token', tokens.access_token);
-			await this.context.secrets.store('mobiledeck.oauth.id_token', tokens.id_token);
-			if (tokens.refresh_token) {
-				await this.context.secrets.store('mobiledeck.oauth.refresh_token', tokens.refresh_token);
-			}
-
-			// store token expiry time
-			const expiresAt = Date.now() + (tokens.expires_in * 1000);
-			await this.context.secrets.store('mobiledeck.oauth.expires_at', expiresAt.toString());
-			// store email address
-			if (email) {
-				await this.context.secrets.store('mobiledeck.oauth.email', email);
-			}
-
-			this.logger.log('tokens stored successfully');
-
-			// update authentication context to show sign out button
-			await vscode.commands.executeCommand('setContext', 'mobiledeck.isAuthenticated', true);
-		} catch (error) {
-			this.logger.log('failed to store tokens: ' + (error instanceof Error ? error.message : String(error)));
-			throw error;
-		}
 	}
 
 	// refresh access token using refresh token

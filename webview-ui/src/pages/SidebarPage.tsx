@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight } from "lucide-react";
 import vscode from '../vscode';
-import { JsonRpcClient } from '../JsonRpcClient';
-import { MobilecliClient } from '../MobilecliClient';
-import { DeviceDescriptor, DevicePlatform } from '../models';
+import { JsonRpcClient } from '@shared/JsonRpcClient';
+import { MobilecliClient } from '@shared/MobilecliClient';
+import { DeviceDescriptor, DevicePlatform } from '@shared/models';
 import DeviceCategory from '../components/DeviceCategory';
 import GettingStartedBanner from '../components/GettingStartedBanner';
 import DeviceRow from '../components/DeviceRow';

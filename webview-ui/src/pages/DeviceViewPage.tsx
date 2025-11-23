@@ -1,14 +1,22 @@
+import vscode from '../vscode';
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../Header';
-import { DeviceStream, GesturePoint } from '../DeviceStream';
-import { JsonRpcClient } from '../JsonRpcClient';
-import { MobilecliClient } from '../MobilecliClient';
 import { MjpegStream } from '../MjpegStream';
-import vscode from '../vscode';
+import { DeviceStream, GesturePoint } from '../DeviceStream';
+import { JsonRpcClient } from '@shared/JsonRpcClient';
+import { MobilecliClient } from '@shared/MobilecliClient';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
-import { DeviceDescriptor, DeviceInfo, DeviceInfoResponse, ListDevicesResponse, ScreenSize } from '../models';
+import { DeviceDescriptor, ScreenSize, ButtonType } from '@shared/models';
+import { MessageRouter } from '../MessageRouter';
 
 const DEVICE_BOOT_UPDATE_INTERVAL_MS = 1000;
+
+interface ConfigureMessage {
+	command: 'configure';
+	device: DeviceDescriptor;
+	serverPort: number;
+	mediaSkinsUri: string;
+}
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -144,7 +152,7 @@ function DeviceViewPage() {
 	const fetchDevices = async () => {
 		try {
 			setIsRefreshing(true);
-			const result = await getMobilecliClient().listDevices();
+			const result = await getMobilecliClient().listDevices(false);
 			console.log('mobiledeck: devices list', result);
 			setAvailableDevices(result.devices);
 		} catch (error) {
@@ -237,7 +245,9 @@ function DeviceViewPage() {
 	}, [selectedDevice]);
 
 	const handleTap = async (x: number, y: number) => {
-		await getMobilecliClient().tap(selectedDevice?.id!, x, y);
+		if (selectedDevice) {
+			await getMobilecliClient().tap(selectedDevice.id, x, y);
+		}
 	};
 
 	const handleGesture = async (points: Array<GesturePoint>) => {
@@ -277,7 +287,9 @@ function DeviceViewPage() {
 			});
 		}
 
-		await getMobilecliClient().gesture(selectedDevice?.id!, actions);
+		if (selectedDevice) {
+			await getMobilecliClient().gesture(selectedDevice.id, actions);
+		}
 	};
 
 	const flushPendingKeys = async () => {
@@ -295,7 +307,9 @@ function DeviceViewPage() {
 
 		pendingKeys.current = "";
 		try {
-			await getMobilecliClient().inputText(selectedDevice?.id!, keys, 3000);
+			if (selectedDevice) {
+				await getMobilecliClient().inputText(selectedDevice.id, keys, 3000);
+			}
 		} catch (error) {
 			console.error('mobiledeck: error flushing keys:', error);
 		} finally {
@@ -323,40 +337,36 @@ function DeviceViewPage() {
 		setTimeout(() => flushPendingKeys(), 500);
 	};
 
-	const handleMessage = (event: MessageEvent) => {
-		const message = event.data;
-		console.log('mobiledeck: received message:', message);
+	const handleConfigure = (message: ConfigureMessage) => {
+		if (message.device && message.serverPort) {
+			console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
+			setServerPort(message.serverPort);
+			setSelectedDevice(message.device);
+			console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
+			setMediaSkinsUri(message.mediaSkinsUri);
+		}
+	};
 
-		switch (message.command) {
-			case 'configure':
-				if (message.device && message.serverPort) {
-					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
-					setServerPort(message.serverPort);
-					setSelectedDevice(message.device);
-					console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
-					setMediaSkinsUri(message.mediaSkinsUri);
-				}
-				break;
-			default:
-				console.log('mobiledeck: unknown message', message);
-				break;
+	const pressButton = async (button: ButtonType) => {
+		if (selectedDevice) {
+			await getMobilecliClient().pressButton(selectedDevice.id, button);
 		}
 	};
 
 	const onHome = () => {
-		getMobilecliClient().pressButton(selectedDevice?.id!, 'HOME').then();
+		pressButton('HOME').then();
 	};
 
 	const onBack = () => {
-		getMobilecliClient().pressButton(selectedDevice?.id!, 'BACK').then();
+		pressButton('BACK').then();
 	};
 
 	const onAppSwitch = () => {
-		getMobilecliClient().pressButton(selectedDevice?.id!, 'APP_SWITCH').then();
+		pressButton('APP_SWITCH').then();
 	};
 
 	const onPower = () => {
-		getMobilecliClient().pressButton(selectedDevice?.id!, 'POWER').then();
+		pressButton('POWER').then();
 	};
 
 	const onRotateDevice = () => {
@@ -364,13 +374,12 @@ function DeviceViewPage() {
 		// TODO: Implement device rotation
 	};
 
-
 	const onIncreaseVolume = () => {
-		getMobilecliClient().pressButton(selectedDevice?.id!, 'VOLUME_UP').then();
+		pressButton('VOLUME_UP').then();
 	};
 
 	const onDecreaseVolume = () => {
-		getMobilecliClient().pressButton(selectedDevice?.id!, 'VOLUME_DOWN').then();
+		pressButton('VOLUME_DOWN').then();
 	};
 
 	const getScreenshotFilename = (device: DeviceDescriptor) => {
@@ -423,8 +432,10 @@ function DeviceViewPage() {
 	};
 
 	useEffect(() => {
-		const messageHandler = (event: MessageEvent) => handleMessage(event);
-		window.addEventListener('message', messageHandler);
+		const router = new MessageRouter(window);
+
+		// register message handlers
+		router.register('configure', handleConfigure);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({
@@ -432,7 +443,7 @@ function DeviceViewPage() {
 		});
 
 		return () => {
-			window.removeEventListener('message', messageHandler);
+			router.destroy();
 			stopMjpegStream();
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);

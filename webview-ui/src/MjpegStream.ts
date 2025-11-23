@@ -6,7 +6,10 @@ export class MjpegStream {
 	private isActive: boolean = false;
 	private currentImageUrl: string = "";
 
-	constructor(private reader: ReadableStreamDefaultReader<Uint8Array>, private onImageCallback: MjpegStreamCallback) { }
+	constructor(
+		private reader: ReadableStreamDefaultReader<Uint8Array>,
+		private onImageCallback: MjpegStreamCallback
+	) { }
 
 	public start(): void {
 		this.isActive = true;

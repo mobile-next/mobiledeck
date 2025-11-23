@@ -8,6 +8,10 @@
 		],
 		"sourceMap": true,
 		"rootDir": "src",
+		"baseUrl": ".",
+		"paths": {
+			"@shared/*": ["./src/shared/*"]
+		},
 		"strict": true, /* enable all strict type-checking options */
 		"skipLibCheck": true, /* skip type checking of declaration files */
 		/* Additional Checks */

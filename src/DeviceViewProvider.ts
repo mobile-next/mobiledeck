@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Logger } from './utils/Logger';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
-import { DeviceDescriptor } from './DeviceDescriptor';
+import { DeviceDescriptor } from '@shared/models';
 
 interface Message {
 	command: string;
@@ -88,33 +88,30 @@ export class DeviceViewProvider {
 		}
 	}
 
-	createWebviewPanel(_preselectedDevice?: DeviceDescriptor, page: string = 'device'): vscode.WebviewPanel {
+	createWebviewPanel(_preselectedDevice?: DeviceDescriptor): vscode.WebviewPanel {
 		this.logger.log('createWebviewPanel called');
 
 		const panel = vscode.window.createWebviewPanel(
 			'mobiledeck',
-			'Mobiledeck Device View',
+			'',
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
+				retainContextWhenHidden: true,
 				localResourceRoots: [
 					// allow css and js files to be loaded
 					vscode.Uri.joinPath(this.context.extensionUri, 'assets'),
 					// allow media files (skins) to be loaded
-					vscode.Uri.joinPath(this.context.extensionUri, 'media')
-				]
-			}
+					vscode.Uri.joinPath(this.context.extensionUri, 'media'),
+				],
+			},
 		);
 
-		// set mobile next icon for the tab (theme-aware)
-		panel.iconPath = {
-			light: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-light.svg'),
-			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg')
-		};
-
 		panel.webview.onDidReceiveMessage(message => this.handleMessage(panel, message), undefined, this.context.subscriptions);
+		panel.webview.html = this.getHtml(panel);
 
-		panel.webview.html = this.getHtml(panel, page);
+		// set title and icon
+		this.updateWebviewTitle(panel, "Mobiledeck Device View");
 
 		return panel;
 	}
@@ -128,12 +125,12 @@ export class DeviceViewProvider {
 
 		// add mobile next icon (theme-aware)
 		webviewPanel.iconPath = {
+			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg'),
 			light: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-light.svg'),
-			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg')
 		};
 	}
 
-	private getHtml(webviewPanel: vscode.WebviewPanel, page: string = 'device'): string {
-		return HtmlUtils.getHtml(this.context, webviewPanel.webview, page);
+	private getHtml(webviewPanel: vscode.WebviewPanel): string {
+		return HtmlUtils.getHtml(this.context, webviewPanel.webview, "device");
 	}
 }

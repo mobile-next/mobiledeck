@@ -1,5 +1,5 @@
 import React from "react";
-import { DeviceDescriptor, DevicePlatform } from "../models";
+import { DeviceDescriptor, DevicePlatform } from "@shared/models";
 import { AndroidConnectSequence } from "./AndroidConnectSequence";
 import { IosConnectSequence } from "./IosConnectSequence";
 

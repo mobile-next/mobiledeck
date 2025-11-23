@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as crypto from 'node:crypto';
-import { DeviceDescriptor } from './DeviceDescriptor';
+import { DeviceDescriptor } from '@shared/models';
 import { DeviceViewProvider } from './DeviceViewProvider';
 import { MobileCliServer } from './MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
@@ -110,6 +110,12 @@ class MobiledeckExtension {
 			this.logger.log('updating sidebar with connected devices: ' + JSON.stringify(connectedDeviceIds));
 			this.sidebarProvider.updateConnectedDevices(connectedDeviceIds);
 		}
+	}
+
+	private onDocumentation() {
+		this.logger.log('mobiledeck.documentation command executed');
+		this.telemetry.sendEvent('documentation_opened');
+		vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
 	}
 
 	private async onSignOut(context: vscode.ExtensionContext) {
