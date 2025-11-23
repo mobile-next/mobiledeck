@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Logger } from './utils/Logger';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
-import { DeviceDescriptor } from './DeviceDescriptor';
+import { DeviceDescriptor } from '@shared/models';
 
 interface Message {
 	command: string;

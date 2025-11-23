@@ -23,7 +23,10 @@ const config = {
 	resolve: {
 		// support reading typescript and javascript files
 		mainFields: ['main', 'module'],
-		extensions: ['.ts', '.js']
+		extensions: ['.ts', '.js'],
+		alias: {
+			'@shared': path.resolve(__dirname, 'src/shared')
+		}
 	},
 	module: {
 		rules: [
