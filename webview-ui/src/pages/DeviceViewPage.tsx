@@ -7,8 +7,16 @@ import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
 import { DeviceDescriptor, ScreenSize, ButtonType } from '@shared/models';
+import { MessageRouter } from '../MessageRouter';
 
 const DEVICE_BOOT_UPDATE_INTERVAL_MS = 1000;
+
+interface ConfigureMessage {
+	command: 'configure';
+	device: DeviceDescriptor;
+	serverPort: number;
+	mediaSkinsUri: string;
+}
 
 interface StatusBarProps {
 	isRefreshing: boolean;
@@ -329,23 +337,13 @@ function DeviceViewPage() {
 		setTimeout(() => flushPendingKeys(), 500);
 	};
 
-	const handleMessage = (event: MessageEvent) => {
-		const message = event.data;
-		console.log('mobiledeck: received message:', message);
-
-		switch (message.command) {
-			case 'configure':
-				if (message.device && message.serverPort) {
-					console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
-					setServerPort(message.serverPort);
-					setSelectedDevice(message.device);
-					console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
-					setMediaSkinsUri(message.mediaSkinsUri);
-				}
-				break;
-			default:
-				console.log('mobiledeck: unknown message', message);
-				break;
+	const handleConfigure = (message: ConfigureMessage) => {
+		if (message.device && message.serverPort) {
+			console.log('mobiledeck: configure message received, device:', message.device, 'port:', message.serverPort);
+			setServerPort(message.serverPort);
+			setSelectedDevice(message.device);
+			console.log("mobiledeck: got media skins uri: " + message.mediaSkinsUri);
+			setMediaSkinsUri(message.mediaSkinsUri);
 		}
 	};
 
@@ -434,8 +432,10 @@ function DeviceViewPage() {
 	};
 
 	useEffect(() => {
-		const messageHandler = (event: MessageEvent) => handleMessage(event);
-		window.addEventListener('message', messageHandler);
+		const router = new MessageRouter(window);
+
+		// register message handlers
+		router.register('configure', handleConfigure);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({
@@ -443,7 +443,7 @@ function DeviceViewPage() {
 		});
 
 		return () => {
-			window.removeEventListener('message', messageHandler);
+			router.destroy();
 			stopMjpegStream();
 			if (imageUrl) {
 				URL.revokeObjectURL(imageUrl);
