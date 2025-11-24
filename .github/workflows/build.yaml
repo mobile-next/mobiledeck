@@ -96,7 +96,7 @@ jobs:
         retention-days: 2
         overwrite: true
 
-  publish:
+  publish-vscode-marketplace:
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
@@ -111,6 +111,11 @@ jobs:
         node-version: 22.x
         cache: 'npm'
 
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: mobiledeck
+
     - name: Update package.json version from release tag
       run: |
         VERSION=${{ github.ref_name }}
@@ -123,23 +128,48 @@ jobs:
         npm install
         cd webview-ui && npm install
 
-    - name: Publish to marketplace
+    - name: Publish to VSCode Marketplace
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASES_TOKEN }}
       run: |
-        # darwin x64
-        make clean build-darwin-x64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-x64
-        # darwin arm64
-        make clean build-darwin-arm64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target darwin-arm64
-        # linux x64
-        make clean build-linux-x64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-x64
-        # linux arm64
-        make clean build-linux-arm64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target linux-arm64
-        # win32-x64
-        make clean build-win32-x64
-        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --target win32-x64
+        VERSION=${{ github.ref_name }}
+        VERSION=${VERSION#v}
+        ls -l *.vsix
+        
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --packagePath mobiledeck-darwin-x64-${VERSION}.vsix
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --packagePath mobiledeck-darwin-arm64-${VERSION}.vsix
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --packagePath mobiledeck-linux-x64-${VERSION}.vsix
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --packagePath mobiledeck-linux-arm64-${VERSION}.vsix
+        npx vsce publish -p ${{ secrets.VSCE_TOKEN }} --packagePath mobiledeck-win32-x64-${VERSION}.vsix
 
+  publish-openvsx:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [build]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+
+    - name: Download build artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: mobiledeck
+
+    - name: Publish to OpenVSX
+      run: |
+        VERSION=${{ github.ref_name }}
+        VERSION=${VERSION#v}
+        ls -l *.vsix
+        
+        npx ovsx publish mobiledeck-darwin-x64-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
+        npx ovsx publish mobiledeck-darwin-arm64-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
+        npx ovsx publish mobiledeck-linux-x64-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
+        npx ovsx publish mobiledeck-linux-arm64-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
+        npx ovsx publish mobiledeck-win32-x64-${VERSION}.vsix -p ${{ secrets.OPENVSX_TOKEN }}
