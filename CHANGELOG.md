@@ -1,3 +1,11 @@
+## [0.0.17](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.17) (2025-11-23)
+
+- General: added documentation and feedback links to sidebar
+- General: fixed device stream to remain running when panel is not visible
+- General: added theme-aware mobile icon to device editor tabs
+- General: removed duplicate fetch device list timer
+- General: handle non-jpeg mime types in mjpeg stream
+
 ## [0.0.16](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.16) (2025-11-22)
 
 - General: improved device connection with platform-specific animations
