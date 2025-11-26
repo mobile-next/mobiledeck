@@ -48,10 +48,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					this.logger.log('sidebar webview initialized');
 					// send server port and email to webview
 					const email = await this.context.secrets.get('mobiledeck.oauth.email');
+					const gettingStartedDismissed = this.context.globalState.get('mobiledeck.gettingStartedDismissed', false);
 					webviewView.webview.postMessage({
 						command: 'configure',
 						serverPort: this.cliServer.getJsonRpcServerPort(),
 						email: email || '',
+						gettingStartedDismissed: gettingStartedDismissed,
 					});
 					break;
 
@@ -70,6 +72,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					this.logger.log('opening getting started guide');
 					this.telemetry.sendEvent('getting_started_clicked', {});
 					vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
+					break;
+
+				case 'dismissGettingStarted':
+					this.logger.log('dismissing getting started banner');
+					await this.context.globalState.update('mobiledeck.gettingStartedDismissed', true);
+					this.telemetry.sendEvent('getting_started_dismissed', {});
 					break;
 
 				case 'openOAuthLogin':

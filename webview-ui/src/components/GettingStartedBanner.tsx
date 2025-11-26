@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import vscode from '../vscode';
 
 function GettingStartedBanner() {
-	const [isVisible, setIsVisible] = useState(true);
-
 	const handleGettingStartedClick = () => {
 		vscode.postMessage({
 			command: 'openGettingStarted'
@@ -12,12 +10,10 @@ function GettingStartedBanner() {
 	};
 
 	const handleClose = () => {
-		setIsVisible(false);
+		vscode.postMessage({
+			command: 'dismissGettingStarted'
+		});
 	};
-
-	if (!isVisible) {
-		return null;
-	}
 
 	return (
 		<div className="px-3 py-4">
