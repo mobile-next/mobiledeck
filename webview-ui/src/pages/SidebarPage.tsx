@@ -99,6 +99,12 @@ function SidebarPage({
 			setDevices(sortedDevices);
 			setIsRefreshing(false);
 			setHasInitiallyLoaded(true);
+
+			// notify extension of updated device list
+			vscode.postMessage({
+				command: 'devicesUpdated',
+				devices: sortedDevices
+			});
 		} catch (error) {
 			console.error('sidebar: error fetching devices:', error);
 			setIsRefreshing(false);

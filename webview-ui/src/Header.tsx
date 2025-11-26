@@ -22,7 +22,7 @@ export interface HeaderProps {
 	onTakeScreenshot: () => void;
 	onAppSwitch: () => void;
 	onPower: () => void;
-	onRefreshDevices: () => void;
+	// onRefreshDevices: () => void;
 	onSelectDevice: (device: DeviceDescriptor) => void;
 }
 
@@ -34,11 +34,14 @@ export const Header: React.FC<HeaderProps> = ({
 	onTakeScreenshot,
 	onAppSwitch,
 	onPower,
-	onRefreshDevices,
+	// onRefreshDevices,
 	onSelectDevice,
 }) => {
+	// filter to show only online devices
+	const onlineDevices = availableDevices.filter(device => device.state === 'online');
+
 	return (
-		<div className="flex items-center justify-between px-2 py-2 border-b border-[#333333]">
+		<div className="flex items-center justify-between px-2 py-2 border-[#333333]">
 			<div className="flex items-center gap-2">
 				{/* Device selector dropdown */}
 				<DropdownMenu>
@@ -70,12 +73,12 @@ export const Header: React.FC<HeaderProps> = ({
 							Available Devices
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator className="bg-[#3c3c3c]" />
-						{availableDevices.length === 0 ? (
+						{onlineDevices.length === 0 ? (
 							<DropdownMenuItem disabled className="text-xs">
 								No devices available
 							</DropdownMenuItem>
 						) : (
-							availableDevices.map((device) => (
+							onlineDevices.map((device) => (
 								<DropdownMenuItem
 									key={device.id}
 									onClick={() => onSelectDevice(device)}
@@ -97,14 +100,14 @@ export const Header: React.FC<HeaderProps> = ({
 								</DropdownMenuItem>
 							))
 						)}
-						<DropdownMenuSeparator className="bg-[#3c3c3c]" />
+						{/* <DropdownMenuSeparator className="bg-[#3c3c3c]" />
 						<DropdownMenuItem
 							onClick={onRefreshDevices}
 							className="text-xs hover:bg-[#2a2a2a] cursor-pointer flex items-center gap-2"
 						>
 							<RefreshCw className="h-3.5 w-3.5" />
 							<span>Refresh Devices</span>
-						</DropdownMenuItem>
+						</DropdownMenuItem> */}
 					</DropdownMenuContent>
 				</DropdownMenu>
 
