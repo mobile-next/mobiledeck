@@ -1,3 +1,7 @@
+## [0.0.19](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.19) (2025-11-26)
+
+- General: posthog-js and posthog-node packages updated to latest
+
 ## [0.0.18](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.18) (2025-11-25)
 
 - General: added publishing to OpenVSX marketplace
