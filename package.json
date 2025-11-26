@@ -151,7 +151,7 @@
     "jsonwebtoken": "9.0.2",
     "jwks-rsa": "3.2.0",
     "oidc-client-ts": "3.3.0",
-    "posthog-node": "^5.11.1",
+    "posthog-node": "5.14.0",
     "react-icons": "5.5.0"
   },
   "type": "commonjs"
