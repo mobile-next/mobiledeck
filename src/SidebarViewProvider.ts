@@ -78,6 +78,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					this.logger.log('dismissing getting started banner');
 					await this.context.globalState.update('mobiledeck.gettingStartedDismissed', true);
 					this.telemetry.sendEvent('getting_started_dismissed', {});
+					// notify webview to hide the banner
+					webviewView.webview.postMessage({
+						command: 'configure',
+						gettingStartedDismissed: true,
+					});
 					break;
 
 				case 'openOAuthLogin':
