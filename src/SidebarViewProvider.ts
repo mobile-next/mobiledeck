@@ -12,13 +12,16 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
 	private webviewView?: vscode.WebviewView;
 	private logger: Logger = new Logger('Mobiledeck');
+	private onDevicesUpdatedCallback?: (devices: any[]) => void;
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
 		private readonly cliServer: MobileCliServer,
-		private readonly telemetry: Telemetry
+		private readonly telemetry: Telemetry,
+		onDevicesUpdated?: (devices: any[]) => void
 	) {
 		this.oauthServer = new OAuthCallbackServer();
+		this.onDevicesUpdatedCallback = onDevicesUpdated;
 	}
 
 	async resolveWebviewView(
@@ -104,6 +107,13 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				case 'signOut':
 					this.logger.log('sign out requested from webview');
 					await vscode.commands.executeCommand('mobiledeck.signOut');
+					break;
+
+				case 'devicesUpdated':
+					this.logger.log('devices updated from sidebar: ' + message.devices?.length + ' devices');
+					if (this.onDevicesUpdatedCallback) {
+						this.onDevicesUpdatedCallback(message.devices);
+					}
 					break;
 
 				case 'alert':

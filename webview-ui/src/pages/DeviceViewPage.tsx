@@ -18,6 +18,11 @@ interface ConfigureMessage {
 	mediaSkinsUri: string;
 }
 
+interface DeviceListUpdatedMessage {
+	command: 'deviceListUpdated';
+	devices: DeviceDescriptor[];
+}
+
 interface StatusBarProps {
 	isRefreshing: boolean;
 	selectedDevice: DeviceDescriptor | null;
@@ -356,6 +361,11 @@ function DeviceViewPage() {
 		}
 	};
 
+	const handleDeviceListUpdated = (message: DeviceListUpdatedMessage) => {
+		console.log('mobiledeck: device list updated, received ' + message.devices.length + ' devices');
+		setAvailableDevices(message.devices);
+	};
+
 	const pressButton = async (button: ButtonType) => {
 		if (selectedDevice) {
 			await getMobilecliClient().pressButton(selectedDevice.id, button);
@@ -445,6 +455,7 @@ function DeviceViewPage() {
 
 		// register message handlers
 		router.register('configure', handleConfigure);
+		router.register('deviceListUpdated', handleDeviceListUpdated);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({
@@ -466,25 +477,6 @@ function DeviceViewPage() {
 		};
 	}, []);
 
-	useEffect(() => {
-		// only start fetching devices after serverPort is configured
-		if (serverPort === 12000) {
-			return;
-		}
-
-		// fetch available devices on mount
-		fetchDevices();
-
-		// poll for devices every 2 seconds
-		const intervalId = setInterval(() => {
-			fetchDevices();
-		}, 2000);
-
-		return () => {
-			clearInterval(intervalId);
-		};
-	}, [serverPort]);
-
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] overflow-x-visible overflow-y-auto">
 			{/* Header with controls */}
@@ -496,7 +488,7 @@ function DeviceViewPage() {
 				onTakeScreenshot={onTakeScreenshot}
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
-				onRefreshDevices={fetchDevices}
+				// onRefreshDevices={fetchDevices}
 				onSelectDevice={onDeviceSelected}
 			/>
 

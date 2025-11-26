@@ -112,6 +112,19 @@ class MobiledeckExtension {
 		}
 	}
 
+	private broadcastDevicesToPanels(devices: DeviceDescriptor[]) {
+		this.logger.log('broadcasting device list to ' + this.devicePanelManager.ids().length + ' panels');
+		this.devicePanelManager.ids().forEach(deviceId => {
+			const panel = this.devicePanelManager.get(deviceId);
+			if (panel) {
+				panel.webview.postMessage({
+					command: 'deviceListUpdated',
+					devices: devices
+				});
+			}
+		});
+	}
+
 	private onDocumentation() {
 		this.logger.log('mobiledeck.documentation command executed');
 		this.telemetry.sendEvent('documentation_opened');
@@ -166,7 +179,12 @@ class MobiledeckExtension {
 			});
 
 		// register the sidebar webview provider
-		this.sidebarProvider = new SidebarViewProvider(context, this.cliServer, this.telemetry);
+		this.sidebarProvider = new SidebarViewProvider(
+			context,
+			this.cliServer,
+			this.telemetry,
+			(devices) => this.broadcastDevicesToPanels(devices)
+		);
 		context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW_ID, this.sidebarProvider)
 		);
