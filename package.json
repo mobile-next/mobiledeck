@@ -70,6 +70,32 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "mobiledeck.openDevicePanel",
+          "when": "false"
+        },
+        {
+          "command": "mobiledeck.documentation",
+          "when": "false"
+        },
+        {
+          "command": "mobiledeck.sendFeedback",
+          "when": "false"
+        },
+        {
+          "command": "mobiledeck.refreshDevices",
+          "when": "false"
+        },
+        {
+          "command": "mobiledeck.connect",
+          "when": "false"
+        },
+        {
+          "command": "mobiledeck.signOut",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "mobiledeck.refreshDevices",
