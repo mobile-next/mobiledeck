@@ -16,6 +16,7 @@ export interface GesturePoint {
 export interface DeviceStreamProps {
 	isConnecting: boolean;
 	isBooting?: boolean;
+	connectProgressMessage?: string;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
 	imageUrl: string;
@@ -59,6 +60,7 @@ const emptyGestureState: GestureState = {
 export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	isConnecting,
 	isBooting = false,
+	connectProgressMessage,
 	selectedDevice,
 	screenSize,
 	imageUrl,
@@ -213,7 +215,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 											{isBooting ? (
 												<BootSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} />
 											) : (
-												<ConnectSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} message="Connecting" />
+												<ConnectSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} message={connectProgressMessage || "Connecting..."} />
 											)}
 										</div>
 									</DeviceSkin>

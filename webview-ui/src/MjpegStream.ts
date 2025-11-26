@@ -2,13 +2,18 @@ export interface MjpegStreamCallback {
 	(imageUrl: string): void;
 }
 
+export interface MjpegProgressCallback {
+	(message: string): void;
+}
+
 export class MjpegStream {
 	private isActive: boolean = false;
 	private currentImageUrl: string = "";
 
 	constructor(
 		private reader: ReadableStreamDefaultReader<Uint8Array>,
-		private onImageCallback: MjpegStreamCallback
+		private onImageCallback: MjpegStreamCallback,
+		private onProgressCallback?: MjpegProgressCallback
 	) { }
 
 	public start(): void {
@@ -98,12 +103,14 @@ export class MjpegStream {
 						processedData = true;
 
 						if (bytesRead >= contentLength) {
+							console.log('mobiledeck: frame complete, content-type:', contentType, 'bytes:', contentLength);
 							if (contentType === 'image/jpeg') {
 								this.displayMjpegImage(imageData);
 							} else {
 								// non-jpeg mime type, this will later be shown as connection progresses
 								const bodyText = new TextDecoder().decode(imageData);
 								console.log('non-jpeg frame received, content-type:', contentType, 'body:', bodyText);
+								this.handleNonJpegFrame(contentType, bodyText);
 							}
 
 							inImage = false;
@@ -128,6 +135,7 @@ export class MjpegStream {
 
 	private displayMjpegImage(imageData: Uint8Array): void {
 		try {
+			console.log('mobiledeck: displaying jpeg image, size:', imageData.length);
 			const blob = new Blob([imageData as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
 			const newImageUrl = URL.createObjectURL(blob);
 
@@ -137,9 +145,23 @@ export class MjpegStream {
 			}
 
 			this.currentImageUrl = newImageUrl;
+			console.log('mobiledeck: calling onImageCallback with url:', newImageUrl);
 			this.onImageCallback(newImageUrl);
 		} catch (error) {
 			console.error('Error displaying MJPEG image:', error);
+		}
+	}
+
+	private handleNonJpegFrame(contentType: string, bodyText: string): void {
+		if (contentType === 'application/json' && this.onProgressCallback) {
+			try {
+				const jsonData = JSON.parse(bodyText);
+				if (jsonData.jsonrpc === '2.0' && jsonData.method === 'notification/message' && jsonData.params?.message) {
+					this.onProgressCallback(jsonData.params.message);
+				}
+			} catch (error) {
+				console.error('Error parsing JSON-RPC notification:', error);
+			}
 		}
 	}
 }
