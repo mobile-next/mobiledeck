@@ -1,3 +1,8 @@
+## [0.0.18](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.18) (2025-11-25)
+
+- General: added publishing to OpenVSX marketplace
+- General: optimized workflow to use previously built artifacts
+
 ## [0.0.17](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.17) (2025-11-23)
 
 - General: added documentation and feedback links to sidebar
