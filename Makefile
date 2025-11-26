@@ -1,4 +1,4 @@
-.PHONY: all build npm_install npm_update
+.PHONY: all build npm_install npm_update install
 
 all: build
 
@@ -49,4 +49,26 @@ npm_install:
 npm_update:
 	npm update
 	(cd webview-ui && npm update)
+
+install:
+	@OS=$$(uname -s); \
+	ARCH=$$(uname -m); \
+	if [ "$$OS" = "Darwin" ]; then \
+		if [ "$$ARCH" = "arm64" ]; then \
+			VSIX="mobiledeck-darwin-arm64-0.0.1.vsix"; \
+		else \
+			VSIX="mobiledeck-darwin-x64-0.0.1.vsix"; \
+		fi; \
+	elif [ "$$OS" = "Linux" ]; then \
+		if [ "$$ARCH" = "aarch64" ] || [ "$$ARCH" = "arm64" ]; then \
+			VSIX="mobiledeck-linux-arm64-0.0.1.vsix"; \
+		else \
+			VSIX="mobiledeck-linux-x64-0.0.1.vsix"; \
+		fi; \
+	else \
+		echo "Unsupported OS: $$OS"; \
+		exit 1; \
+	fi; \
+	echo "Installing $$VSIX..."; \
+	code --install-extension $$VSIX
 

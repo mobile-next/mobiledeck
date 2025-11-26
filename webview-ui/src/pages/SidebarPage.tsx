@@ -16,6 +16,7 @@ interface ConfigureMessage {
 	command: 'configure';
 	serverPort?: number;
 	email?: string;
+	gettingStartedDismissed?: boolean;
 }
 
 interface RefreshDevicesMessage {
@@ -49,6 +50,7 @@ function SidebarPage({
 	const [userEmail, setUserEmail] = useState<string>('');
 	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
 	const [operatingDeviceIds, setOperatingDeviceIds] = useState<Set<string>>(new Set());
+	const [gettingStartedDismissed, setGettingStartedDismissed] = useState<boolean>(false);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
@@ -113,6 +115,11 @@ function SidebarPage({
 		if (message.email) {
 			console.log('sidebar: email received:', message.email);
 			setUserEmail(message.email);
+		}
+
+		if (message.gettingStartedDismissed !== undefined) {
+			console.log('sidebar: gettingStartedDismissed:', message.gettingStartedDismissed);
+			setGettingStartedDismissed(message.gettingStartedDismissed);
 		}
 	};
 
@@ -346,7 +353,7 @@ function SidebarPage({
 			</div>
 
 			{/* getting started banner - always visible after initial load */}
-			{hasInitiallyLoaded && /*devices.length === 0 &&*/ <GettingStartedBanner />}
+			{hasInitiallyLoaded && !gettingStartedDismissed && <GettingStartedBanner />}
 		</div>
 	);
 }
