@@ -3,8 +3,8 @@ import React from "react";
 export const AppleIcon: React.FC = () => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
-		width="100%"
-		height="100%"
+		width="80"
+		height="80"
 		viewBox="0 0 842.32007 1000.0001"
 	>
 		<path
