@@ -103,6 +103,7 @@ export class MjpegStream {
 						processedData = true;
 
 						if (bytesRead >= contentLength) {
+							console.log('mobiledeck: frame complete, content-type:', contentType, 'bytes:', contentLength);
 							if (contentType === 'image/jpeg') {
 								this.displayMjpegImage(imageData);
 							} else {
@@ -134,6 +135,7 @@ export class MjpegStream {
 
 	private displayMjpegImage(imageData: Uint8Array): void {
 		try {
+			console.log('mobiledeck: displaying jpeg image, size:', imageData.length);
 			const blob = new Blob([imageData as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
 			const newImageUrl = URL.createObjectURL(blob);
 
@@ -143,6 +145,7 @@ export class MjpegStream {
 			}
 
 			this.currentImageUrl = newImageUrl;
+			console.log('mobiledeck: calling onImageCallback with url:', newImageUrl);
 			this.onImageCallback(newImageUrl);
 		} catch (error) {
 			console.error('Error displaying MJPEG image:', error);
