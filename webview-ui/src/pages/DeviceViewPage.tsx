@@ -44,6 +44,7 @@ function DeviceViewPage() {
 	const [availableDevices, setAvailableDevices] = useState<DeviceDescriptor[]>([]);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [isConnecting, setIsConnecting] = useState(false);
+	const [connectProgressMessage, setConnectProgressMessage] = useState<string | null>(null);
 	const [fpsCount, setFpsCount] = useState(30);
 	const [imageUrl, setImageUrl] = useState<string>("");
 	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
@@ -101,16 +102,24 @@ function DeviceViewPage() {
 			const reader = response.body.getReader();
 			setStreamController(controller);
 			setStreamReader(reader);
-			setIsConnecting(false);
 
-			const stream = new MjpegStream(reader, (newImageUrl) => {
-				// Clean up previous URL
-				if (imageUrl) {
-					URL.revokeObjectURL(imageUrl);
+			const stream = new MjpegStream(
+				reader,
+				(newImageUrl) => {
+					// stop "Connecting..." upon first jpeg frame
+					setIsConnecting(false);
+
+					setImageUrl((prevImageUrl) => {
+						if (prevImageUrl) {
+							URL.revokeObjectURL(prevImageUrl);
+						}
+						return newImageUrl;
+					});
+				},
+				(message) => {
+					setConnectProgressMessage(message);
 				}
-
-				setImageUrl(newImageUrl);
-			});
+			);
 
 			setMjpegStream(stream);
 			stream.start();
@@ -235,7 +244,7 @@ function DeviceViewPage() {
 				});
 			} else {
 				console.log('mobiledeck: device is available, starting mjpeg stream with port', serverPort);
-				startMjpegStream(selectedDevice.id);
+				startMjpegStream(selectedDevice.id).then();
 				requestDeviceInfo(selectedDevice.id).then();
 
 				// set device skin based on device platform/model
@@ -495,6 +504,7 @@ function DeviceViewPage() {
 			<DeviceStream
 				isConnecting={isConnecting}
 				isBooting={isBooting}
+				connectProgressMessage={connectProgressMessage || undefined}
 				selectedDevice={selectedDevice}
 				imageUrl={imageUrl}
 				screenSize={screenSize}
