@@ -44,7 +44,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 
 		// handle messages from the webview
 		webviewView.webview.onDidReceiveMessage(async (message) => {
-			this.logger.log('sidebar received message: ' + message.command);
+			// this.logger.log('sidebar received message: ' + message.command);
 
 			switch (message.command) {
 				case 'onInitialized':
@@ -110,7 +110,6 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					break;
 
 				case 'devicesUpdated':
-					this.logger.log('devices updated from sidebar: ' + message.devices?.length + ' devices');
 					if (this.onDevicesUpdatedCallback) {
 						this.onDevicesUpdatedCallback(message.devices);
 					}

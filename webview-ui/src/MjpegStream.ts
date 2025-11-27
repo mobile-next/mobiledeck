@@ -1,5 +1,5 @@
 export interface MjpegStreamCallback {
-	(imageUrl: string): void;
+	(imageBitmap: ImageBitmap): void;
 }
 
 export interface MjpegProgressCallback {
@@ -8,7 +8,6 @@ export interface MjpegProgressCallback {
 
 export class MjpegStream {
 	private isActive: boolean = false;
-	private currentImageUrl: string = "";
 
 	constructor(
 		private reader: ReadableStreamDefaultReader<Uint8Array>,
@@ -23,10 +22,6 @@ export class MjpegStream {
 
 	public stop(): void {
 		this.isActive = false;
-		if (this.currentImageUrl) {
-			URL.revokeObjectURL(this.currentImageUrl);
-			this.currentImageUrl = "";
-		}
 	}
 
 	private async processMjpegStream(): Promise<void> {
@@ -103,7 +98,7 @@ export class MjpegStream {
 						processedData = true;
 
 						if (bytesRead >= contentLength) {
-							console.log('mobiledeck: frame complete, content-type:', contentType, 'bytes:', contentLength);
+							// console.log('mobiledeck: frame complete, content-type:', contentType, 'bytes:', contentLength);
 							if (contentType === 'image/jpeg') {
 								this.displayMjpegImage(imageData);
 							} else {
@@ -133,22 +128,19 @@ export class MjpegStream {
 		}
 	}
 
-	private displayMjpegImage(imageData: Uint8Array): void {
+	private async displayMjpegImage(imageData: Uint8Array): Promise<void> {
 		try {
-			console.log('mobiledeck: displaying jpeg image, size:', imageData.length);
+			// console.log('mobiledeck: displaying jpeg image, size:', imageData.length);
 			const blob = new Blob([imageData as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
-			const newImageUrl = URL.createObjectURL(blob);
 
-			// Clean up previous URL
-			if (this.currentImageUrl) {
-				URL.revokeObjectURL(this.currentImageUrl);
-			}
+			// create imagebitmap for fast rendering
+			const imageBitmap = await createImageBitmap(blob);
 
-			this.currentImageUrl = newImageUrl;
-			console.log('mobiledeck: calling onImageCallback with url:', newImageUrl);
-			this.onImageCallback(newImageUrl);
-		} catch (error) {
+			// console.log('mobiledeck: calling onImageCallback with imagebitmap:', imageBitmap.width, 'x', imageBitmap.height);
+			this.onImageCallback(imageBitmap);
+		} catch (error: any) {
 			console.error('Error displaying MJPEG image:', error);
+			console.error('Failed to decode JPEG, size:', imageData.length, 'first bytes:', Array.from(imageData.slice(0, 10)));
 		}
 	}
 

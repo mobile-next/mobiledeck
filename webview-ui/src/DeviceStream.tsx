@@ -19,7 +19,7 @@ export interface DeviceStreamProps {
 	connectProgressMessage?: string;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
-	imageUrl: string;
+	imageBitmap: ImageBitmap | null;
 	skinOverlayUri: string;
 	deviceSkin: DeviceSkinType;
 	onTap: (x: number, y: number) => void;
@@ -63,7 +63,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	connectProgressMessage,
 	selectedDevice,
 	screenSize,
-	imageUrl,
+	imageBitmap,
 	skinOverlayUri,
 	deviceSkin,
 	onTap,
@@ -82,6 +82,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	const [gestureState, setGestureState] = useState<GestureState>(emptyGestureState);
 	const [skinRatio, setSkinRatio] = useState<number>(1.0);
 	const deviceSkinRef = useRef<HTMLImageElement>(null);
+	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	const calculateSkinRatio = () => {
 		if (deviceSkinRef.current) {
@@ -101,17 +102,39 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		};
 	}, []);
 
-	const convertToScreenCoords = (clientX: number, clientY: number, imgElement: HTMLImageElement) => {
-		const rect = imgElement.getBoundingClientRect();
+	useEffect(() => {
+		if (imageBitmap && canvasRef.current) {
+			const canvas = canvasRef.current;
+			const ctx = canvas.getContext('2d');
+			if (ctx) {
+				// set canvas size to match screen size
+				canvas.width = screenSize.width;
+				canvas.height = screenSize.height;
+
+				// validate bitmap is still open before drawing (prevent race condition)
+				if (imageBitmap.width > 0 && imageBitmap.height > 0) {
+					// draw the imagebitmap
+					ctx.drawImage(imageBitmap, 0, 0, screenSize.width, screenSize.height);
+				}
+
+				// note: bitmap will be closed by parent when new frame arrives
+			}
+		}
+	}, [imageBitmap, screenSize]);
+
+	const convertToScreenCoords = (clientX: number, clientY: number, element: HTMLCanvasElement) => {
+		const rect = element.getBoundingClientRect();
 		const x = clientX - rect.left;
 		const y = clientY - rect.top;
-		const screenX = Math.floor((x / imgElement.width) * screenSize.width);
-		const screenY = Math.floor((y / imgElement.height) * screenSize.height);
+		const screenX = Math.floor((x / element.width) * screenSize.width);
+		const screenY = Math.floor((y / element.height) * screenSize.height);
 		console.log("=> converting clientX,clientY " + clientX + "," + clientY + " to " + "x,y " + x + "," + y);
+		console.log("=> element dimensions:", element.width, element.height, "screenSize:", screenSize.width, screenSize.height);
+		console.log("=> resulting screenX,screenY:", screenX, screenY);
 		return { x, y, screenX, screenY };
 	};
 
-	const handleMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+	const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		const coords = convertToScreenCoords(e.clientX, e.clientY, e.currentTarget);
 		const now = Date.now();
 
@@ -124,7 +147,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		});
 	};
 
-	const handleMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+	const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		if (gestureState.points.length === 0) {
 			// move without mousedown
 			return;
@@ -154,7 +177,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		}
 	};
 
-	const handleMouseUp = (e: React.MouseEvent<HTMLImageElement>) => {
+	const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
 		if (gestureState.points.length === 0) {
 			// up without gesture
 			return;
@@ -234,7 +257,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 								</div>
 							) : (
 								<>
-									{imageUrl !== "" && (
+									{imageBitmap !== null && (
 										<div className="relative flex items-center">
 											<DeviceSkin
 												skinOverlayUri={skinOverlayUri}
@@ -244,9 +267,8 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 												onSkinLoad={calculateSkinRatio}
 											>
 												{/* device stream */}
-												<img
-													src={imageUrl}
-													alt=""
+												<canvas
+													ref={canvasRef}
 													className="cursor-crosshair w-full h-full"
 													style={{
 														objectFit: 'cover',
@@ -258,7 +280,6 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 													onMouseMove={handleMouseMove}
 													onMouseUp={handleMouseUp}
 													onMouseLeave={handleMouseUp}
-													draggable={false}
 												/>
 												{/* click animations relative to stream */}
 												{clicks.map(click => (

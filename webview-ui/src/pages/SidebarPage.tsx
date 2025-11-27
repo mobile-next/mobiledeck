@@ -304,7 +304,6 @@ function SidebarPage({
 													isConnected={true}
 													onReboot={handleRebootDevice}
 													onShutdown={handleShutdownDevice}
-													onConnect={handleConnectDevice}
 													isOperating={operatingDeviceIds.has(device.id)}
 												/>
 											))}

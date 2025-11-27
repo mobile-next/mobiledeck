@@ -113,7 +113,6 @@ class MobiledeckExtension {
 	}
 
 	private broadcastDevicesToPanels(devices: DeviceDescriptor[]) {
-		this.logger.log('broadcasting device list to ' + this.devicePanelManager.ids().length + ' panels');
 		this.devicePanelManager.ids().forEach(deviceId => {
 			const panel = this.devicePanelManager.get(deviceId);
 			if (panel) {
