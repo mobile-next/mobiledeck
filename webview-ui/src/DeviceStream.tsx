@@ -4,7 +4,7 @@ import { DeviceSkin as DeviceSkinType } from "./DeviceSkins";
 import { DeviceSkin } from "./DeviceSkin";
 import { Polyline } from "./Polyline";
 import { DeviceControls } from "./DeviceControls";
-import { BootSequence  } from "./components/BootSequence";
+import { BootSequence } from "./components/BootSequence";
 import { ConnectSequence } from "./components/ConnectSequence";
 
 export interface GesturePoint {
@@ -126,11 +126,8 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		const rect = element.getBoundingClientRect();
 		const x = clientX - rect.left;
 		const y = clientY - rect.top;
-		const screenX = Math.floor((x / element.width) * screenSize.width);
-		const screenY = Math.floor((y / element.height) * screenSize.height);
-		console.log("=> converting clientX,clientY " + clientX + "," + clientY + " to " + "x,y " + x + "," + y);
-		console.log("=> element dimensions:", element.width, element.height, "screenSize:", screenSize.width, screenSize.height);
-		console.log("=> resulting screenX,screenY:", screenX, screenY);
+		const screenX = Math.floor((x / rect.width) * screenSize.width);
+		const screenY = Math.floor((y / rect.height) * screenSize.height);
 		return { x, y, screenX, screenY };
 	};
 
