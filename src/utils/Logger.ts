@@ -4,7 +4,7 @@ export class Logger {
 
 	private static outputChannel: vscode.OutputChannel;
 
-	constructor(private channelName: string) {
+	constructor(private category: string) {
 		if (!Logger.outputChannel) {
 			Logger.outputChannel = vscode.window.createOutputChannel("Mobile Deck");
 		}
@@ -17,6 +17,6 @@ export class Logger {
 
 	private formatMessage(message: string): string {
 		const timestamp = new Date().toISOString();
-		return `[${timestamp}] [${this.channelName}] ${message}`;
+		return `[${timestamp}] [${this.category}] ${message}`;
 	}
 }

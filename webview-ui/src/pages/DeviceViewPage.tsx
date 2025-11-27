@@ -51,7 +51,7 @@ function DeviceViewPage() {
 	const [isConnecting, setIsConnecting] = useState(false);
 	const [connectProgressMessage, setConnectProgressMessage] = useState<string | null>(null);
 	const [fpsCount, setFpsCount] = useState(30);
-	const [imageUrl, setImageUrl] = useState<string>("");
+	const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
 	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
@@ -110,15 +110,16 @@ function DeviceViewPage() {
 
 			const stream = new MjpegStream(
 				reader,
-				(newImageUrl) => {
+				(newImageBitmap) => {
 					// stop "Connecting..." upon first jpeg frame
 					setIsConnecting(false);
 
-					setImageUrl((prevImageUrl) => {
-						if (prevImageUrl) {
-							URL.revokeObjectURL(prevImageUrl);
+					// close previous imagebitmap to free memory
+					setImageBitmap((prevImageBitmap) => {
+						if (prevImageBitmap) {
+							prevImageBitmap.close();
 						}
-						return newImageUrl;
+						return newImageBitmap;
 					});
 				},
 				(message) => {
@@ -151,7 +152,12 @@ function DeviceViewPage() {
 			setStreamReader(null);
 		}
 
-		setImageUrl("");
+		// close imagebitmap to free memory
+		if (imageBitmap) {
+			imageBitmap.close();
+		}
+
+		setImageBitmap(null);
 	};
 
 	const requestDeviceInfo = async (deviceId: string) => {
@@ -465,8 +471,8 @@ function DeviceViewPage() {
 		return () => {
 			router.destroy();
 			stopMjpegStream();
-			if (imageUrl) {
-				URL.revokeObjectURL(imageUrl);
+			if (imageBitmap) {
+				imageBitmap.close();
 			}
 
 			// clear boot polling interval if exists
@@ -498,7 +504,7 @@ function DeviceViewPage() {
 				isBooting={isBooting}
 				connectProgressMessage={connectProgressMessage || undefined}
 				selectedDevice={selectedDevice}
-				imageUrl={imageUrl}
+				imageBitmap={imageBitmap}
 				screenSize={screenSize}
 				skinOverlayUri={mediaSkinsUri + "/" + deviceSkin.imageFilename}
 				deviceSkin={deviceSkin}
