@@ -38,6 +38,12 @@ interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
 }
 
+/**
+ * Render the sidebar UI that lists local mobile devices, groups them by state, and exposes actions for connect, reboot, and shutdown while synchronizing with the host extension.
+ *
+ * @param onDeviceClicked - Callback invoked when a device row is clicked; receives the clicked `DeviceDescriptor`. Defaults to showing an alert with the device name.
+ * @returns The React element for the sidebar containing device sections, controls, and the getting-started banner.
+ */
 function SidebarPage({
 	onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`)
 }: SidebarPageProps) {

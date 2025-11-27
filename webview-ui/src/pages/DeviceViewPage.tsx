@@ -44,6 +44,16 @@ const StatusBar: React.FC<StatusBarProps> = ({
 	);
 };
 
+/**
+ * Renders the device streaming and control UI for remote devices.
+ *
+ * Manages device selection, MJPEG streaming, device input (touch, gestures, keys, buttons),
+ * screenshots, boot/polling flow, device skins, and communication with the backend JSON-RPC
+ * and mobile CLI client. Registers message handlers for configuration and device list updates
+ * and cleans up streams and resources on unmount.
+ *
+ * @returns The JSX element tree for the Device view page
+ */
 function DeviceViewPage() {
 	const [selectedDevice, setSelectedDevice] = useState<DeviceDescriptor | null>(null);
 	const [availableDevices, setAvailableDevices] = useState<DeviceDescriptor[]>([]);
