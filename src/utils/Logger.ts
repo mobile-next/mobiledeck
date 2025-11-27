@@ -1,23 +1,22 @@
 import * as vscode from 'vscode';
 
 export class Logger {
-	private outputChannel: vscode.OutputChannel;
 
-	constructor(channelName: string) {
-		this.outputChannel = vscode.window.createOutputChannel(channelName);
+	private static outputChannel: vscode.OutputChannel;
+
+	constructor(private channelName: string) {
+		if (!Logger.outputChannel) {
+			Logger.outputChannel = vscode.window.createOutputChannel("Mobile Deck");
+		}
 	}
 
 	public log(message: string): void {
 		const formattedMessage = this.formatMessage(message);
-		this.outputChannel.appendLine(formattedMessage);
+		Logger.outputChannel.appendLine(formattedMessage);
 	}
 
 	private formatMessage(message: string): string {
 		const timestamp = new Date().toISOString();
-		return `[${timestamp}] ${message}`;
-	}
-
-	public dispose(): void {
-		this.outputChannel.dispose();
+		return `[${timestamp}] [${this.channelName}] ${message}`;
 	}
 }
