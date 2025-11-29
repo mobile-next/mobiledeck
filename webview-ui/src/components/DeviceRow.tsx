@@ -29,11 +29,9 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 	};
 
 	const handleRowClick = () => {
-		if (isOperating) {
-			return;
+		if (!isOperating) {
+			onClick(device);
 		}
-
-		onClick(device);
 	};
 
 	return (
@@ -47,7 +45,7 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 			</div>
 
 			{/* device name and type */}
-			<div className="flex-1 min-w-0 flex flex-col">
+			<div className="flex-1 min-w-0 flex flex-col" style={{textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "clip"}}>
 				<span className="text-sm text-white">
 					{device.name}
 				</span>
