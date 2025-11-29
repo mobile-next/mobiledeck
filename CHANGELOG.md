@@ -1,3 +1,13 @@
+## [0.0.20](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.20) (2025-11-29)
+
+- General: merged 'available' and 'connected' device categories into one list
+- General: fixed vscode output channel leak by using a single shared channel
+- General: switched from Blob to ImageBitmap for faster frame rendering, moved to Canvas
+- General: removed per-panel device refresh timer, reduce load on mobilecli server
+- General: removed old mobiledeck commands from command palette
+- General: added on-screen progress notifications from mobilecli during screen capture startup
+- General: updated mobilecli to 0.0.42 (see [mobilecli releases](https://github.com/mobile-next/mobilecli/releases))
+
 ## [0.0.19](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.19) (2025-11-26)
 
 - General: posthog-js and posthog-node packages updated to latest
