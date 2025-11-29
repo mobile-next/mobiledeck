@@ -46,7 +46,7 @@ class MobiledeckExtension {
 				DevicePlatform: device.platform,
 			});
 
-			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
+			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!, this.telemetry);
 			viewProvider.createWebviewPanel(device);
 		}
 	}
@@ -67,7 +67,7 @@ class MobiledeckExtension {
 				DevicePlatform: device.platform,
 			});
 
-			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!);
+			const viewProvider = new DeviceViewProvider(context, device, this.cliServer!, this.telemetry);
 			const panel = viewProvider.createWebviewPanel(device);
 
 			// track the panel

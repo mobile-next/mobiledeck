@@ -62,6 +62,8 @@ function DeviceViewPage() {
 	const [isBooting, setIsBooting] = useState(false);
 	const bootPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 	const imageBitmapRef = useRef<ImageBitmap | null>(null);
+	const streamStartTimeRef = useRef<number | null>(null);
+	const firstFrameReceivedRef = useRef<boolean>(false);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -80,6 +82,12 @@ function DeviceViewPage() {
 	const startMjpegStream = async (deviceId: string) => {
 		try {
 			setIsConnecting(true);
+
+			// benchmark: record stream start time
+			streamStartTimeRef.current = +new Date();
+			firstFrameReceivedRef.current = false;
+			console.log('mobiledeck benchmark: mjpeg stream starting');
+
 			const response = await fetch(`http://localhost:${serverPort}/rpc`, {
 				method: 'POST',
 				headers: {
@@ -112,6 +120,25 @@ function DeviceViewPage() {
 			const stream = new MjpegStream(
 				reader,
 				(newImageBitmap) => {
+					// benchmark: log time to first frame
+					if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
+						const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
+						console.log(`mobiledeck benchmark: first frame received in ${timeToFirstFrame}ms`);
+						firstFrameReceivedRef.current = true;
+
+						// send telemetry event
+						vscode.postMessage({
+							command: 'telemetry',
+							event: 'mjpeg_stream_started',
+							properties: {
+								TimeToFirstFrame: timeToFirstFrame,
+								DevicePlatform: selectedDevice?.platform,
+								DeviceOSVersion: selectedDevice?.version,
+								DeviceType: selectedDevice?.type
+							}
+						});
+					}
+
 					// stop "Connecting..." upon first jpeg frame
 					setIsConnecting(false);
 
@@ -120,7 +147,7 @@ function DeviceViewPage() {
 						if (prevImageBitmap) {
 							prevImageBitmap.close();
 						}
-            
+
 						return newImageBitmap;
 					});
 				},

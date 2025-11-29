@@ -3,6 +3,7 @@ import { Logger } from './utils/Logger';
 import { MobileCliServer } from './MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 import { DeviceDescriptor } from '@shared/models';
+import { Telemetry } from './utils/Telemetry';
 
 interface Message {
 	command: string;
@@ -34,7 +35,13 @@ interface OnInitializedMessage extends Message {
 	command: 'onInitialized';
 }
 
-type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage | ConfigureMessage;
+interface TelemetryMessage extends Message {
+	command: 'telemetry';
+	event: string;
+	properties?: Record<string, any>;
+}
+
+type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelectedMessage | OnInitializedMessage | ConfigureMessage | TelemetryMessage;
 
 export class DeviceViewProvider {
 
@@ -44,6 +51,7 @@ export class DeviceViewProvider {
 		private readonly context: vscode.ExtensionContext,
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
+		private readonly telemetry: Telemetry,
 	) {}
 
 	async handleMessage(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
@@ -80,6 +88,10 @@ export class DeviceViewProvider {
 			case 'onDeviceSelected':
 				this.logger.log('Device selected: ' + message.device.name);
 				this.updateWebviewTitle(webviewPanel, message.device.name);
+				break;
+
+			case 'telemetry':
+				this.telemetry.sendEvent(message.event, message.properties);
 				break;
 
 			default:
