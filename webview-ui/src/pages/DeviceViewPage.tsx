@@ -120,7 +120,7 @@ function DeviceViewPage() {
 						if (prevImageBitmap) {
 							prevImageBitmap.close();
 						}
-						imageBitmapRef.current = newImageBitmap;
+            
 						return newImageBitmap;
 					});
 				},
@@ -474,6 +474,7 @@ function DeviceViewPage() {
 		return () => {
 			router.destroy();
 			stopMjpegStream();
+      
 			if (imageBitmapRef.current) {
 				imageBitmapRef.current.close();
 				imageBitmapRef.current = null;
