@@ -292,40 +292,25 @@ function SidebarPage({
 								</div>
 							) : (
 								<>
-									{/* connected devices section */}
-									{devices.some(d => connectedDeviceIds.includes(d.id) && d.state !== 'offline') && (
-										<>
-											<DeviceCategory label="Connected" />
-											{devices.filter(d => connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
-												<DeviceRow
-													key={device.id}
-													device={device}
-													onClick={handleDeviceClick}
-													isConnected={true}
-													onReboot={handleRebootDevice}
-													onShutdown={handleShutdownDevice}
-													isOperating={operatingDeviceIds.has(device.id)}
-												/>
-											))}
-										</>
-									)}
-
-									{/* available devices section */}
-									{devices.some(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline') && (
+									{/* available devices section (includes both connected and non-connected) */}
+									{devices.some(d => d.state !== 'offline') && (
 										<>
 											<DeviceCategory label="Available" />
-											{devices.filter(d => !connectedDeviceIds.includes(d.id) && d.state !== 'offline').map((device) => (
-												<DeviceRow
-													key={device.id}
-													device={device}
-													onClick={handleDeviceClick}
-													isConnected={false}
-													onReboot={handleRebootDevice}
-													onShutdown={handleShutdownDevice}
-													onConnect={handleConnectDevice}
-													isOperating={operatingDeviceIds.has(device.id)}
-												/>
-											))}
+											{devices.filter(d => d.state !== 'offline').map((device) => {
+												const isConnected = connectedDeviceIds.includes(device.id);
+												return (
+													<DeviceRow
+														key={device.id}
+														device={device}
+														onClick={handleDeviceClick}
+														isConnected={isConnected}
+														onReboot={handleRebootDevice}
+														onShutdown={handleShutdownDevice}
+														onConnect={isConnected ? undefined : handleConnectDevice}
+														isOperating={operatingDeviceIds.has(device.id)}
+													/>
+												);
+											})}
 										</>
 									)}
 
