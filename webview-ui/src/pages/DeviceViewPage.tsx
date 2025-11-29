@@ -61,6 +61,7 @@ function DeviceViewPage() {
 	const [deviceSkin, setDeviceSkin] = useState<DeviceSkin>(NoDeviceSkin);
 	const [isBooting, setIsBooting] = useState(false);
 	const bootPollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+	const imageBitmapRef = useRef<ImageBitmap | null>(null);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -119,6 +120,7 @@ function DeviceViewPage() {
 						if (prevImageBitmap) {
 							prevImageBitmap.close();
 						}
+						imageBitmapRef.current = newImageBitmap;
 						return newImageBitmap;
 					});
 				},
@@ -153,8 +155,9 @@ function DeviceViewPage() {
 		}
 
 		// close imagebitmap to free memory
-		if (imageBitmap) {
-			imageBitmap.close();
+		if (imageBitmapRef.current) {
+			imageBitmapRef.current.close();
+			imageBitmapRef.current = null;
 		}
 
 		setImageBitmap(null);
@@ -471,8 +474,9 @@ function DeviceViewPage() {
 		return () => {
 			router.destroy();
 			stopMjpegStream();
-			if (imageBitmap) {
-				imageBitmap.close();
+			if (imageBitmapRef.current) {
+				imageBitmapRef.current.close();
+				imageBitmapRef.current = null;
 			}
 
 			// clear boot polling interval if exists
