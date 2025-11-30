@@ -9,9 +9,6 @@ const styles = {
 		background: '#0a0a0a',
 		color: '#e0e0e0',
 		minHeight: '100vh',
-		display: 'flex',
-		justifyContent: 'center',
-		alignItems: 'center',
 		width: '100%',
 		height: '100vh',
 		position: 'fixed' as const,
@@ -22,6 +19,16 @@ const styles = {
 		width: '100%',
 		maxWidth: '500px',
 		padding: '20px',
+		marginTop: '1em',
+		marginLeft: 'auto',
+		marginRight: 'auto',
+	} as React.CSSProperties,
+	headerContainer: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: '12px',
+		gap: '16px',
 	} as React.CSSProperties,
 	logo: {
 		width: '48px',
@@ -30,8 +37,8 @@ const styles = {
 		display: 'flex',
 		alignItems: 'center',
 		justifyContent: 'center',
-		margin: '0 auto 32px',
 		overflow: 'hidden',
+		flexShrink: 0,
 	} as React.CSSProperties,
 	logoImg: {
 		width: '100%',
@@ -39,9 +46,8 @@ const styles = {
 		objectFit: 'cover' as const,
 	} as React.CSSProperties,
 	h1: {
-		fontSize: '32px',
-		textAlign: 'center' as const,
-		marginBottom: '12px',
+		fontSize: '48px',
+		margin: 0,
 		fontWeight: 700,
 		background: 'linear-gradient(135deg, #00ff88 0%, #00cc6f 100%)',
 		WebkitBackgroundClip: 'text',
@@ -49,7 +55,7 @@ const styles = {
 		backgroundClip: 'text',
 	} as React.CSSProperties,
 	subtitle: {
-		textAlign: 'center' as const,
+		textAlign: 'justify' as const,
 		color: '#888',
 		fontSize: '15px',
 		marginBottom: '48px',
@@ -59,7 +65,7 @@ const styles = {
 		background: '#1a1a1a',
 		border: '1px solid #2a2a2a',
 		borderRadius: '12px',
-		padding: '32px',
+		padding: '24px',
 	} as React.CSSProperties,
 	divider: {
 		display: 'flex',
@@ -136,22 +142,39 @@ function LoginPage() {
 	return (
 		<div style={styles.wrapper}>
 			<div id="welcome-screen" style={styles.container}>
-				<div style={styles.logo}>
-					<img
-						src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4"
-						alt="Mobiledeck Logo"
-						style={styles.logoImg}
-					/>
+				<div style={styles.headerContainer}>
+					<div style={styles.logo}>
+						<img
+							src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4"
+							alt="Mobile Deck Logo"
+							style={styles.logoImg}
+						/>
+					</div>
+					<h1 style={styles.h1}>Mobile Deck</h1>
 				</div>
 
-				<h1 style={styles.h1}>Welcome to Mobile Deck</h1>
 				<p style={styles.subtitle}>
-					Making mobile development accessible to everyone.
-					<br />
-					Build cross-platform applications across any device.
+					See your iOS & Android simulators and real devices, then connect with a click — without leaving the editor.
 				</p>
 
 				<div style={styles.card}>
+
+					<div style={{ color: "white" }}>
+						Step 1 · Sign in to get your devices
+					</div>
+
+					<ul style={{ color: "gray", marginTop: "8px", marginBottom: "24px", lineHeight: "1.6em" }}>
+						<li>
+							<span style={{ color: "green" }}>✓</span> View all connected devices & simulators
+						</li>
+						<li>
+							<span style={{ color: "green" }}>✓</span> Connect instantly to run and test apps
+						</li>
+						<li>
+							<span style={{ color: "green" }}>✓</span> Capture screenshots & interact with the screen
+						</li>
+					</ul>
+
 					<div style={styles.oauthButtons}>
 						<button style={styles.oauthBtn} onClick={onGoogleLogin}>
 							<GoogleIcon />
