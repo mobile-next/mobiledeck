@@ -8,8 +8,6 @@ import DeviceCategory from '../components/DeviceCategory';
 import GettingStartedBanner from '../components/GettingStartedBanner';
 import DeviceRow from '../components/DeviceRow';
 import { MessageRouter } from '../MessageRouter';
-import posthog, { DisplaySurveyType } from 'posthog-js';
-import { usePostHog } from '@posthog/react';
 
 // message type definitions
 interface ConfigureMessage {
@@ -28,11 +26,7 @@ interface UpdateConnectedDevicesMessage {
 	connectedDeviceIds?: string[];
 }
 
-interface ShowFeedbackFormMessage {
-	command: 'showFeedbackForm';
-}
-
-type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowFeedbackFormMessage;
+type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage;
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
@@ -148,21 +142,6 @@ function SidebarPage({
 		});
 	};
 
-	const handleShowFeedbackForm = (message: ShowFeedbackFormMessage) => {
-		const surveyId = '019ab205-307f-0000-05d5-a71b359e724a';
-
-		posthog.init('phc_3IL723l6xo0k7ANkMYpi4G0OaGIrodLuZjbvn6iGXHx', {
-			api_host: 'https://us.i.posthog.com',
-			defaults: '2025-05-24',
-		});
-
-		posthog.displaySurvey(surveyId, {
-			displayType: DisplaySurveyType.Popover,
-			ignoreConditions: true,
-			ignoreDelay: true,
-		});
-	};
-
 	useEffect(() => {
 		const router = new MessageRouter(window);
 
@@ -170,7 +149,6 @@ function SidebarPage({
 		router.register('configure', handleConfigure);
 		router.register('refreshDevices', handleRefreshDevices);
 		router.register('updateConnectedDevices', handleUpdateConnectedDevices);
-		router.register('showFeedbackForm', handleShowFeedbackForm);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({
