@@ -334,12 +334,4 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			this.logger.log('failed to update sign out button title: ' + (error instanceof Error ? error.message : String(error)));
 		}
 	}
-
-	public onSendFeedback() {
-		if (this.webviewView) {
-			this.webviewView.webview.postMessage({
-				command: 'showFeedbackForm',
-			});
-		}
-	}
 }

@@ -9,6 +9,7 @@ import { Logger } from './utils/Logger';
 import { AuthenticationManager } from './AuthenticationManager';
 
 const SIDEBAR_VIEW_ID = 'mobiledeckDevices';
+const FEEDBACK_FORM_URL = "https://forms.gle/eFb9opGjCCxCyX4s9";
 
 class DevicePanelManager {
 	private devicePanels: Map<string, vscode.WebviewPanel> = new Map();
@@ -125,20 +126,16 @@ class MobiledeckExtension {
 	}
 
 	private onDocumentation() {
-		this.logger.log('mobiledeck.documentation command executed');
 		this.telemetry.sendEvent('documentation_opened');
 		vscode.env.openExternal(vscode.Uri.parse('https://github.com/mobile-next/mobiledeck/wiki'));
 	}
 
 	private onSendFeedback() {
-		if (this.sidebarProvider) {
-			this.sidebarProvider.onSendFeedback();
-		}
+		this.telemetry.sendEvent('send_feedback_clicked');
+		vscode.env.openExternal(vscode.Uri.parse(FEEDBACK_FORM_URL));
 	}
 
 	private async onSignOut(context: vscode.ExtensionContext) {
-		this.logger.log('mobiledeck.signOut command executed');
-
 		this.telemetry.sendEvent('signed_out');
 
 		await this.authenticationManager.clear(context);
@@ -150,8 +147,6 @@ class MobiledeckExtension {
 		if (this.sidebarProvider) {
 			this.sidebarProvider.showLoginPage();
 		}
-
-		vscode.window.showInformationMessage('Successfully signed out');
 	}
 
 	public async activate(context: vscode.ExtensionContext) {
