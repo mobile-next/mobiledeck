@@ -70,7 +70,7 @@ export class DeviceViewProvider {
 
 				// convert media skins directory path to webview URI
 				const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
-					vscode.Uri.joinPath(this.context.extensionUri, 'media', 'skins')
+					vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'skins')
 				);
 
 				// Send configure message with both device and server port
