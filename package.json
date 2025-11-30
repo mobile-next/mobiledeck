@@ -2,7 +2,7 @@
   "name": "mobiledeck",
   "displayName": "Mobile Deck (iOS/Android Device Manager and Preview)",
   "description": "View, control and manage all your Android and iOS real devices, simulators, and emulators",
-  "icon": "media/mobilenexthq_logo.png",
+  "icon": "assets/mobilenexthq_logo.png",
   "version": "0.0.1",
   "publisher": "mobilenext",
   "author": "Mobile Next",
@@ -138,7 +138,7 @@
         {
           "id": "mobiledeck",
           "title": "Mobile Deck",
-          "icon": "media/mobiledeck.svg"
+          "icon": "assets/mobiledeck.svg"
         }
       ]
     }
@@ -173,7 +173,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@mobilenext/mobilecli": "0.0.42",
+    "@mobilenext/mobilecli": "0.0.43",
     "jsonwebtoken": "9.0.2",
     "jwks-rsa": "3.2.0",
     "oidc-client-ts": "3.3.0",

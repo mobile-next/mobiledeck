@@ -85,6 +85,10 @@ export class MobileCliServer {
 		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {
 			detached: false,
 			stdio: 'pipe',
+			env: {
+				...process.env,
+				MOBILECLI_WDA_PATH: vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'agents').fsPath,
+			},
 		});
 
 		this.mobilecliServerProcess.stdout?.on('data', (data: Buffer) => {

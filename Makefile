@@ -1,32 +1,35 @@
-.PHONY: all build npm_install npm_update install
+.PHONY: all build npm_install npm_update install download-agents
+
+WEBDRIVER_VERSION = 10.2.5
+WEBDRIVER_RELEASE_URL = https://github.com/appium/WebDriverAgent/releases/download/v$(WEBDRIVER_VERSION)/
 
 all: build
 
-build-darwin-arm64:
+build-darwin-arm64: download-agents
 	make -C webview-ui
 	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-arm64 assets/mobilecli
 	npx vsce package --target darwin-arm64
 
-build-darwin-x64:
+build-darwin-x64: download-agents
 	make -C webview-ui
 	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-amd64 assets/mobilecli
 	npx vsce package --target darwin-x64
 
-build-linux-x64:
+build-linux-x64: download-agents
 	make -C webview-ui
 	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-amd64 assets/mobilecli
 	npx vsce package --target linux-x64
 
-build-linux-arm64:
+build-linux-arm64: download-agents
 	make -C webview-ui
 	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-arm64 assets/mobilecli
 	npx vsce package --target linux-arm64
 
-build-win32-x64:
+build-win32-x64: download-agents
 	make -C webview-ui
 	cp -R media/* assets
 	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-windows-amd64.exe assets/mobilecli.exe
@@ -34,6 +37,17 @@ build-win32-x64:
 
 clean:
 	rm -rf assets
+
+download-agents: media/agents/WebDriverAgentRunner-Build-Sim-arm64.zip media/agents/WebDriverAgentRunner-Build-Sim-x86_64.zip
+	#
+
+media/agents/WebDriverAgentRunner-Build-Sim-arm64.zip:
+	mkdir -p $(dir $@)
+	curl -o $@ -L "$(WEBDRIVER_RELEASE_URL)/WebDriverAgentRunner-Build-Sim-arm64.zip"
+
+media/agents/WebDriverAgentRunner-Build-Sim-x86_64.zip:
+	mkdir -p $(dir $@)
+	curl -o $@ -L "$(WEBDRIVER_RELEASE_URL)/WebDriverAgentRunner-Build-Sim-x86_64.zip"
 
 build:
 	make clean build-darwin-x64
