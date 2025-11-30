@@ -42,9 +42,11 @@ download-agents: media/agents/WebDriverAgentRunner-Build-Sim-arm64.zip media/age
 	#
 
 media/agents/WebDriverAgentRunner-Build-Sim-arm64.zip:
+	mkdir -p $(dir $@)
 	curl -o $@ -L "$(WEBDRIVER_RELEASE_URL)/WebDriverAgentRunner-Build-Sim-arm64.zip"
 
 media/agents/WebDriverAgentRunner-Build-Sim-x86_64.zip:
+	mkdir -p $(dir $@)
 	curl -o $@ -L "$(WEBDRIVER_RELEASE_URL)/WebDriverAgentRunner-Build-Sim-x86_64.zip"
 
 build:
