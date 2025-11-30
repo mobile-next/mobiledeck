@@ -70,7 +70,7 @@ export class DeviceViewProvider {
 
 				// convert media skins directory path to webview URI
 				const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
-					vscode.Uri.joinPath(this.context.extensionUri, 'media', 'skins')
+					vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'skins')
 				);
 
 				// Send configure message with both device and server port
@@ -137,8 +137,8 @@ export class DeviceViewProvider {
 
 		// add mobile next icon (theme-aware)
 		webviewPanel.iconPath = {
-			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg'),
-			light: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-light.svg'),
+			dark: vscode.Uri.joinPath(this.context.extensionUri, 'mobiledeck-dark.svg'),
+			light: vscode.Uri.joinPath(this.context.extensionUri, 'mobiledeck-light.svg'),
 		};
 	}
 
