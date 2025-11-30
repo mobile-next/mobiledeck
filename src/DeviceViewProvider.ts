@@ -137,8 +137,8 @@ export class DeviceViewProvider {
 
 		// add mobile next icon (theme-aware)
 		webviewPanel.iconPath = {
-			dark: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-dark.svg'),
-			light: vscode.Uri.joinPath(this.context.extensionUri, 'media', 'mobiledeck-light.svg'),
+			dark: vscode.Uri.joinPath(this.context.extensionUri, 'mobiledeck-dark.svg'),
+			light: vscode.Uri.joinPath(this.context.extensionUri, 'mobiledeck-light.svg'),
 		};
 	}
 
