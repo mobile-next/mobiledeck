@@ -33,7 +33,7 @@ export class OAuthCallbackServer {
 	private server: http.Server | null = null;
 	private port: number = 0;
 	private timeoutId: NodeJS.Timeout | null = null;
-	private logger: Logger = new Logger('Mobiledeck');
+	private logger: Logger = new Logger('OAuthCallbackServer');
 
 	private AUTHENTICATION_SUCCESSFUL_HTML = `
 	<!DOCTYPE html>

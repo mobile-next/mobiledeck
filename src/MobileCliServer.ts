@@ -10,8 +10,8 @@ export class MobileCliServer {
 	private static SERVER_STARTUP_TIMEOUT_MS = 10000; // 10 seconds
 	private static SERVER_HEALTH_CHECK_INTERVAL_MS = 200; // 200ms between checks
 
-	private logger: Logger = new Logger('Mobiledeck');
-	private portManager: PortManager = new PortManager(this.logger);
+	private logger: Logger = new Logger('MobileCliServer');
+	private portManager: PortManager = new PortManager();
 
 	private mobilecliPath: string;
 	private serverPort: number = MobileCliServer.DEFAULT_SERVER_PORT;
@@ -25,7 +25,7 @@ export class MobileCliServer {
 	}
 
 	private findMobilecliPath(): string {
-		const basePath = vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'mobilecli').fsPath;
+		const basePath = vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'mobilecli').fsPath;
 		const mobilecliPath = process.platform === 'win32' ? `${basePath}.exe` : basePath;
 
 		this.logger.log("mobilecli path: " + mobilecliPath);
@@ -87,7 +87,7 @@ export class MobileCliServer {
 			stdio: 'pipe',
 			env: {
 				...process.env,
-				MOBILECLI_WDA_PATH: vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'agents').fsPath,
+				MOBILECLI_WDA_PATH: vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'agents').fsPath,
 			},
 		});
 

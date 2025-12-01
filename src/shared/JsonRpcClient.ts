@@ -14,7 +14,7 @@ export class JsonRpcClient {
 	constructor(private readonly url: string) { }
 
 	public sendJsonRpcRequest = async <T>(method: string, params: any, timeoutMs?: number): Promise<T> => {
-		console.log('mobiledeck: sending json rpc request', method, params);
+		console.log(`mobiledeck: sending json rpc request ${method} ${JSON.stringify(params)}`);
 
 		const id = this.idCounter++;
 

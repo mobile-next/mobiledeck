@@ -8,7 +8,7 @@ module.exports = {
     cacheDirectory: path.resolve(__dirname, '.tmp_cache'),
   },
   output: {
-    path: path.resolve(__dirname, '../assets'),
+    path: path.resolve(__dirname, '../dist'),
     filename: 'bundle.js',
   },
   resolve: {
@@ -41,4 +41,4 @@ module.exports = {
     maxAssetSize: 512000,
   },
   devtool: 'source-map',
-}; 
+};

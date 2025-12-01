@@ -11,7 +11,7 @@ import { AuthenticationManager } from './AuthenticationManager';
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
 	private webviewView?: vscode.WebviewView;
-	private logger: Logger = new Logger('Mobiledeck');
+	private logger: Logger = new Logger('SidebarViewProvider');
 	private onDevicesUpdatedCallback?: (devices: any[]) => void;
 
 	constructor(
@@ -33,7 +33,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [
-				vscode.Uri.joinPath(this.context.extensionUri, 'assets')
+				vscode.Uri.joinPath(this.context.extensionUri, 'dist')
 			]
 		};
 

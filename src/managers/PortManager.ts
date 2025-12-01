@@ -5,7 +5,7 @@ interface ServerHealthResponse {
 }
 
 export class PortManager {
-	constructor(private logger: Logger) {}
+	private logger: Logger = new Logger('PortManager');
 
 	public async findAvailablePort(startPort: number, endPort: number): Promise<number> {
 		for (let port = startPort; port <= endPort; port++) {
