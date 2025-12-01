@@ -7,36 +7,41 @@ all: build
 
 build-darwin-arm64: download-agents
 	make -C webview-ui
-	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-arm64 assets/mobilecli
+	mkdir -p dist
+	cp -R media/* dist
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-arm64 dist/mobilecli
 	npx vsce package --target darwin-arm64
 
 build-darwin-x64: download-agents
 	make -C webview-ui
-	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-amd64 assets/mobilecli
+	mkdir -p dist
+	cp -R media/* dist
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-darwin-amd64 dist/mobilecli
 	npx vsce package --target darwin-x64
 
 build-linux-x64: download-agents
 	make -C webview-ui
-	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-amd64 assets/mobilecli
+	mkdir -p dist
+	cp -R media/* dist
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-amd64 dist/mobilecli
 	npx vsce package --target linux-x64
 
 build-linux-arm64: download-agents
 	make -C webview-ui
-	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-arm64 assets/mobilecli
+	mkdir -p dist
+	cp -R media/* dist
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-linux-arm64 dist/mobilecli
 	npx vsce package --target linux-arm64
 
 build-win32-x64: download-agents
 	make -C webview-ui
-	cp -R media/* assets
-	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-windows-amd64.exe assets/mobilecli.exe
+	mkdir -p dist
+	cp -R media/* dist
+	cp node_modules/@mobilenext/mobilecli/bin/mobilecli-windows-amd64.exe dist/mobilecli.exe
 	npx vsce package --target win32-x64
 
 clean:
-	rm -rf assets
+	rm -rf dist
 
 download-agents: media/agents/WebDriverAgentRunner-Build-Sim-arm64.zip media/agents/WebDriverAgentRunner-Build-Sim-x86_64.zip
 	#

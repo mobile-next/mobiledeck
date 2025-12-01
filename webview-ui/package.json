@@ -8,7 +8,7 @@
     "prepare": "npx husky",
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "npx webpack watch --mode development",
-    "build": "npm run typecheck && npx @tailwindcss/cli -i ./src/input.css -o ../assets/styles.css && npx webpack --mode production"
+    "build": "npm run typecheck && npx @tailwindcss/cli -i ./src/input.css -o ../dist/styles.css && npx webpack --mode production"
   },
   "keywords": [],
   "author": "",

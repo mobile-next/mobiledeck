@@ -15,12 +15,12 @@ export class HtmlUtils {
 		webview: vscode.Webview,
 		page: string = 'device'
 	): string {
-		const htmlPath = vscode.Uri.joinPath(context.extensionUri, 'assets', 'index.html');
+		const htmlPath = vscode.Uri.joinPath(context.extensionUri, 'dist', 'index.html');
 		let htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
 
 		const assets = ["styles.css", "bundle.js"];
 		for (const asset of assets) {
-			const uri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'assets', asset));
+			const uri = webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'dist', asset));
 			htmlContent = htmlContent.replace(asset, uri.toString());
 		}
 

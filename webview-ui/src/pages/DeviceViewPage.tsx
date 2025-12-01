@@ -259,7 +259,7 @@ function DeviceViewPage() {
 	};
 
 	useEffect(() => {
-		console.log('mobiledeck: selectDevice called with device:', selectedDevice);
+		console.log('mobiledeck: selectDevice called with device: ' + JSON.stringify(selectedDevice));
 		stopMjpegStream();
 
 		// clear any existing boot polling
@@ -501,7 +501,7 @@ function DeviceViewPage() {
 		return () => {
 			router.destroy();
 			stopMjpegStream();
-      
+
 			if (imageBitmapRef.current) {
 				imageBitmapRef.current.close();
 				imageBitmapRef.current = null;

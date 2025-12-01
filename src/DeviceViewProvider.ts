@@ -45,7 +45,7 @@ type WebviewMessage = AlertWebviewMessage | LogWebviewMessage | OnDeviceSelected
 
 export class DeviceViewProvider {
 
-	private logger: Logger = new Logger('Mobiledeck');
+	private logger: Logger = new Logger('DeviceViewProvider');
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
@@ -70,7 +70,7 @@ export class DeviceViewProvider {
 
 				// convert media skins directory path to webview URI
 				const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
-					vscode.Uri.joinPath(this.context.extensionUri, 'assets', 'skins')
+					vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'skins')
 				);
 
 				// Send configure message with both device and server port
@@ -112,9 +112,9 @@ export class DeviceViewProvider {
 				retainContextWhenHidden: true,
 				localResourceRoots: [
 					// allow css and js files to be loaded
-					vscode.Uri.joinPath(this.context.extensionUri, 'assets'),
+					vscode.Uri.joinPath(this.context.extensionUri, 'dist'),
 					// allow media files (skins) to be loaded
-					vscode.Uri.joinPath(this.context.extensionUri, 'media'),
+					// vscode.Uri.joinPath(this.context.extensionUri, 'media'),
 				],
 			},
 		);
@@ -137,8 +137,8 @@ export class DeviceViewProvider {
 
 		// add mobile next icon (theme-aware)
 		webviewPanel.iconPath = {
-			dark: vscode.Uri.joinPath(this.context.extensionUri, 'mobiledeck-dark.svg'),
-			light: vscode.Uri.joinPath(this.context.extensionUri, 'mobiledeck-light.svg'),
+			dark: vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'mobiledeck-dark.svg'),
+			light: vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'mobiledeck-light.svg'),
 		};
 	}
 
