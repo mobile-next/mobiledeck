@@ -19,7 +19,8 @@ export class MobileCliServer {
 
 	constructor(
 		private readonly context: vscode.ExtensionContext,
-		private readonly telemetry: Telemetry
+		private readonly telemetry: Telemetry,
+		private readonly onProcessExit?: (exitCode: number) => void
 	) {
 		this.mobilecliPath = this.findMobilecliPath();
 	}
@@ -108,6 +109,11 @@ export class MobileCliServer {
 					exitCode: code,
 					port: this.serverPort,
 				});
+			}
+
+			// call the exit callback if provided
+			if (this.onProcessExit) {
+				this.onProcessExit(code);
 			}
 		});
 
