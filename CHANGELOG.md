@@ -1,3 +1,10 @@
+## [0.0.21](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.21) (2025-12-02)
+
+- General: moved feedback form to Google Forms
+- General: added explanatory text on login page describing why authentication is needed
+- General: added timing analytics for mjpeg stream startup performance tracking
+- iOS: WebDriverAgent is now bundled within mobiledeck for faster iOS device connection and installation
+
 ## [0.0.20](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.20) (2025-11-29)
 
 - General: merged 'available' and 'connected' device categories into one list
