@@ -205,19 +205,6 @@ function DeviceViewPage() {
 		}
 	};
 
-	const fetchDevices = async () => {
-		try {
-			setIsRefreshing(true);
-			const result = await getMobilecliClient().listDevices(false);
-			console.log('mobiledeck: devices list', result);
-			setAvailableDevices(result.devices);
-		} catch (error) {
-			console.error('mobiledeck: error fetching devices:', error);
-		} finally {
-			setIsRefreshing(false);
-		}
-	};
-
 	const bootDevice = async (deviceId: string) => {
 		try {
 			console.log('mobiledeck: booting device', deviceId);
@@ -532,7 +519,6 @@ function DeviceViewPage() {
 				onTakeScreenshot={onTakeScreenshot}
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
-				// onRefreshDevices={fetchDevices}
 				onSelectDevice={onDeviceSelected}
 			/>
 

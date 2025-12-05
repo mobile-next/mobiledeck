@@ -30,6 +30,7 @@ export class MjpegStream {
 	}
 
 	public stop(): void {
+		console.log("mobiledeck: stopping mjpeg stream through stop()");
 		this.isActive = false;
 	}
 
@@ -48,7 +49,7 @@ export class MjpegStream {
 				const { done, value } = await this.reader.read();
 
 				if (done) {
-					console.log('MJPEG stream ended');
+					console.log('mobiledeck: mjpeg stream ended by server');
 					break;
 				}
 
@@ -131,9 +132,9 @@ export class MjpegStream {
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error(String(error));
 			if (err.name === 'AbortError') {
-				console.log('MJPEG stream aborted');
+				console.log('mobiledeck: mjpeg stream processing aborted with AbortError');
 			} else {
-				console.error('Error processing MJPEG stream:', err);
+				console.error('mobiledeck: mjpeg processing failed with error:', err);
 				this.options.onError?.(err);
 			}
 		}
