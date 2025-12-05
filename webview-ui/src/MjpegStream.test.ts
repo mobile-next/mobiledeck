@@ -26,8 +26,7 @@ function createMockReader(data: Uint8Array, chunkSize: number = 1024): ReadableS
 
 // helper function to load mjpeg test file
 function loadMjpegFile(): Uint8Array {
-	const buffer = readFileSync('./src/test/fixtures/file.mjpeg');
-	return new Uint8Array(buffer);
+	return readFileSync('./src/test/fixtures/file.mjpeg');
 }
 
 describe('MjpegStream', () => {

@@ -31,7 +31,6 @@
     "url": "https://github.com/mobile-next/mobiledeck.git"
   },
   "activationEvents": [
-    "onStartupFinished",
     "onView:mobiledeckDevices"
   ],
   "bugs": {
