@@ -35,43 +35,40 @@ describe('MjpegStream', () => {
 	});
 
 	describe('when processing mjpeg stream', () => {
-		it('should call image callback with imagebitmap', async () => {
+		it('should call frame callback with jpeg data', async () => {
 			const streamData = loadMjpegFile();
 			const mockReader = createMockReader(streamData);
-			const imageCallback = vi.fn();
+			const frameCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
+			const stream = new MjpegStream(mockReader, { onFrame: frameCallback });
 			stream.start();
 
-			await waitForImageCallback(imageCallback);
+			await waitForFrameCallback(frameCallback);
 
-			expect(imageCallback).toHaveBeenCalled();
-			expect(imageCallback).toHaveBeenCalledWith(expect.objectContaining({
-				width: expect.any(Number),
-				height: expect.any(Number),
-			}));
+			expect(frameCallback).toHaveBeenCalled();
+			expect(frameCallback).toHaveBeenCalledWith('image/jpeg', expect.any(Uint8Array));
 		});
 
 		it('should handle frame split across multiple chunks', async () => {
 			const streamData = loadMjpegFile();
 			// use small chunks to force frame splitting (but not too small)
 			const mockReader = createMockReader(streamData, 512);
-			const imageCallback = vi.fn();
+			const frameCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
+			const stream = new MjpegStream(mockReader, { onFrame: frameCallback });
 			stream.start();
 
-			await waitForImageCallback(imageCallback);
+			await waitForFrameCallback(frameCallback);
 
-			expect(imageCallback).toHaveBeenCalled();
+			expect(frameCallback).toHaveBeenCalled();
 		}, 10000);
 
 		it('should stop processing after stop is called', async () => {
 			const streamData = loadMjpegFile();
 			const mockReader = createMockReader(streamData, 50);
-			const imageCallback = vi.fn();
+			const frameCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
+			const stream = new MjpegStream(mockReader, { onFrame: frameCallback });
 			stream.start();
 
 			// stop immediately
@@ -81,27 +78,27 @@ describe('MjpegStream', () => {
 			await waitForStreamEnd();
 
 			// should have been stopped (verified it completes)
-			expect(imageCallback.mock.calls.length).toBeGreaterThanOrEqual(0);
+			expect(frameCallback.mock.calls.length).toBeGreaterThanOrEqual(0);
 		});
 
 		it('should stop processing when reader returns done', async () => {
 			const streamData = loadMjpegFile();
 			const mockReader = createMockReader(streamData);
-			const imageCallback = vi.fn();
+			const frameCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
+			const stream = new MjpegStream(mockReader, { onFrame: frameCallback });
 			stream.start();
 
-			await waitForImageCallback(imageCallback);
+			await waitForFrameCallback(frameCallback);
 			await waitForStreamEnd();
 
-			expect(imageCallback).toHaveBeenCalled();
+			expect(frameCallback).toHaveBeenCalled();
 		});
 	});
 });
 
-// helper function to wait for image callback to be called
-function waitForImageCallback(callback: any, expectedCalls: number = 1): Promise<void> {
+// helper function to wait for frame callback to be called
+function waitForFrameCallback(callback: any, expectedCalls: number = 1): Promise<void> {
 	return new Promise((resolve) => {
 		const checkInterval = setInterval(() => {
 			if (callback.mock.calls.length >= expectedCalls) {

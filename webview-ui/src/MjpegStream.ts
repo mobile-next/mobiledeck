@@ -1,9 +1,5 @@
-export interface MjpegStreamCallback {
-	(imageBitmap: ImageBitmap): void;
-}
-
-export interface MjpegProgressCallback {
-	(message: string): void;
+export interface MjpegFrameCallback {
+	(mimeType: string, body: Uint8Array): void;
 }
 
 export interface MjpegErrorCallback {
@@ -11,8 +7,7 @@ export interface MjpegErrorCallback {
 }
 
 export interface MjpegStreamOptions {
-	onImage: MjpegStreamCallback;
-	onProgress?: MjpegProgressCallback;
+	onFrame: MjpegFrameCallback;
 	onError?: MjpegErrorCallback;
 }
 
@@ -109,14 +104,7 @@ export class MjpegStream {
 
 						if (bytesRead >= contentLength) {
 							// console.log('mobiledeck: frame complete, content-type:', contentType, 'bytes:', contentLength);
-							if (contentType === 'image/jpeg') {
-								this.displayMjpegImage(imageData);
-							} else {
-								// non-jpeg mime type, this will later be shown as connection progresses
-								const bodyText = new TextDecoder().decode(imageData);
-								console.log('non-jpeg frame received, content-type:', contentType, 'body:', bodyText);
-								this.handleNonJpegFrame(contentType, bodyText);
-							}
+							this.options.onFrame(contentType, imageData);
 
 							inImage = false;
 							imageData = new Uint8Array();
@@ -140,36 +128,4 @@ export class MjpegStream {
 		}
 	}
 
-	private async displayMjpegImage(imageData: Uint8Array): Promise<void> {
-		try {
-			// console.log('mobiledeck: displaying jpeg image, size:', imageData.length);
-			const blob = new Blob([imageData as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
-
-			// create imagebitmap for fast rendering
-			const imageBitmap = await createImageBitmap(blob);
-
-			// console.log('mobiledeck: calling onImageCallback with imagebitmap:', imageBitmap.width, 'x', imageBitmap.height);
-			this.options.onImage(imageBitmap);
-		} catch (error) {
-			const err = error instanceof Error ? error : new Error(String(error));
-			console.error('Error displaying MJPEG image:', err);
-			console.error('Failed to decode JPEG, size:', imageData.length, 'first bytes:', Array.from(imageData.slice(0, 10)));
-			this.options.onError?.(err);
-		}
-	}
-
-	private handleNonJpegFrame(contentType: string, bodyText: string): void {
-		if (contentType === 'application/json' && this.options.onProgress) {
-			try {
-				const jsonData = JSON.parse(bodyText);
-				if (jsonData.jsonrpc === '2.0' && jsonData.method === 'notification/message' && jsonData.params?.message) {
-					this.options.onProgress(jsonData.params.message);
-				}
-			} catch (error) {
-				const err = error instanceof Error ? error : new Error(String(error));
-				console.error('Error parsing JSON-RPC notification:', err);
-				this.options.onError?.(err);
-			}
-		}
-	}
 }

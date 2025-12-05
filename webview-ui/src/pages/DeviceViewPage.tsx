@@ -120,40 +120,66 @@ function DeviceViewPage() {
 			const stream = new MjpegStream(
 				reader,
 				{
-					onImage: (newImageBitmap) => {
-						// benchmark: log time to first frame
-						if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
-							const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
-							console.log(`mobiledeck benchmark: first frame received in ${timeToFirstFrame}ms`);
-							firstFrameReceivedRef.current = true;
+					onFrame: async (mimeType, body) => {
+						if (mimeType === 'image/jpeg') {
+							try {
+								// console.log('mobiledeck: displaying jpeg image, size:', body.length);
+								const blob = new Blob([body as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
 
-							// send telemetry event
-							vscode.postMessage({
-								command: 'telemetry',
-								event: 'mjpeg_stream_started',
-								properties: {
-									TimeToFirstFrame: timeToFirstFrame,
-									DevicePlatform: selectedDevice?.platform,
-									DeviceOSVersion: selectedDevice?.version,
-									DeviceType: selectedDevice?.type
+								// create imagebitmap for fast rendering
+								const newImageBitmap = await createImageBitmap(blob);
+
+								// benchmark: log time to first frame
+								if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
+									const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
+									console.log(`mobiledeck benchmark: first frame received in ${timeToFirstFrame}ms`);
+									firstFrameReceivedRef.current = true;
+
+									// send telemetry event
+									vscode.postMessage({
+										command: 'telemetry',
+										event: 'mjpeg_stream_started',
+										properties: {
+											TimeToFirstFrame: timeToFirstFrame,
+											DevicePlatform: selectedDevice?.platform,
+											DeviceOSVersion: selectedDevice?.version,
+											DeviceType: selectedDevice?.type
+										}
+									});
 								}
-							});
-						}
 
-						// stop "Connecting..." upon first jpeg frame
-						setIsConnecting(false);
+								// stop "Connecting..." upon first jpeg frame
+								setIsConnecting(false);
 
-						// close previous imagebitmap to free memory
-						setImageBitmap((prevImageBitmap) => {
-							if (prevImageBitmap) {
-								prevImageBitmap.close();
+								// close previous imagebitmap to free memory
+								setImageBitmap((prevImageBitmap) => {
+									if (prevImageBitmap) {
+										prevImageBitmap.close();
+									}
+
+									return newImageBitmap;
+								});
+							} catch (error) {
+								const err = error instanceof Error ? error : new Error(String(error));
+								console.error('Error displaying MJPEG image:', err);
+								console.error('Failed to decode JPEG, size:', body.length, 'first bytes:', Array.from(body.slice(0, 10)));
 							}
-
-							return newImageBitmap;
-						});
-					},
-					onProgress: (message) => {
-						setConnectProgressMessage(message);
+						} else if (mimeType === 'application/json') {
+							try {
+								const bodyText = new TextDecoder().decode(body);
+								const jsonData = JSON.parse(bodyText);
+								if (jsonData.jsonrpc === '2.0' && jsonData.method === 'notification/message' && jsonData.params?.message) {
+									setConnectProgressMessage(jsonData.params.message);
+								}
+							} catch (error) {
+								const err = error instanceof Error ? error : new Error(String(error));
+								console.error('Error parsing JSON-RPC notification:', err);
+							}
+						} else {
+							// non-jpeg mime type, this will later be shown as connection progresses
+							const bodyText = new TextDecoder().decode(body);
+							console.log('non-jpeg frame received, content-type:', mimeType, 'body:', bodyText);
+						}
 					},
 					onError: (error) => {
 						console.error('MJPEG stream error:', error);
