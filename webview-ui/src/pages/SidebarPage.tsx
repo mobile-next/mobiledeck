@@ -158,18 +158,13 @@ function SidebarPage({
 			command: 'onInitialized'
 		});
 
-		// show hello world toast
-		toast({
-			title: "Hello World",
-			description: "Welcome to MobileDeck!",
-		});
-
-		// example of error toast
+		/*
 		toast({
 			variant: "destructive",
 			title: "Error",
 			description: "Something went wrong!",
 		});
+		*/
 
 		return () => {
 			router.destroy();

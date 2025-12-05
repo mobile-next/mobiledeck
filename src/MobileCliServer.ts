@@ -3,18 +3,23 @@ import { ChildProcess, execFileSync, spawn } from 'node:child_process';
 import { Logger } from './utils/Logger';
 import { PortManager } from './managers/PortManager';
 import { Telemetry } from './utils/Telemetry';
+import { sleep } from './utils/TimerUtils';
+
+const DEFAULT_SERVER_PORT = 12000;
+const SERVER_STARTUP_TIMEOUT_MS = 10000; // 10 seconds
+const SERVER_HEALTH_CHECK_INTERVAL_MS = 200; // 200ms between checks
+
+interface ServerHealthResponse {
+	status: string;
+}
 
 export class MobileCliServer {
-
-	private static DEFAULT_SERVER_PORT = 12000;
-	private static SERVER_STARTUP_TIMEOUT_MS = 10000; // 10 seconds
-	private static SERVER_HEALTH_CHECK_INTERVAL_MS = 200; // 200ms between checks
 
 	private logger: Logger = new Logger('MobileCliServer');
 	private portManager: PortManager = new PortManager();
 
 	private mobilecliPath: string;
-	private serverPort: number = MobileCliServer.DEFAULT_SERVER_PORT;
+	private serverPort: number = DEFAULT_SERVER_PORT;
 	private mobilecliServerProcess: ChildProcess | null = null;
 
 	constructor(
@@ -37,8 +42,23 @@ export class MobileCliServer {
 		return mobilecliPath;
 	}
 
+	private async checkServerHealth(port: number): Promise<boolean> {
+		try {
+			const response = await fetch(`http://localhost:${port}/`, {
+				method: 'GET',
+				signal: AbortSignal.timeout(2000)
+			});
+
+			const data = await response.json() as ServerHealthResponse;
+			return data.status === 'ok';
+		} catch {
+			return false;
+		}
+	}
+
+
 	private async checkMobilecliServerRunning(): Promise<boolean> {
-		return await this.portManager.checkServerHealth(MobileCliServer.DEFAULT_SERVER_PORT);
+		return await this.checkServerHealth(DEFAULT_SERVER_PORT);
 	}
 
 	public async stopMobilecliServer(): Promise<void> {
@@ -50,19 +70,26 @@ export class MobileCliServer {
 
 	private async waitForServerReady(port: number, timeoutMs: number): Promise<void> {
 		const startTime = Date.now();
+		const expirationTime = startTime + timeoutMs;
 
-		while (Date.now() - startTime < timeoutMs) {
-			const isHealthy = await this.portManager.checkServerHealth(port);
+		while (Date.now() < expirationTime) {
+			const isHealthy = await this.checkServerHealth(port);
 			if (isHealthy) {
 				this.logger.log(`mobilecli server is ready on port ${port}`);
 				return;
 			}
 
 			// wait before next check
-			await new Promise(resolve => setTimeout(resolve, MobileCliServer.SERVER_HEALTH_CHECK_INTERVAL_MS));
+			await sleep(SERVER_HEALTH_CHECK_INTERVAL_MS);
 		}
 
 		throw new Error(`mobilecli server failed to become ready within ${timeoutMs}ms`);
+	}
+
+	private async findAvailablePort() {
+		const minPort = DEFAULT_SERVER_PORT + 1;
+		const maxPort = DEFAULT_SERVER_PORT + 100;
+		return await this.portManager.findAvailablePort(minPort, maxPort);
 	}
 
 	public async launchMobilecliServer(): Promise<void> {
@@ -78,19 +105,20 @@ export class MobileCliServer {
 		}
 
 		// look up an available port that is not DEFAULT_SERVER_PORT
-		const minPort = MobileCliServer.DEFAULT_SERVER_PORT + 1;
-		const maxPort = MobileCliServer.DEFAULT_SERVER_PORT + 100;
-		this.serverPort = await this.portManager.findAvailablePort(minPort, maxPort);
+		this.serverPort = await this.findAvailablePort();
 		this.logger.log(`Launching mobilecli server on port ${this.serverPort}...`);
 
-		this.mobilecliServerProcess = spawn(this.mobilecliPath, ['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`], {
-			detached: false,
-			stdio: 'pipe',
-			env: {
-				...process.env,
-				MOBILECLI_WDA_PATH: vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'agents').fsPath,
-			},
-		});
+		this.mobilecliServerProcess = spawn(
+			this.mobilecliPath,
+			['-v', 'server', 'start', '--cors', '--listen', `localhost:${this.serverPort}`],
+			{
+				detached: false,
+				stdio: 'pipe',
+				env: {
+					...process.env,
+					MOBILECLI_WDA_PATH: vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'agents').fsPath,
+				},
+			});
 
 		this.mobilecliServerProcess.stdout?.on('data', (data: Buffer) => {
 			this.logger.log(`mobilecli server stdout: ${data.toString().trimEnd()}`);
@@ -123,7 +151,7 @@ export class MobileCliServer {
 		});
 
 		// wait for server to be ready before returning
-		await this.waitForServerReady(this.serverPort, MobileCliServer.SERVER_STARTUP_TIMEOUT_MS);
+		await this.waitForServerReady(this.serverPort, SERVER_STARTUP_TIMEOUT_MS);
 	}
 
 	public getJsonRpcServerPort(): number {
