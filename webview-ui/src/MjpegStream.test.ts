@@ -40,7 +40,7 @@ describe('MjpegStream', () => {
 			const mockReader = createMockReader(streamData);
 			const imageCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, imageCallback);
+			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
 			stream.start();
 
 			await waitForImageCallback(imageCallback);
@@ -58,7 +58,7 @@ describe('MjpegStream', () => {
 			const mockReader = createMockReader(streamData, 512);
 			const imageCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, imageCallback);
+			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
 			stream.start();
 
 			await waitForImageCallback(imageCallback);
@@ -71,7 +71,7 @@ describe('MjpegStream', () => {
 			const mockReader = createMockReader(streamData, 50);
 			const imageCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, imageCallback);
+			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
 			stream.start();
 
 			// stop immediately
@@ -89,7 +89,7 @@ describe('MjpegStream', () => {
 			const mockReader = createMockReader(streamData);
 			const imageCallback = vi.fn();
 
-			const stream = new MjpegStream(mockReader, imageCallback);
+			const stream = new MjpegStream(mockReader, { onImage: imageCallback });
 			stream.start();
 
 			await waitForImageCallback(imageCallback);

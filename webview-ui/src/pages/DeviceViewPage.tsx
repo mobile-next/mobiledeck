@@ -119,40 +119,46 @@ function DeviceViewPage() {
 
 			const stream = new MjpegStream(
 				reader,
-				(newImageBitmap) => {
-					// benchmark: log time to first frame
-					if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
-						const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
-						console.log(`mobiledeck benchmark: first frame received in ${timeToFirstFrame}ms`);
-						firstFrameReceivedRef.current = true;
+				{
+					onImage: (newImageBitmap) => {
+						// benchmark: log time to first frame
+						if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
+							const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
+							console.log(`mobiledeck benchmark: first frame received in ${timeToFirstFrame}ms`);
+							firstFrameReceivedRef.current = true;
 
-						// send telemetry event
-						vscode.postMessage({
-							command: 'telemetry',
-							event: 'mjpeg_stream_started',
-							properties: {
-								TimeToFirstFrame: timeToFirstFrame,
-								DevicePlatform: selectedDevice?.platform,
-								DeviceOSVersion: selectedDevice?.version,
-								DeviceType: selectedDevice?.type
-							}
-						});
-					}
-
-					// stop "Connecting..." upon first jpeg frame
-					setIsConnecting(false);
-
-					// close previous imagebitmap to free memory
-					setImageBitmap((prevImageBitmap) => {
-						if (prevImageBitmap) {
-							prevImageBitmap.close();
+							// send telemetry event
+							vscode.postMessage({
+								command: 'telemetry',
+								event: 'mjpeg_stream_started',
+								properties: {
+									TimeToFirstFrame: timeToFirstFrame,
+									DevicePlatform: selectedDevice?.platform,
+									DeviceOSVersion: selectedDevice?.version,
+									DeviceType: selectedDevice?.type
+								}
+							});
 						}
 
-						return newImageBitmap;
-					});
-				},
-				(message) => {
-					setConnectProgressMessage(message);
+						// stop "Connecting..." upon first jpeg frame
+						setIsConnecting(false);
+
+						// close previous imagebitmap to free memory
+						setImageBitmap((prevImageBitmap) => {
+							if (prevImageBitmap) {
+								prevImageBitmap.close();
+							}
+
+							return newImageBitmap;
+						});
+					},
+					onProgress: (message) => {
+						setConnectProgressMessage(message);
+					},
+					onError: (error) => {
+						console.error('MJPEG stream error:', error);
+						setIsConnecting(false);
+					}
 				}
 			);
 
