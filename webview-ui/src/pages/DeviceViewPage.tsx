@@ -2,7 +2,7 @@ import vscode from '../vscode';
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../Header';
 import { MjpegStream } from '../MjpegStream';
-import { DeviceStream, GesturePoint } from '../DeviceStream';
+import { DeviceStream, DeviceStreamHandle, GesturePoint } from '../DeviceStream';
 import { StatusBar } from '../components/StatusBar';
 import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
@@ -45,6 +45,7 @@ function DeviceViewPage() {
 	const imageBitmapRef = useRef<ImageBitmap | null>(null);
 	const streamStartTimeRef = useRef<number | null>(null);
 	const firstFrameReceivedRef = useRef<boolean>(false);
+	const deviceStreamRef = useRef<DeviceStreamHandle>(null);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -59,6 +60,29 @@ function DeviceViewPage() {
 	}, [serverPort]);
 
 	const getMobilecliClient = () => mobilecliClientRef.current;
+
+	// render imageBitmap to canvas
+	useEffect(() => {
+		if (imageBitmap && deviceStreamRef.current) {
+			const canvas = deviceStreamRef.current.getCanvas();
+			if (canvas) {
+				const ctx = canvas.getContext('2d');
+				if (ctx) {
+					// set canvas size to match screen size
+					canvas.width = screenSize.width;
+					canvas.height = screenSize.height;
+
+					// validate bitmap is still open before drawing (prevent race condition)
+					if (imageBitmap.width > 0 && imageBitmap.height > 0) {
+						// draw the imagebitmap
+						ctx.drawImage(imageBitmap, 0, 0, screenSize.width, screenSize.height);
+					}
+
+					// note: bitmap will be closed by parent when new frame arrives
+				}
+			}
+		}
+	}, [imageBitmap, screenSize]);
 
 	const startMjpegStream = async (deviceId: string) => {
 		try {
@@ -536,11 +560,11 @@ function DeviceViewPage() {
 
 			{/* Device stream area */}
 			<DeviceStream
+				ref={deviceStreamRef}
 				isConnecting={isConnecting}
 				isBooting={isBooting}
 				connectProgressMessage={connectProgressMessage || undefined}
 				selectedDevice={selectedDevice}
-				imageBitmap={imageBitmap}
 				screenSize={screenSize}
 				skinOverlayUri={mediaSkinsUri + "/" + deviceSkin.imageFilename}
 				deviceSkin={deviceSkin}

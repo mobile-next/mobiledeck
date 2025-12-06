@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { DeviceDescriptor, DevicePlatform, ScreenSize } from "@shared/models";
 import { DeviceSkin as DeviceSkinType } from "./DeviceSkins";
 import { DeviceSkin } from "./DeviceSkin";
@@ -13,13 +13,16 @@ export interface GesturePoint {
 	duration: number;
 }
 
+export interface DeviceStreamHandle {
+	getCanvas: () => HTMLCanvasElement | null;
+}
+
 export interface DeviceStreamProps {
 	isConnecting: boolean;
 	isBooting?: boolean;
 	connectProgressMessage?: string;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
-	imageBitmap: ImageBitmap | null;
 	skinOverlayUri: string;
 	deviceSkin: DeviceSkinType;
 	onTap: (x: number, y: number) => void;
@@ -57,13 +60,12 @@ const emptyGestureState: GestureState = {
 	path: []
 };
 
-export const DeviceStream: React.FC<DeviceStreamProps> = ({
+export const DeviceStream = forwardRef<DeviceStreamHandle, DeviceStreamProps>(({
 	isConnecting,
 	isBooting = false,
 	connectProgressMessage,
 	selectedDevice,
 	screenSize,
-	imageBitmap,
 	skinOverlayUri,
 	deviceSkin,
 	onTap,
@@ -77,12 +79,17 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onIncreaseVolume,
 	onDecreaseVolume,
 	onTogglePower,
-}) => {
+}, ref) => {
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
 	const [gestureState, setGestureState] = useState<GestureState>(emptyGestureState);
 	const [skinRatio, setSkinRatio] = useState<number>(1.0);
 	const deviceSkinRef = useRef<HTMLImageElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+
+	// expose canvas to parent
+	useImperativeHandle(ref, () => ({
+		getCanvas: () => canvasRef.current,
+	}));
 
 	const calculateSkinRatio = () => {
 		if (deviceSkinRef.current) {
@@ -101,26 +108,6 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 			window.removeEventListener('resize', calculateSkinRatio);
 		};
 	}, []);
-
-	useEffect(() => {
-		if (imageBitmap && canvasRef.current) {
-			const canvas = canvasRef.current;
-			const ctx = canvas.getContext('2d');
-			if (ctx) {
-				// set canvas size to match screen size
-				canvas.width = screenSize.width;
-				canvas.height = screenSize.height;
-
-				// validate bitmap is still open before drawing (prevent race condition)
-				if (imageBitmap.width > 0 && imageBitmap.height > 0) {
-					// draw the imagebitmap
-					ctx.drawImage(imageBitmap, 0, 0, screenSize.width, screenSize.height);
-				}
-
-				// note: bitmap will be closed by parent when new frame arrives
-			}
-		}
-	}, [imageBitmap, screenSize]);
 
 	const convertToScreenCoords = (clientX: number, clientY: number, element: HTMLCanvasElement) => {
 		const rect = element.getBoundingClientRect();
@@ -215,42 +202,6 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 		});
 	};
 
-	const DeviceCanvas: React.FC = () => {
-
-		console.log("painting device canvas");
-		return (
-			<>
-				{/* device stream */}
-				<canvas
-					ref={canvasRef}
-					className="cursor-crosshair w-full h-full"
-					style={{
-						objectFit: 'cover',
-						maxHeight: 'calc(100vh - 100px)',
-						maxWidth: 'calc(100vw - 2em)',
-						borderRadius: `${deviceSkin.borderRadius * skinRatio}px`
-					}}
-					onMouseDown={handleMouseDown}
-					onMouseMove={handleMouseMove}
-					onMouseUp={handleMouseUp}
-					onMouseLeave={handleMouseUp}
-				/>
-
-				{/* click animations relative to stream */}
-				{clicks.map(click => (
-					<div
-						key={click.id}
-						className="click-animation"
-						style={{ left: `${click.x}px`, top: `${click.y}px` }}
-					/>
-				))}
-
-				{/* gesture path relative to stream */}
-				{gestureState.isGesturing && <Polyline points={gestureState.path} />}
-			</>
-		);
-	};
-
 	return (
 		<div className="relative flex-grow flex items-center justify-center overflow-visible focus:outline-none" style={{ backgroundColor: "#202224", paddingTop: "24px", paddingBottom: "24px" }} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
 			{/* Simulated device stream */}
@@ -277,7 +228,35 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 										</div>
 									</>
 								) : (
-									<DeviceCanvas />
+									<>
+										{/* device stream */}
+										<canvas
+											ref={canvasRef}
+											className="cursor-crosshair w-full h-full"
+											style={{
+												objectFit: 'cover',
+												maxHeight: 'calc(100vh - 100px)',
+												maxWidth: 'calc(100vw - 2em)',
+												borderRadius: `${deviceSkin.borderRadius * skinRatio}px`
+											}}
+											onMouseDown={handleMouseDown}
+											onMouseMove={handleMouseMove}
+											onMouseUp={handleMouseUp}
+											onMouseLeave={handleMouseUp}
+										/>
+
+										{/* click animations relative to stream */}
+										{clicks.map(click => (
+											<div
+												key={click.id}
+												className="click-animation"
+												style={{ left: `${click.x}px`, top: `${click.y}px` }}
+											/>
+										))}
+
+										{/* gesture path relative to stream */}
+										{gestureState.isGesturing && <Polyline points={gestureState.path} />}
+									</>
 								)}
 							</DeviceSkin>
 
@@ -300,4 +279,4 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 			</div>
 		</div>
 	);
-};
+});
