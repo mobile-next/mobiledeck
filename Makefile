@@ -1,9 +1,31 @@
-.PHONY: all build npm_install npm_update install download-agents
+.PHONY: default all build build-current npm_install npm_update install download-agents
 
 WEBDRIVER_VERSION = 10.2.5
 WEBDRIVER_RELEASE_URL = https://github.com/appium/WebDriverAgent/releases/download/v$(WEBDRIVER_VERSION)/
 
+default: build-current
+
 all: build
+
+build-current:
+	@OS=$$(uname -s); \
+	ARCH=$$(uname -m); \
+	if [ "$$OS" = "Darwin" ]; then \
+		if [ "$$ARCH" = "arm64" ]; then \
+			$(MAKE) build-darwin-arm64; \
+		else \
+			$(MAKE) build-darwin-x64; \
+		fi; \
+	elif [ "$$OS" = "Linux" ]; then \
+		if [ "$$ARCH" = "aarch64" ] || [ "$$ARCH" = "arm64" ]; then \
+			$(MAKE) build-linux-arm64; \
+		else \
+			$(MAKE) build-linux-x64; \
+		fi; \
+	else \
+		echo "Unsupported OS: $$OS"; \
+		exit 1; \
+	fi
 
 build-darwin-arm64: download-agents
 	make -C webview-ui

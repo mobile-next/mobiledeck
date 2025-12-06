@@ -157,7 +157,7 @@ function DeviceViewPage() {
 			const onError = (error: Error) => {
 				console.error('mobiledeck: error from mjpeg stream:', error);
 				setIsConnecting(false);
-			}
+			};
 
 			const stream = new MjpegStream(
 				reader,
@@ -303,7 +303,7 @@ function DeviceViewPage() {
 			type: "pointerDown",
 			button: 0
 		};
-	}
+	};
 
 	const pointerMove = (x: number, y: number, duration: number) => {
 		return {
