@@ -2,12 +2,14 @@ import vscode from '../vscode';
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../Header';
 import { MjpegStream } from '../MjpegStream';
-import { DeviceStream, GesturePoint } from '../DeviceStream';
+import { DeviceStream, DeviceStreamHandle, GesturePoint } from '../DeviceStream';
+import { StatusBar } from '../components/StatusBar';
 import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
 import { DeviceDescriptor, ScreenSize, ButtonType } from '@shared/models';
 import { MessageRouter } from '../MessageRouter';
+import { telemetry } from '../Telemetry';
 
 const DEVICE_BOOT_UPDATE_INTERVAL_MS = 1000;
 
@@ -22,27 +24,6 @@ interface DeviceListUpdatedMessage {
 	command: 'deviceListUpdated';
 	devices: DeviceDescriptor[];
 }
-
-interface StatusBarProps {
-	isRefreshing: boolean;
-	selectedDevice: DeviceDescriptor | null;
-	fpsCount: number;
-}
-
-const StatusBar: React.FC<StatusBarProps> = ({
-	isRefreshing,
-	selectedDevice,
-	fpsCount,
-}) => {
-	return (
-		<div className="px-2 py-1 text-[10px] text-gray-500 border-t border-[#333333] flex justify-between">
-			{/* left */}
-			{/* <span>USB: Connected</span> */}
-			{/* right */}
-			{/* <span>FPS: {isRefreshing ? "..." : fpsCount}</span> */}
-		</div>
-	);
-};
 
 function DeviceViewPage() {
 	const [selectedDevice, setSelectedDevice] = useState<DeviceDescriptor | null>(null);
@@ -64,6 +45,7 @@ function DeviceViewPage() {
 	const imageBitmapRef = useRef<ImageBitmap | null>(null);
 	const streamStartTimeRef = useRef<number | null>(null);
 	const firstFrameReceivedRef = useRef<boolean>(false);
+	const deviceStreamRef = useRef<DeviceStreamHandle>(null);
 
 	/// keys waiting to be sent, to prevent out-of-order and cancellation of synthetic events
 	const pendingKeys = useRef("");
@@ -79,6 +61,29 @@ function DeviceViewPage() {
 
 	const getMobilecliClient = () => mobilecliClientRef.current;
 
+	// render imageBitmap to canvas
+	useEffect(() => {
+		if (imageBitmap && deviceStreamRef.current) {
+			const canvas = deviceStreamRef.current.getCanvas();
+			if (canvas) {
+				const ctx = canvas.getContext('2d');
+				if (ctx) {
+					// set canvas size to match screen size
+					canvas.width = screenSize.width;
+					canvas.height = screenSize.height;
+
+					// validate bitmap is still open before drawing (prevent race condition)
+					if (imageBitmap.width > 0 && imageBitmap.height > 0) {
+						// draw the imagebitmap
+						ctx.drawImage(imageBitmap, 0, 0, screenSize.width, screenSize.height);
+					}
+
+					// note: bitmap will be closed by parent when new frame arrives
+				}
+			}
+		}
+	}, [imageBitmap, screenSize]);
+
 	const startMjpegStream = async (deviceId: string) => {
 		try {
 			setIsConnecting(true);
@@ -88,26 +93,7 @@ function DeviceViewPage() {
 			firstFrameReceivedRef.current = false;
 			console.log('mobiledeck benchmark: mjpeg stream starting');
 
-			const response = await fetch(`http://localhost:${serverPort}/rpc`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					method: 'screencapture',
-					id: '1',
-					jsonrpc: '2.0',
-					params: {
-						format: 'mjpeg',
-						deviceId: deviceId
-					}
-				})
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
+			const response = await getMobilecliClient().screenCaptureStart(deviceId);
 			if (!response.body) {
 				throw new Error('ReadableStream not supported');
 			}
@@ -117,27 +103,32 @@ function DeviceViewPage() {
 			setStreamController(controller);
 			setStreamReader(reader);
 
-			const stream = new MjpegStream(
-				reader,
-				(newImageBitmap) => {
-					// benchmark: log time to first frame
-					if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
-						const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
-						console.log(`mobiledeck benchmark: first frame received in ${timeToFirstFrame}ms`);
-						firstFrameReceivedRef.current = true;
+			const benchmarkTimeToFirstFrame = () => {
+				if (!firstFrameReceivedRef.current && streamStartTimeRef.current !== null) {
+					const timeToFirstFrame = +new Date() - streamStartTimeRef.current;
+					console.log(`mobiledeck: first frame received in ${timeToFirstFrame}ms`);
+					firstFrameReceivedRef.current = true;
 
-						// send telemetry event
-						vscode.postMessage({
-							command: 'telemetry',
-							event: 'mjpeg_stream_started',
-							properties: {
-								TimeToFirstFrame: timeToFirstFrame,
-								DevicePlatform: selectedDevice?.platform,
-								DeviceOSVersion: selectedDevice?.version,
-								DeviceType: selectedDevice?.type
-							}
-						});
-					}
+					// send telemetry event
+					telemetry('mjpeg_stream_started', {
+						TimeToFirstFrame: timeToFirstFrame,
+						DevicePlatform: selectedDevice?.platform,
+						DeviceOSVersion: selectedDevice?.version,
+						DeviceType: selectedDevice?.type
+					});
+				}
+			};
+
+			const onJpegFrame = async (body: Uint8Array) => {
+				try {
+					// benchmark: log time to first frame
+					benchmarkTimeToFirstFrame();
+
+					// console.log('mobiledeck: displaying jpeg image, size:', body.length);
+					const blob = new Blob([body as Uint8Array<ArrayBuffer>], { type: 'image/jpeg' });
+
+					// create imagebitmap for fast rendering
+					const newImageBitmap = await createImageBitmap(blob);
 
 					// stop "Connecting..." upon first jpeg frame
 					setIsConnecting(false);
@@ -150,9 +141,54 @@ function DeviceViewPage() {
 
 						return newImageBitmap;
 					});
-				},
-				(message) => {
-					setConnectProgressMessage(message);
+				} catch (error) {
+					const err = error instanceof Error ? error : new Error(String(error));
+					console.error('Error displaying MJPEG image:', err);
+					console.error('Failed to decode JPEG, size:', body.length, 'first bytes:', Array.from(body.slice(0, 10)));
+				}
+			};
+
+			const onJsonFrame = async (body: Uint8Array) => {
+				try {
+					const bodyText = new TextDecoder().decode(body);
+					const jsonData = JSON.parse(bodyText);
+					if (jsonData.jsonrpc === '2.0' && jsonData.method === 'notification/message' && jsonData.params?.message) {
+						setConnectProgressMessage(jsonData.params.message);
+					}
+				} catch (error) {
+					const err = error instanceof Error ? error : new Error(String(error));
+					console.error('Error parsing JSON-RPC notification:', err);
+				}
+			};
+
+			const onFrame = async (mimeType: string, body: Uint8Array) => {
+				switch (mimeType) {
+					case 'image/jpeg':
+						await onJpegFrame(body);
+						break;
+
+					case 'application/json':
+						await onJsonFrame(body);
+						break;
+
+					default: {
+						const bodyText = new TextDecoder().decode(body);
+						console.log('non-jpeg frame received, content-type:', mimeType, 'body:', bodyText);
+						break;
+					}
+				}
+			};
+
+			const onError = (error: Error) => {
+				console.error('mobiledeck: error from mjpeg stream:', error);
+				setIsConnecting(false);
+			};
+
+			const stream = new MjpegStream(
+				reader,
+				{
+					onFrame,
+					onError,
 				}
 			);
 
@@ -177,7 +213,7 @@ function DeviceViewPage() {
 		}
 
 		if (streamReader) {
-			streamReader.cancel();
+			// reader is already cancelled by mjpegStream.stop()
 			setStreamReader(null);
 		}
 
@@ -196,19 +232,6 @@ function DeviceViewPage() {
 		if (result && result.device) {
 			// TODO: get device info should not call a setter
 			setScreenSize(result.device.screenSize);
-		}
-	};
-
-	const fetchDevices = async () => {
-		try {
-			setIsRefreshing(true);
-			const result = await getMobilecliClient().listDevices(false);
-			console.log('mobiledeck: devices list', result);
-			setAvailableDevices(result.devices);
-		} catch (error) {
-			console.error('mobiledeck: error fetching devices:', error);
-		} finally {
-			setIsRefreshing(false);
 		}
 	};
 
@@ -300,45 +323,52 @@ function DeviceViewPage() {
 		}
 	};
 
+	const pointerDown = () => {
+		return {
+			type: "pointerDown",
+			button: 0
+		};
+	};
+
+	const pointerMove = (x: number, y: number, duration: number) => {
+		return {
+			type: "pointerMove",
+			duration: duration,
+			x: x,
+			y: y
+		};
+	};
+
+	const pointerUp = () => {
+		return {
+			type: "pointerUp",
+			button: 0
+		};
+	};
+
 	const handleGesture = async (points: Array<GesturePoint>) => {
 		// convert points to new actions format
 		const actions: Array<{ type: string, duration?: number, x?: number, y?: number, button?: number }> = [];
 
 		if (points.length > 0) {
 			// first point - move to start position
-			actions.push({
-				type: "pointerMove",
-				duration: 0,
-				x: points[0].x,
-				y: points[0].y
-			});
+			actions.push(pointerMove(points[0].x, points[0].y, 0));
 
 			// pointer down
-			actions.push({
-				type: "pointerDown",
-				button: 0
-			});
+			actions.push(pointerDown());
 
 			// move through all intermediate points
 			for (let i = 1; i < points.length; i++) {
 				const duration = i < points.length - 1 ? points[i].duration - points[i - 1].duration : 100;
-				actions.push({
-					type: "pointerMove",
-					duration: Math.max(duration, 0),
-					x: points[i].x,
-					y: points[i].y
-				});
+				actions.push(pointerMove(points[i].x, points[i].y, Math.max(duration, 0)));
 			}
 
 			// pointer up
-			actions.push({
-				type: "pointerUp",
-				button: 0
-			});
-		}
+			actions.push(pointerUp());
 
-		if (selectedDevice) {
-			await getMobilecliClient().gesture(selectedDevice.id, actions);
+			if (selectedDevice) {
+				await getMobilecliClient().gesture(selectedDevice.id, actions);
+			}
 		}
 	};
 
@@ -526,17 +556,16 @@ function DeviceViewPage() {
 				onTakeScreenshot={onTakeScreenshot}
 				onAppSwitch={() => onAppSwitch()}
 				onPower={() => onPower()}
-				// onRefreshDevices={fetchDevices}
 				onSelectDevice={onDeviceSelected}
 			/>
 
 			{/* Device stream area */}
 			<DeviceStream
+				ref={deviceStreamRef}
 				isConnecting={isConnecting}
 				isBooting={isBooting}
 				connectProgressMessage={connectProgressMessage || undefined}
 				selectedDevice={selectedDevice}
-				imageBitmap={imageBitmap}
 				screenSize={screenSize}
 				skinOverlayUri={mediaSkinsUri + "/" + deviceSkin.imageFilename}
 				deviceSkin={deviceSkin}

@@ -52,4 +52,29 @@ export class MobilecliClient {
 	async takeScreenshot(deviceId: string): Promise<ScreenshotResponse> {
 		return this.jsonRpcClient.sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId });
 	}
+
+	// screencapture
+	async screenCaptureStart(deviceId: string): Promise<Response> {
+		const response = await fetch(this.jsonRpcClient.url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				method: 'screencapture',
+				id: '1',
+				jsonrpc: '2.0',
+				params: {
+					format: 'mjpeg',
+					deviceId: deviceId
+				}
+			})
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		return response;
+	}
 }

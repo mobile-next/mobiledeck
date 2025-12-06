@@ -1,8 +1,5 @@
 import { Logger } from '../utils/Logger';
-
-interface ServerHealthResponse {
-	status: string;
-}
+import * as net from 'node:net';
 
 export class PortManager {
 	private logger: Logger = new Logger('PortManager');
@@ -20,20 +17,27 @@ export class PortManager {
 	}
 
 	public async isPortInUse(port: number): Promise<boolean> {
-		try {
-			const response = await fetch(`http://localhost:${port}/`, {
-				method: 'GET',
-				signal: AbortSignal.timeout(2000)
+		return new Promise((resolve) => {
+			const socket = new net.Socket();
+
+			socket.setTimeout(1000);
+
+			socket.on('connect', () => {
+				socket.destroy();
+				resolve(true);
 			});
 
-			const data = await response.json() as ServerHealthResponse;
-			return data.status === 'ok';
-		} catch {
-			return false;
-		}
-	}
+			socket.on('timeout', () => {
+				socket.destroy();
+				resolve(false);
+			});
 
-	public async checkServerHealth(port: number): Promise<boolean> {
-		return await this.isPortInUse(port);
+			socket.on('error', () => {
+				socket.destroy();
+				resolve(false);
+			});
+
+			socket.connect(port, 'localhost');
+		});
 	}
 }

@@ -22,9 +22,87 @@ export interface HeaderProps {
 	onTakeScreenshot: () => void;
 	onAppSwitch: () => void;
 	onPower: () => void;
-	// onRefreshDevices: () => void;
 	onSelectDevice: (device: DeviceDescriptor) => void;
 }
+
+const DeviceSelectorDropdown: React.FC<{
+	selectedDevice: DeviceDescriptor | null;
+	onSelectDevice: (device: DeviceDescriptor) => void;
+	availableDevices: DeviceDescriptor[];
+}> = ({ selectedDevice, availableDevices, onSelectDevice }) => {
+
+	// filter to show only online devices
+	const onlineDevices = availableDevices.filter(device => device.state === 'online');
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					className="h-8 px-2 hover:bg-[#2a2a2a] flex items-center gap-1"
+				>
+					{selectedDevice ? (
+						<>
+							{selectedDevice.platform === 'ios' ? (
+								<IosIcon className="h-4 w-4" />
+							) : (
+								<AndroidIcon className="h-4 w-4" />
+							)}
+							<span className="text-xs">{selectedDevice.name}</span>
+						</>
+					) : (
+						<>
+							<Smartphone className="h-3.5 w-3.5" />
+							<span className="text-xs">Select Device</span>
+						</>
+					)}
+					<ChevronDown className="h-3 w-3" />
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[250px]">
+				<DropdownMenuLabel className="text-xs text-gray-400">
+					Available Devices
+				</DropdownMenuLabel>
+				<DropdownMenuSeparator className="bg-[#3c3c3c]" />
+				{onlineDevices.length === 0 ? (
+					<DropdownMenuItem disabled className="text-xs">
+						No devices available
+					</DropdownMenuItem>
+				) : (
+					onlineDevices.map((device) => (
+						<DropdownMenuItem
+							key={device.id}
+							onClick={() => onSelectDevice(device)}
+							className="text-xs hover:bg-[#2a2a2a] cursor-pointer flex items-center gap-2"
+						>
+							{device.platform === 'ios' ? (
+								<IosIcon className="h-4 w-4" />
+							) : (
+								<AndroidIcon className="h-4 w-4" />
+							)}
+							<div className="flex flex-col">
+								<span>{device.name}</span>
+								{device.version && (
+									<span className="text-[10px] text-gray-500">
+										{device.type} - v{device.version}
+									</span>
+								)}
+							</div>
+						</DropdownMenuItem>
+					))
+				)}
+				{/* <DropdownMenuSeparator className="bg-[#3c3c3c]" />
+						<DropdownMenuItem
+							onClick={onRefreshDevices}
+							className="text-xs hover:bg-[#2a2a2a] cursor-pointer flex items-center gap-2"
+						>
+							<RefreshCw className="h-3.5 w-3.5" />
+							<span>Refresh Devices</span>
+						</DropdownMenuItem> */}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+};
 
 export const Header: React.FC<HeaderProps> = ({
 	selectedDevice,
@@ -37,79 +115,14 @@ export const Header: React.FC<HeaderProps> = ({
 	// onRefreshDevices,
 	onSelectDevice,
 }) => {
-	// filter to show only online devices
-	const onlineDevices = availableDevices.filter(device => device.state === 'online');
-
 	return (
 		<div className="flex items-center justify-between px-2 py-2 border-[#333333]">
 			<div className="flex items-center gap-2">
-				{/* Device selector dropdown */}
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							variant="ghost"
-							className="h-8 px-2 hover:bg-[#2a2a2a] flex items-center gap-1"
-						>
-							{selectedDevice ? (
-								<>
-									{selectedDevice.platform === 'ios' ? (
-										<IosIcon className="h-4 w-4" />
-									) : (
-										<AndroidIcon className="h-4 w-4" />
-									)}
-									<span className="text-xs">{selectedDevice.name}</span>
-								</>
-							) : (
-								<>
-									<Smartphone className="h-3.5 w-3.5" />
-									<span className="text-xs">Select Device</span>
-								</>
-							)}
-							<ChevronDown className="h-3 w-3" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc] w-[250px]">
-						<DropdownMenuLabel className="text-xs text-gray-400">
-							Available Devices
-						</DropdownMenuLabel>
-						<DropdownMenuSeparator className="bg-[#3c3c3c]" />
-						{onlineDevices.length === 0 ? (
-							<DropdownMenuItem disabled className="text-xs">
-								No devices available
-							</DropdownMenuItem>
-						) : (
-							onlineDevices.map((device) => (
-								<DropdownMenuItem
-									key={device.id}
-									onClick={() => onSelectDevice(device)}
-									className="text-xs hover:bg-[#2a2a2a] cursor-pointer flex items-center gap-2"
-								>
-									{device.platform === 'ios' ? (
-										<IosIcon className="h-4 w-4" />
-									) : (
-										<AndroidIcon className="h-4 w-4" />
-									)}
-									<div className="flex flex-col">
-										<span>{device.name}</span>
-										{device.version && (
-											<span className="text-[10px] text-gray-500">
-												{device.type} - v{device.version}
-											</span>
-										)}
-									</div>
-								</DropdownMenuItem>
-							))
-						)}
-						{/* <DropdownMenuSeparator className="bg-[#3c3c3c]" />
-						<DropdownMenuItem
-							onClick={onRefreshDevices}
-							className="text-xs hover:bg-[#2a2a2a] cursor-pointer flex items-center gap-2"
-						>
-							<RefreshCw className="h-3.5 w-3.5" />
-							<span>Refresh Devices</span>
-						</DropdownMenuItem> */}
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<DeviceSelectorDropdown
+					selectedDevice={selectedDevice}
+					availableDevices={availableDevices}
+					onSelectDevice={onSelectDevice}
+				/>
 
 				{/* Delimiter after device selector */}
 				<div className="h-4 w-px bg-[#333333]" />
