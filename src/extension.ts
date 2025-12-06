@@ -143,8 +143,8 @@ class MobiledeckExtension {
 			this.updateAllPanelsWithNewServer();
 
 			// update sidebar with new server
-			if (this.sidebarProvider) {
-				this.sidebarProvider.updateServerPort(this.cliServer!.getJsonRpcServerPort());
+			if (this.sidebarProvider && this.cliServer) {
+				this.sidebarProvider.updateServerPort(this.cliServer.getJsonRpcServerPort());
 			}
 		}
 	}
