@@ -28,7 +28,14 @@ interface UpdateConnectedDevicesMessage {
 	connectedDeviceIds?: string[];
 }
 
-type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage;
+interface ShowToastMessage {
+	command: 'showToast';
+	variant: 'default' | 'destructive';
+	title: string;
+	message: string;
+}
+
+type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage;
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
@@ -145,6 +152,14 @@ function SidebarPage({
 		});
 	};
 
+	const handleShowToast = (message: ShowToastMessage) => {
+		toast({
+			variant: message.variant,
+			title: message.title,
+			description: message.message,
+		});
+	};
+
 	useEffect(() => {
 		const router = new MessageRouter(window);
 
@@ -152,6 +167,7 @@ function SidebarPage({
 		router.register('configure', handleConfigure);
 		router.register('refreshDevices', handleRefreshDevices);
 		router.register('updateConnectedDevices', handleUpdateConnectedDevices);
+		router.register('showToast', handleShowToast);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({

@@ -348,4 +348,16 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			this.logger.log('failed to update sign out button title: ' + (error instanceof Error ? error.message : String(error)));
 		}
 	}
+
+	// show server restart toast
+	public showServerRestartToast(): void {
+		if (this.webviewView) {
+			this.webviewView.webview.postMessage({
+				command: 'showToast',
+				title: "Notice",
+				variant: "destructive",
+				message: 'Server stopped responding, attempting restart...'
+			});
+		}
+	}
 }

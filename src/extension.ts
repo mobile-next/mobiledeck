@@ -135,6 +135,11 @@ class MobiledeckExtension {
 	private async onCliServerExit(exitCode: number) {
 		this.logger.log(`mobilecli server exited with code ${exitCode}, restarting...`);
 
+		// show toast notification
+		if (this.sidebarProvider) {
+			this.sidebarProvider.showServerRestartToast();
+		}
+
 		// restart the server
 		if (this.context) {
 			await this.startCliServer(this.context);
