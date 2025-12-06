@@ -171,10 +171,11 @@ function DeviceViewPage() {
 						await onJsonFrame(body);
 						break;
 
-					default:
+					default: {
 						const bodyText = new TextDecoder().decode(body);
 						console.log('non-jpeg frame received, content-type:', mimeType, 'body:', bodyText);
 						break;
+					}
 				}
 			};
 
@@ -212,7 +213,7 @@ function DeviceViewPage() {
 		}
 
 		if (streamReader) {
-			streamReader.cancel();
+			// reader is already cancelled by mjpegStream.stop()
 			setStreamReader(null);
 		}
 

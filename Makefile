@@ -1,4 +1,4 @@
-.PHONY: default all build build-current npm_install npm_update install download-agents
+.PHONY: default all build build-current npm_install npm_update install download-agents clean
 
 WEBDRIVER_VERSION = 10.2.5
 WEBDRIVER_RELEASE_URL = https://github.com/appium/WebDriverAgent/releases/download/v$(WEBDRIVER_VERSION)/

@@ -27,6 +27,8 @@ export class MjpegStream {
 	public stop(): void {
 		console.log("mobiledeck: stopping mjpeg stream through stop()");
 		this.isActive = false;
+		// cancel the reader to immediately abort any pending read operation
+		this.reader.cancel();
 	}
 
 	private async processMjpegStream(): Promise<void> {
