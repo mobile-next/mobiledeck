@@ -54,7 +54,7 @@ export class DeviceViewProvider {
 		private readonly telemetry: Telemetry,
 	) { }
 
-	private onWebviewInitialized(webviewPanel: vscode.WebviewPanel, message: OnInitializedMessage) {
+	private onWebviewInitialized(webviewPanel: vscode.WebviewPanel, _message: OnInitializedMessage) {
 		this.logger.log('Webview initialized');
 
 		// convert media skins directory path to webview URI
