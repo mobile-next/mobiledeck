@@ -19,7 +19,7 @@ interface LogWebviewMessage extends Message {
 	text: string;
 }
 
-interface ConfigureMessage extends Message{
+interface ConfigureMessage extends Message {
 	command: 'configure';
 	device: DeviceDescriptor;
 	serverPort: number;
@@ -52,13 +52,37 @@ export class DeviceViewProvider {
 		private readonly selectedDevice: DeviceDescriptor,
 		private readonly cliServer: MobileCliServer,
 		private readonly telemetry: Telemetry,
-	) {}
+	) { }
+
+	private onWebviewInitialized(webviewPanel: vscode.WebviewPanel, message: OnInitializedMessage) {
+		this.logger.log('Webview initialized');
+
+		// convert media skins directory path to webview URI
+		const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
+			vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'skins')
+		);
+
+		// Send configure message with both device and server port
+		const configureMessage: ConfigureMessage = {
+			command: 'configure',
+			device: this.selectedDevice,
+			serverPort: this.cliServer.getJsonRpcServerPort(),
+			mediaSkinsUri: mediaSkinsUri.toString(),
+		};
+
+		this.sendMessageToWebview(webviewPanel, configureMessage);
+		this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
+	}
+
+	private onWebviewAlert(webviewPanel: vscode.WebviewPanel, message: AlertWebviewMessage) {
+		vscode.window.showErrorMessage(message.text);
+	}
 
 	async handleMessage(webviewPanel: vscode.WebviewPanel, message: WebviewMessage) {
 		this.logger.log('Received message: ' + JSON.stringify(message));
 		switch (message.command) {
 			case 'alert':
-				vscode.window.showErrorMessage(message.text);
+				this.onWebviewAlert(webviewPanel, message);
 				break;
 
 			case 'log':
@@ -66,23 +90,7 @@ export class DeviceViewProvider {
 				break;
 
 			case 'onInitialized':
-				this.logger.log('Webview initialized');
-
-				// convert media skins directory path to webview URI
-				const mediaSkinsUri = webviewPanel.webview.asWebviewUri(
-					vscode.Uri.joinPath(this.context.extensionUri, 'dist', 'skins')
-				);
-
-				// Send configure message with both device and server port
-				const configureMessage: ConfigureMessage = {
-					command: 'configure',
-					device: this.selectedDevice,
-					serverPort: this.cliServer.getJsonRpcServerPort(),
-					mediaSkinsUri: mediaSkinsUri.toString(),
-				};
-
-				this.sendMessageToWebview(webviewPanel, configureMessage);
-				this.updateWebviewTitle(webviewPanel, this.selectedDevice.name);
+				this.onWebviewInitialized(webviewPanel, message);
 				break;
 
 			case 'onDeviceSelected':
