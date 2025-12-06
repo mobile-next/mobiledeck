@@ -248,7 +248,7 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 				{/* gesture path relative to stream */}
 				{gestureState.isGesturing && <Polyline points={gestureState.path} />}
 			</>
-		)
+		);
 	};
 
 	return (
