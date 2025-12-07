@@ -46,7 +46,7 @@ export class AvcStream {
 
 		this.decoder = new VideoDecoder({
 			output: (frame: VideoFrame) => {
-				console.log(`mobiledeck: VideoDecoder output! frame=${frame.codedWidth}x${frame.codedHeight}, timestamp=${frame.timestamp}, format=${frame.format}`);
+				// console.log(`mobiledeck: VideoDecoder output! frame=${frame.codedWidth}x${frame.codedHeight}, timestamp=${frame.timestamp}, format=${frame.format}`);
 				this.options.onFrame(frame);
 			},
 			error: (error: Error) => {
@@ -157,8 +157,8 @@ export class AvcStream {
 		}
 
 		// log NAL unit details
-		const firstBytes = Array.from(data.slice(0, Math.min(10, data.length))).map(b => b.toString(16).padStart(2, '0')).join(' ');
-		console.log(`mobiledeck: NAL unit type=${type} (${nalTypeValue}), length=${data.length}, first bytes: ${firstBytes}`);
+		// const firstBytes = Array.from(data.slice(0, Math.min(10, data.length))).map(b => b.toString(16).padStart(2, '0')).join(' ');
+		// console.log(`mobiledeck: NAL unit type=${type} (${nalTypeValue}), length=${data.length}, first bytes: ${firstBytes}`);
 
 		return { type, data };
 	}
@@ -277,7 +277,7 @@ export class AvcStream {
 		const isKeyFrame = nalUnit.type === 'idr';
 		const timestamp = this.frameCount * 16666; // assume ~60fps (16.666ms per frame)
 
-		console.log(`mobiledeck: decoding frame #${this.frameCount}, type=${isKeyFrame ? 'key' : 'delta'}, size=${nalUnit.data.length}, decoder.state=${this.decoder.state}`);
+		// console.log(`mobiledeck: decoding frame #${this.frameCount}, type=${isKeyFrame ? 'key' : 'delta'}, size=${nalUnit.data.length}, decoder.state=${this.decoder.state}`);
 
 		try {
 			// convert from Annex B to AVCC format (length-prefixed)
@@ -299,7 +299,7 @@ export class AvcStream {
 
 			this.decoder.decode(chunk);
 			this.frameCount++;
-			console.log(`mobiledeck: frame #${this.frameCount - 1} queued for decoding, queue length=${this.decoder.decodeQueueSize}`);
+			// console.log(`mobiledeck: frame #${this.frameCount - 1} queued for decoding, queue length=${this.decoder.decodeQueueSize}`);
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error(String(error));
 			console.error('mobiledeck: error decoding frame:', err);
