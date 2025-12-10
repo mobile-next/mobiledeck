@@ -4,6 +4,7 @@ import {
 	ListDevicesResponse,
 	ScreenshotResponse,
 	ButtonType,
+	ScreenCaptureFormat,
 } from './models';
 
 export class MobilecliClient {
@@ -54,7 +55,16 @@ export class MobilecliClient {
 	}
 
 	// screencapture
-	async screenCaptureStart(deviceId: string): Promise<Response> {
+	async screenCaptureStart(deviceId: string, format: ScreenCaptureFormat = 'mjpeg', scale?: number): Promise<Response> {
+		const params: Record<string, unknown> = {
+			format: format,
+			deviceId: deviceId
+		};
+
+		if (scale !== undefined) {
+			params.scale = scale;
+		}
+
 		const response = await fetch(this.jsonRpcClient.url, {
 			method: 'POST',
 			headers: {
@@ -64,10 +74,7 @@ export class MobilecliClient {
 				method: 'screencapture',
 				id: '1',
 				jsonrpc: '2.0',
-				params: {
-					format: 'mjpeg',
-					deviceId: deviceId
-				}
+				params: params
 			})
 		});
 

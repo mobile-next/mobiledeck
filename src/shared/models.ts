@@ -45,3 +45,5 @@ export interface ScreenshotResponse {
 }
 
 export type ButtonType = 'HOME' | 'BACK' | 'APP_SWITCH' | 'POWER' | 'VOLUME_UP' | 'VOLUME_DOWN';
+
+export type ScreenCaptureFormat = 'mjpeg' | 'avc';

@@ -2,12 +2,13 @@ import vscode from '../vscode';
 import React, { useState, useEffect, useRef } from 'react';
 import { Header } from '../Header';
 import { MjpegStream } from '../MjpegStream';
+import { AvcStream } from '../AvcStream';
 import { DeviceStream, DeviceStreamHandle, GesturePoint } from '../DeviceStream';
 import { StatusBar } from '../components/StatusBar';
 import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
 import { DeviceSkin, getDeviceSkinForDevice, NoDeviceSkin } from '../DeviceSkins';
-import { DeviceDescriptor, ScreenSize, ButtonType } from '@shared/models';
+import { DeviceDescriptor, ScreenSize, ButtonType, DevicePlatform, ScreenCaptureFormat } from '@shared/models';
 import { MessageRouter } from '../MessageRouter';
 import { telemetry } from '../Telemetry';
 
@@ -33,10 +34,11 @@ function DeviceViewPage() {
 	const [connectProgressMessage, setConnectProgressMessage] = useState<string | null>(null);
 	const [fpsCount, setFpsCount] = useState(30);
 	const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
-	const [screenSize, setScreenSize] = useState<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
+	const screenSizeRef = useRef<ScreenSize>({ width: 0, height: 0, scale: 1.0 });
 	const [streamReader, setStreamReader] = useState<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 	const [streamController, setStreamController] = useState<AbortController | null>(null);
-	const [mjpegStream, setMjpegStream] = useState<MjpegStream | null>(null);
+	const mjpegStreamRef = useRef<MjpegStream | null>(null);
+	const avcStreamRef = useRef<AvcStream | null>(null);
 	const [serverPort, setServerPort] = useState<number>(12000);
 	const [mediaSkinsUri, setMediaSkinsUri] = useState<string>("skins");
 	const [deviceSkin, setDeviceSkin] = useState<DeviceSkin>(NoDeviceSkin);
@@ -61,39 +63,43 @@ function DeviceViewPage() {
 
 	const getMobilecliClient = () => mobilecliClientRef.current;
 
-	// render imageBitmap to canvas
+	// render imageBitmap to canvas (MJPEG only - AVC renders directly in callback for performance)
 	useEffect(() => {
 		if (imageBitmap && deviceStreamRef.current) {
 			const canvas = deviceStreamRef.current.getCanvas();
 			if (canvas) {
 				const ctx = canvas.getContext('2d');
 				if (ctx) {
-					// set canvas size to match screen size
-					canvas.width = screenSize.width;
-					canvas.height = screenSize.height;
+					// use ref to get current screen size
+					const currentScreenSize = screenSizeRef.current;
 
-					// validate bitmap is still open before drawing (prevent race condition)
+					// set canvas size to match screen size
+					canvas.width = currentScreenSize.width;
+					canvas.height = currentScreenSize.height;
+
+					// validate bitmap is still valid before drawing (prevent race condition)
 					if (imageBitmap.width > 0 && imageBitmap.height > 0) {
 						// draw the imagebitmap
-						ctx.drawImage(imageBitmap, 0, 0, screenSize.width, screenSize.height);
+						ctx.drawImage(imageBitmap, 0, 0, currentScreenSize.width, currentScreenSize.height);
 					}
 
 					// note: bitmap will be closed by parent when new frame arrives
 				}
 			}
 		}
-	}, [imageBitmap, screenSize]);
+	}, [imageBitmap]);
 
-	const startMjpegStream = async (deviceId: string) => {
+	const startStream = async (deviceId: string, format: ScreenCaptureFormat) => {
 		try {
 			setIsConnecting(true);
 
 			// benchmark: record stream start time
 			streamStartTimeRef.current = +new Date();
 			firstFrameReceivedRef.current = false;
-			console.log('mobiledeck benchmark: mjpeg stream starting');
+			console.log(`mobiledeck benchmark: ${format} stream starting`);
 
-			const response = await getMobilecliClient().screenCaptureStart(deviceId);
+			const scale = format === 'avc' ? 0.5 : undefined;
+			const response = await getMobilecliClient().screenCaptureStart(deviceId, format, scale);
 			if (!response.body) {
 				throw new Error('ReadableStream not supported');
 			}
@@ -110,7 +116,7 @@ function DeviceViewPage() {
 					firstFrameReceivedRef.current = true;
 
 					// send telemetry event
-					telemetry('mjpeg_stream_started', {
+					telemetry(`${format}_stream_started`, {
 						TimeToFirstFrame: timeToFirstFrame,
 						DevicePlatform: selectedDevice?.platform,
 						DeviceOSVersion: selectedDevice?.version,
@@ -179,32 +185,97 @@ function DeviceViewPage() {
 				}
 			};
 
+			const onAvcFrame = async (frame: VideoFrame) => {
+				try {
+					// benchmark: log time to first frame
+					benchmarkTimeToFirstFrame();
+
+					// stop "Connecting..." upon first frame
+					setIsConnecting(false);
+
+					// render directly to canvas (skip React state for performance)
+					if (deviceStreamRef.current) {
+						const canvas = deviceStreamRef.current.getCanvas();
+						if (canvas) {
+							const ctx = canvas.getContext('2d');
+							if (ctx) {
+								// use ref to get current screen size (avoids stale closure)
+								const currentScreenSize = screenSizeRef.current;
+
+								// set canvas size if needed (only on first frame or size change)
+								if (canvas.width !== currentScreenSize.width || canvas.height !== currentScreenSize.height) {
+									canvas.width = currentScreenSize.width;
+									canvas.height = currentScreenSize.height;
+								}
+
+								// draw frame directly to canvas
+								ctx.drawImage(frame, 0, 0, currentScreenSize.width, currentScreenSize.height);
+							}
+						}
+					}
+
+					// close frame immediately after drawing (free memory)
+					frame.close();
+				} catch (error) {
+					const err = error instanceof Error ? error : new Error(String(error));
+					console.error('Error displaying AVC frame:', err);
+				}
+			};
+
 			const onError = (error: Error) => {
-				console.error('mobiledeck: error from mjpeg stream:', error);
+				console.error(`mobiledeck: error from ${format} stream:`, error);
 				setIsConnecting(false);
 			};
 
-			const stream = new MjpegStream(
-				reader,
-				{
-					onFrame,
-					onError,
-				}
-			);
+			// create appropriate stream based on format
+			if (format === 'avc') {
+				// if using scale, adjust dimensions accordingly
+				const currentScreenSize = screenSizeRef.current;
+				const width = scale ? Math.floor((currentScreenSize.width || 1080) * scale) : (currentScreenSize.width || 1080);
+				const height = scale ? Math.floor((currentScreenSize.height || 1920) * scale) : (currentScreenSize.height || 1920);
 
-			setMjpegStream(stream);
-			stream.start();
+				const stream = new AvcStream(
+					reader,
+					{
+						onFrame: onAvcFrame,
+						onError,
+						width: width,
+						height: height
+					}
+				);
+
+				avcStreamRef.current = stream;
+				stream.start();
+			} else {
+				const stream = new MjpegStream(
+					reader,
+					{
+						onFrame,
+						onError,
+					}
+				);
+
+				mjpegStreamRef.current = stream;
+				stream.start();
+			}
 
 		} catch (error) {
-			console.error('Error starting MJPEG stream:', error);
+			console.error(`Error starting ${format} stream:`, error);
 			setIsConnecting(false);
 		}
 	};
 
-	const stopMjpegStream = () => {
-		if (mjpegStream) {
-			mjpegStream.stop();
-			setMjpegStream(null);
+	const stopStream = () => {
+		// stop mjpeg stream if active
+		if (mjpegStreamRef.current) {
+			mjpegStreamRef.current.stop();
+			mjpegStreamRef.current = null;
+		}
+
+		// stop avc stream if active
+		if (avcStreamRef.current) {
+			avcStreamRef.current.stop();
+			avcStreamRef.current = null;
 		}
 
 		if (streamController) {
@@ -213,7 +284,7 @@ function DeviceViewPage() {
 		}
 
 		if (streamReader) {
-			// reader is already cancelled by mjpegStream.stop()
+			// reader is already cancelled by stream.stop()
 			setStreamReader(null);
 		}
 
@@ -230,8 +301,7 @@ function DeviceViewPage() {
 		const result = await getMobilecliClient().getDeviceInfo(deviceId);
 		console.log('mobiledeck: device info', result);
 		if (result && result.device) {
-			// TODO: get device info should not call a setter
-			setScreenSize(result.device.screenSize);
+			screenSizeRef.current = result.device.screenSize;
 		}
 	};
 
@@ -283,7 +353,7 @@ function DeviceViewPage() {
 
 	useEffect(() => {
 		console.log('mobiledeck: selectDevice called with device: ' + JSON.stringify(selectedDevice));
-		stopMjpegStream();
+		stopStream();
 
 		// clear any existing boot polling
 		if (bootPollIntervalRef.current) {
@@ -307,8 +377,11 @@ function DeviceViewPage() {
 					setIsBooting(false);
 				});
 			} else {
-				console.log('mobiledeck: device is available, starting mjpeg stream with port', serverPort);
-				startMjpegStream(selectedDevice.id).then();
+				// determine format based on platform
+				const format: ScreenCaptureFormat = selectedDevice.platform === DevicePlatform.ANDROID ? 'avc' : 'mjpeg';
+				console.log(`mobiledeck: device is available, starting ${format} stream with port`, serverPort);
+
+				startStream(selectedDevice.id, format).then();
 				requestDeviceInfo(selectedDevice.id).then();
 
 				// set device skin based on device platform/model
@@ -530,7 +603,7 @@ function DeviceViewPage() {
 
 		return () => {
 			router.destroy();
-			stopMjpegStream();
+			stopStream();
 
 			if (imageBitmapRef.current) {
 				imageBitmapRef.current.close();
@@ -566,7 +639,7 @@ function DeviceViewPage() {
 				isBooting={isBooting}
 				connectProgressMessage={connectProgressMessage || undefined}
 				selectedDevice={selectedDevice}
-				screenSize={screenSize}
+				screenSize={screenSizeRef.current}
 				skinOverlayUri={mediaSkinsUri + "/" + deviceSkin.imageFilename}
 				deviceSkin={deviceSkin}
 				onTap={handleTap}
