@@ -3,8 +3,6 @@
 WEBDRIVER_VERSION = 10.2.5
 WEBDRIVER_RELEASE_URL = https://github.com/appium/WebDriverAgent/releases/download/v$(WEBDRIVER_VERSION)/
 
-default: build-current
-
 all: build
 
 build-current:
