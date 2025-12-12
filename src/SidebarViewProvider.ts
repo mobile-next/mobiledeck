@@ -326,12 +326,38 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		});
 	}
 
+	// public method to update server port (called from extension when server restarts)
+	public updateServerPort(serverPort: number): void {
+		if (!this.webviewView) {
+			this.logger.log('webview not available');
+			return;
+		}
+
+		this.logger.log('updating server port: ' + serverPort);
+		this.webviewView.webview.postMessage({
+			command: 'configure',
+			serverPort: serverPort
+		});
+	}
+
 	// update sign out button title with email
 	private async updateSignOutButtonTitle(email: string): Promise<void> {
 		try {
 			await vscode.commands.executeCommand('setContext', 'mobiledeck.userEmail', email);
 		} catch (error) {
 			this.logger.log('failed to update sign out button title: ' + (error instanceof Error ? error.message : String(error)));
+		}
+	}
+
+	// show server restart toast
+	public showServerRestartToast(): void {
+		if (this.webviewView) {
+			this.webviewView.webview.postMessage({
+				command: 'showToast',
+				title: "Notice",
+				variant: "destructive",
+				message: 'Server stopped responding, attempting restart...'
+			});
 		}
 	}
 }

@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { RotateIcon, CameraIcon, HomeIcon, BackIcon, AppSwitchIcon, VolumeUpIcon, VolumeDownIcon, PowerIcon } from './CustomIcons';
 
 interface DeviceControlsProps {
-	onRotateDevice: () => void;
-	onTakeScreenshot: () => void;
-	onDeviceHome: () => void;
+	onRotateDevice?: () => void;
+	onTakeScreenshot?: () => void;
+	onDeviceHome?: () => void;
 	onDeviceBack?: () => void;
 	onAppSwitch?: () => void;
-	onIncreaseVolume: () => void;
-	onDecreaseVolume: () => void;
-	onTogglePower: () => void;
+	onIncreaseVolume?: () => void;
+	onDecreaseVolume?: () => void;
+	onTogglePower?: () => void;
 }
 
 interface ControlButtonProps {
@@ -124,31 +124,33 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
 	onTogglePower,
 }) => {
 
+	const nullCallback = () => { };
+
 	return (
 		<ControlButtonsContainer>
 			{false && (
 				<ControlButton
-					onClick={onRotateDevice}
+					onClick={onRotateDevice || nullCallback}
 					icon={<RotateIcon />}
 					text="Rotate"
 				/>
 			)}
 
 			<ControlButton
-				onClick={onTakeScreenshot}
+				onClick={onTakeScreenshot || nullCallback}
 				icon={<CameraIcon />}
 				text="Screenshot"
 			/>
 
 			<ControlButton
-				onClick={onDeviceHome}
+				onClick={onDeviceHome || nullCallback}
 				icon={<HomeIcon />}
 				text="Home"
 			/>
 
 			{onDeviceBack && (
 				<ControlButton
-					onClick={onDeviceBack}
+					onClick={onDeviceBack || nullCallback}
 					icon={<BackIcon />}
 					text="Back"
 				/>
@@ -156,7 +158,7 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
 
 			{onAppSwitch && (
 				<ControlButton
-					onClick={onAppSwitch}
+					onClick={onAppSwitch || nullCallback}
 					icon={<AppSwitchIcon />}
 					text="Recents"
 				/>
@@ -165,19 +167,19 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
 			<ControlSeparator />
 
 			<ControlButton
-				onClick={onIncreaseVolume}
+				onClick={onIncreaseVolume || nullCallback}
 				icon={<VolumeUpIcon />}
 				text="Volume Up"
 			/>
 
 			<ControlButton
-				onClick={onDecreaseVolume}
+				onClick={onDecreaseVolume || nullCallback}
 				icon={<VolumeDownIcon />}
 				text="Volume Down"
 			/>
 
 			<ControlButton
-				onClick={onTogglePower}
+				onClick={onTogglePower || nullCallback}
 				icon={<PowerIcon />}
 				text="Power"
 			/>

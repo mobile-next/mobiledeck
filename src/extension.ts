@@ -38,6 +38,7 @@ class MobiledeckExtension {
 	private logger: Logger = new Logger('Mobiledeck');
 	private devicePanelManager = new DevicePanelManager();
 	private authenticationManager = new AuthenticationManager();
+	private context: vscode.ExtensionContext | null = null;
 
 	private onConnect(context: vscode.ExtensionContext, device: DeviceDescriptor) {
 		this.logger.log('mobiledeck.connect command executed for device: ' + device.id);
@@ -113,6 +114,65 @@ class MobiledeckExtension {
 		}
 	}
 
+	private async startCliServer(context: vscode.ExtensionContext) {
+		this.cliServer = new MobileCliServer(
+			context,
+			this.telemetry,
+			(exitCode) => this.onCliServerExit(exitCode)
+		);
+
+		await this.cliServer.launchMobilecliServer()
+			.catch(error => {
+				this.logger.log('failed to launch mobilecli server: ' + error.message);
+				this.telemetry.sendEvent('mobilecli_server_start_failed', {
+					Error: error.message || 'unknown error'
+				});
+
+				vscode.window.showErrorMessage('Failed to start mobilecli server');
+			});
+	}
+
+	private async onCliServerExit(exitCode: number) {
+		this.logger.log(`mobilecli server exited with code ${exitCode}, restarting...`);
+
+		// show toast notification
+		if (this.sidebarProvider) {
+			this.sidebarProvider.showServerRestartToast();
+		}
+
+		// restart the server
+		if (this.context) {
+			await this.startCliServer(this.context);
+
+			// update all open panels with new server port
+			this.updateAllPanelsWithNewServer();
+
+			// update sidebar with new server
+			if (this.sidebarProvider && this.cliServer) {
+				this.sidebarProvider.updateServerPort(this.cliServer.getJsonRpcServerPort());
+			}
+		}
+	}
+
+	private updateAllPanelsWithNewServer() {
+		if (!this.cliServer) {
+			return;
+		}
+
+		const newServerPort = this.cliServer.getJsonRpcServerPort();
+		this.logger.log(`updating all panels with new server port: ${newServerPort}`);
+
+		this.devicePanelManager.ids().forEach(deviceId => {
+			const panel = this.devicePanelManager.get(deviceId);
+			if (panel) {
+				panel.webview.postMessage({
+					command: 'serverPortUpdated',
+					serverPort: newServerPort
+				});
+			}
+		});
+	}
+
 	private broadcastDevicesToPanels(devices: DeviceDescriptor[]) {
 		this.devicePanelManager.ids().forEach(deviceId => {
 			const panel = this.devicePanelManager.get(deviceId);
@@ -152,6 +212,9 @@ class MobiledeckExtension {
 	public async activate(context: vscode.ExtensionContext) {
 		this.logger.log('Mobiledeck extension is being activated');
 
+		// store context for later use
+		this.context = context;
+
 		// get or create distinct_id from secrets
 		let distinctId = await context.secrets.get('mobiledeck.telemetry.distinct_id');
 		if (!distinctId) {
@@ -161,16 +224,11 @@ class MobiledeckExtension {
 
 		this.telemetry = new Telemetry(distinctId);
 
-		this.cliServer = new MobileCliServer(context, this.telemetry);
-		await this.cliServer.launchMobilecliServer()
-			.catch(error => {
-				this.logger.log('failed to launch mobilecli server: ' + error.message);
-				this.telemetry.sendEvent('mobilecli_server_start_failed', {
-					Error: error.message || 'unknown error'
-				});
+		await this.startCliServer(context);
 
-				vscode.window.showErrorMessage('Failed to start mobilecli server');
-			});
+		if (!this.cliServer) {
+			throw new Error('failed to initialize cli server');
+		}
 
 		// register the sidebar webview provider
 		this.sidebarProvider = new SidebarViewProvider(

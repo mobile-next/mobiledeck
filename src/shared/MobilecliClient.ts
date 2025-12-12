@@ -4,6 +4,7 @@ import {
 	ListDevicesResponse,
 	ScreenshotResponse,
 	ButtonType,
+	ScreenCaptureFormat,
 } from './models';
 
 class DeviceClient {
@@ -55,6 +56,36 @@ class DeviceClient {
 
 	async takeScreenshot(): Promise<ScreenshotResponse> {
 		return this.request<ScreenshotResponse>('screenshot');
+	}
+
+	async screenCaptureStart(format: ScreenCaptureFormat, scale?: number): Promise<Response> {
+		const params: Record<string, unknown> = {
+			format,
+			deviceId: this.deviceId
+		};
+
+		if (scale !== undefined) {
+			params.scale = scale;
+		}
+
+		const response = await fetch(this.jsonRpcClient.url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				method: 'screencapture',
+				id: '1',
+				jsonrpc: '2.0',
+				params: params
+			})
+		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+
+		return response;
 	}
 }
 

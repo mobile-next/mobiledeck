@@ -8,6 +8,8 @@ import DeviceCategory from '../components/DeviceCategory';
 import GettingStartedBanner from '../components/GettingStartedBanner';
 import DeviceRow from '../components/DeviceRow';
 import { MessageRouter } from '../MessageRouter';
+import { Toaster } from '../components/ui/toaster';
+import { useToast } from '../components/ui/use-toast';
 
 // message type definitions
 interface ConfigureMessage {
@@ -26,7 +28,14 @@ interface UpdateConnectedDevicesMessage {
 	connectedDeviceIds?: string[];
 }
 
-type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage;
+interface ShowToastMessage {
+	command: 'showToast';
+	variant: 'default' | 'destructive';
+	title: string;
+	message: string;
+}
+
+type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage;
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
@@ -35,6 +44,7 @@ interface SidebarPageProps {
 function SidebarPage({
 	onDeviceClicked = (device) => alert(`Device clicked: ${device.name}`)
 }: SidebarPageProps) {
+	const { toast } = useToast();
 	const [isLocalDevicesExpanded, setIsLocalDevicesExpanded] = useState(true);
 	const [isOfflineExpanded, setIsOfflineExpanded] = useState(true);
 	const [devices, setDevices] = useState<DeviceDescriptor[]>([]);
@@ -142,6 +152,14 @@ function SidebarPage({
 		});
 	};
 
+	const handleShowToast = (message: ShowToastMessage) => {
+		toast({
+			variant: message.variant,
+			title: message.title,
+			description: message.message,
+		});
+	};
+
 	useEffect(() => {
 		const router = new MessageRouter(window);
 
@@ -149,16 +167,25 @@ function SidebarPage({
 		router.register('configure', handleConfigure);
 		router.register('refreshDevices', handleRefreshDevices);
 		router.register('updateConnectedDevices', handleUpdateConnectedDevices);
+		router.register('showToast', handleShowToast);
 
 		// send initialization message to extension (parent)
 		vscode.postMessage({
 			command: 'onInitialized'
 		});
 
+		/*
+		toast({
+			variant: "destructive",
+			title: "Error",
+			description: "Something went wrong!",
+		});
+		*/
+
 		return () => {
 			router.destroy();
 		};
-	}, []);
+	}, [toast]);
 
 	const handleDeviceClick = (device: DeviceDescriptor) => {
 		// send device click message to extension
@@ -241,6 +268,7 @@ function SidebarPage({
 
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
+			<Toaster />
 			{/* device list */}
 			<div className="flex-1 overflow-y-auto">
 				{/* local devices section */}

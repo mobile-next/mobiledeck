@@ -1,3 +1,9 @@
+## [0.0.22](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.22) (2025-12-10)
+
+- General: updated mobilecli to 0.0.47 (see [mobilecli releases](https://github.com/mobile-next/mobilecli/releases))
+- General: automatic restart of mobilecli server if terminated
+- Android: added support for avc (h264) video streaming
+
 ## [0.0.21](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.21) (2025-12-02)
 
 - General: moved feedback form to Google Forms

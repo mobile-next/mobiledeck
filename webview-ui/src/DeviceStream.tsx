@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { DeviceDescriptor, DevicePlatform, ScreenSize } from "@shared/models";
 import { DeviceSkin as DeviceSkinType } from "./DeviceSkins";
 import { DeviceSkin } from "./DeviceSkin";
@@ -13,13 +13,16 @@ export interface GesturePoint {
 	duration: number;
 }
 
+export interface DeviceStreamHandle {
+	getCanvas: () => HTMLCanvasElement | null;
+}
+
 export interface DeviceStreamProps {
 	isConnecting: boolean;
 	isBooting?: boolean;
 	connectProgressMessage?: string;
 	selectedDevice: DeviceDescriptor | null;
 	screenSize: ScreenSize;
-	imageBitmap: ImageBitmap | null;
 	skinOverlayUri: string;
 	deviceSkin: DeviceSkinType;
 	onTap: (x: number, y: number) => void;
@@ -57,13 +60,12 @@ const emptyGestureState: GestureState = {
 	path: []
 };
 
-export const DeviceStream: React.FC<DeviceStreamProps> = ({
+export const DeviceStream = forwardRef<DeviceStreamHandle, DeviceStreamProps>(({
 	isConnecting,
 	isBooting = false,
 	connectProgressMessage,
 	selectedDevice,
 	screenSize,
-	imageBitmap,
 	skinOverlayUri,
 	deviceSkin,
 	onTap,
@@ -77,12 +79,17 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 	onIncreaseVolume,
 	onDecreaseVolume,
 	onTogglePower,
-}) => {
+}, ref) => {
 	const [clicks, setClicks] = useState<ClickAnimation[]>([]);
 	const [gestureState, setGestureState] = useState<GestureState>(emptyGestureState);
 	const [skinRatio, setSkinRatio] = useState<number>(1.0);
 	const deviceSkinRef = useRef<HTMLImageElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+
+	// expose canvas to parent
+	useImperativeHandle(ref, () => ({
+		getCanvas: () => canvasRef.current,
+	}));
 
 	const calculateSkinRatio = () => {
 		if (deviceSkinRef.current) {
@@ -101,26 +108,6 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 			window.removeEventListener('resize', calculateSkinRatio);
 		};
 	}, []);
-
-	useEffect(() => {
-		if (imageBitmap && canvasRef.current) {
-			const canvas = canvasRef.current;
-			const ctx = canvas.getContext('2d');
-			if (ctx) {
-				// set canvas size to match screen size
-				canvas.width = screenSize.width;
-				canvas.height = screenSize.height;
-
-				// validate bitmap is still open before drawing (prevent race condition)
-				if (imageBitmap.width > 0 && imageBitmap.height > 0) {
-					// draw the imagebitmap
-					ctx.drawImage(imageBitmap, 0, 0, screenSize.width, screenSize.height);
-				}
-
-				// note: bitmap will be closed by parent when new frame arrives
-			}
-		}
-	}, [imageBitmap, screenSize]);
 
 	const convertToScreenCoords = (clientX: number, clientY: number, element: HTMLCanvasElement) => {
 		const rect = element.getBoundingClientRect();
@@ -217,20 +204,21 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 
 	return (
 		<div className="relative flex-grow flex items-center justify-center overflow-visible focus:outline-none" style={{ backgroundColor: "#202224", paddingTop: "24px", paddingBottom: "24px" }} tabIndex={0} onKeyDown={(e) => onKeyDown(e.key)}>
-			<>
-				{/* Simulated device stream */}
-				<div className={`relative overflow-visible`}>
-					<div className="w-full h-full overflow-visible">
-						<div className="flex flex-col items-center justify-center h-full text-white">
-							{(isConnecting || isBooting) && selectedDevice ? (
-								<div className="relative flex items-center">
-									<DeviceSkin
-										skinOverlayUri={skinOverlayUri}
-										deviceSkin={deviceSkin}
-										skinRatio={skinRatio}
-										deviceSkinRef={deviceSkinRef}
-										onSkinLoad={calculateSkinRatio}
-									>
+			{/* Simulated device stream */}
+			<div className="relative overflow-visible">
+				<div className="w-full h-full overflow-visible">
+					<div className="flex flex-col items-center justify-center h-full text-white">
+						<div className="relative flex items-center">
+							<DeviceSkin
+								skinOverlayUri={skinOverlayUri}
+								deviceSkin={deviceSkin}
+								skinRatio={skinRatio}
+								deviceSkinRef={deviceSkinRef}
+								onSkinLoad={calculateSkinRatio}
+							>
+
+								{(isConnecting || isBooting) && selectedDevice ? (
+									<>
 										<div className="w-full h-full flex items-center justify-center text-center">
 											{isBooting ? (
 												<BootSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} />
@@ -238,79 +226,57 @@ export const DeviceStream: React.FC<DeviceStreamProps> = ({
 												<ConnectSequence device={selectedDevice} skinOverlayUri={skinOverlayUri} message={connectProgressMessage || "Connecting..."} />
 											)}
 										</div>
-									</DeviceSkin>
+									</>
+								) : (
+									<>
+										{/* device stream */}
+										<canvas
+											ref={canvasRef}
+											className="cursor-crosshair w-full h-full"
+											style={{
+												objectFit: 'cover',
+												maxHeight: 'calc(100vh - 100px)',
+												maxWidth: 'calc(100vw - 2em)',
+												borderRadius: `${deviceSkin.borderRadius * skinRatio}px`
+											}}
+											onMouseDown={handleMouseDown}
+											onMouseMove={handleMouseMove}
+											onMouseUp={handleMouseUp}
+											onMouseLeave={handleMouseUp}
+										/>
 
-									{/* device controls positioned to the right */}
-									<DeviceControls
-										onRotateDevice={() => { }}
-										onTakeScreenshot={() => { }}
-										onDeviceHome={() => { }}
-										onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? () => { } : undefined}
-										onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? () => { } : undefined}
-										onIncreaseVolume={() => { }}
-										onDecreaseVolume={() => { }}
-										onTogglePower={() => { }}
-									/>
-								</div>
-							) : (
-								<>
-									{imageBitmap !== null && (
-										<div className="relative flex items-center">
-											<DeviceSkin
-												skinOverlayUri={skinOverlayUri}
-												deviceSkin={deviceSkin}
-												skinRatio={skinRatio}
-												deviceSkinRef={deviceSkinRef}
-												onSkinLoad={calculateSkinRatio}
-											>
-												{/* device stream */}
-												<canvas
-													ref={canvasRef}
-													className="cursor-crosshair w-full h-full"
-													style={{
-														objectFit: 'cover',
-														maxHeight: 'calc(100vh - 100px)',
-														maxWidth: 'calc(100vw - 2em)',
-														borderRadius: `${deviceSkin.borderRadius * skinRatio}px`
-													}}
-													onMouseDown={handleMouseDown}
-													onMouseMove={handleMouseMove}
-													onMouseUp={handleMouseUp}
-													onMouseLeave={handleMouseUp}
-												/>
-												{/* click animations relative to stream */}
-												{clicks.map(click => (
-													<div
-														key={click.id}
-														className="click-animation"
-														style={{ left: `${click.x}px`, top: `${click.y}px` }}
-													/>
-												))}
-												{/* gesture path relative to stream */}
-												{gestureState.isGesturing && <Polyline points={gestureState.path} />}
-											</DeviceSkin>
-											{/* device controls positioned to the right */}
-											{selectedDevice && (
-												<DeviceControls
-													onRotateDevice={onRotateDevice || (() => { })}
-													onTakeScreenshot={onTakeScreenshot}
-													onDeviceHome={onDeviceHome}
-													onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? onDeviceBack : undefined}
-													onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? onAppSwitch : undefined}
-													onIncreaseVolume={onIncreaseVolume || (() => { })}
-													onDecreaseVolume={onDecreaseVolume || (() => { })}
-													onTogglePower={onTogglePower || (() => { })}
-												/>
-											)}
-										</div>
-									)
-									}
-								</>
+										{/* click animations relative to stream */}
+										{clicks.map(click => (
+											<div
+												key={click.id}
+												className="click-animation"
+												style={{ left: `${click.x}px`, top: `${click.y}px` }}
+											/>
+										))}
+
+										{/* gesture path relative to stream */}
+										{gestureState.isGesturing && <Polyline points={gestureState.path} />}
+									</>
+								)}
+							</DeviceSkin>
+
+							{/* device controls positioned to the right */}
+							{selectedDevice && (
+								<DeviceControls
+									onRotateDevice={onRotateDevice}
+									onTakeScreenshot={onTakeScreenshot}
+									onDeviceHome={onDeviceHome}
+									onDeviceBack={selectedDevice.platform === DevicePlatform.ANDROID ? onDeviceBack : undefined}
+									onAppSwitch={selectedDevice.platform === DevicePlatform.ANDROID ? onAppSwitch : undefined}
+									onIncreaseVolume={onIncreaseVolume}
+									onDecreaseVolume={onDecreaseVolume}
+									onTogglePower={onTogglePower}
+								/>
 							)}
 						</div>
 					</div>
 				</div>
-			</>
+			</div>
 		</div>
 	);
-};
+});
