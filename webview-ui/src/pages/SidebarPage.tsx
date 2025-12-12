@@ -191,7 +191,7 @@ function SidebarPage({
 			});
 
 			console.log('sidebar: rebooting device', device.id);
-			await getMobilecliClient().rebootDevice(device.id);
+			await getMobilecliClient().it(device.id).reboot();
 			console.log('sidebar: device reboot initiated');
 		} catch (error) {
 			console.error('sidebar: error rebooting device:', error);
@@ -217,7 +217,7 @@ function SidebarPage({
 			});
 
 			console.log('sidebar: shutting down device', device.id);
-			await getMobilecliClient().shutdownDevice(device.id);
+			await getMobilecliClient().it(device.id).shutdown();
 			console.log('sidebar: device shutdown initiated');
 
 			// clear operating state after shutdown completes

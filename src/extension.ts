@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import * as crypto from 'node:crypto';
 import { DeviceDescriptor } from '@shared/models';
 import { DeviceViewProvider } from './DeviceViewProvider';
-import { MobileCliServer } from './MobileCliServer';
+import { MobileCliServer } from './services/mobilecli/MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
-import { Telemetry } from './utils/Telemetry';
+import { Telemetry } from './services/telemetry/Telemetry';
 import { Logger } from './utils/Logger';
-import { AuthenticationManager } from './AuthenticationManager';
+import { AuthenticationManager } from './services/auth/AuthenticationManager';
 
 const SIDEBAR_VIEW_ID = 'mobiledeckDevices';
 const FEEDBACK_FORM_URL = "https://forms.gle/eFb9opGjCCxCyX4s9";

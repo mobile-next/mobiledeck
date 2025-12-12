@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { MobileCliServer } from './MobileCliServer';
+import { MobileCliServer } from './services/mobilecli/MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
-import { OAuthCallbackServer, OAuthTokens, OAuthStateParams } from './OAuthCallbackServer';
+import { OAuthCallbackServer, OAuthTokens, OAuthStateParams } from './services/auth/OAuthCallbackServer';
 import { OAUTH_CONFIG } from './config/oauth';
-import { Telemetry } from './utils/Telemetry';
+import { Telemetry } from './services/telemetry/Telemetry';
 import { Logger } from './utils/Logger';
 import { ExtensionUtils } from './utils/ExtensionUtils';
-import { AuthenticationManager } from './AuthenticationManager';
+import { AuthenticationManager } from './services/auth/AuthenticationManager';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;

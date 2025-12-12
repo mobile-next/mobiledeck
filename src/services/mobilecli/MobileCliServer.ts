@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { Logger } from './utils/Logger';
-import { PortManager } from './managers/PortManager';
-import { Telemetry } from './utils/Telemetry';
+import { Logger } from '../../utils/Logger';
+import { PortManager } from '../../managers/PortManager';
+import { Telemetry } from '../telemetry/Telemetry';
 
 export class MobileCliServer {
 

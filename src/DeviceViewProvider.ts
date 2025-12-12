@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { Logger } from './utils/Logger';
-import { MobileCliServer } from './MobileCliServer';
+import { MobileCliServer } from './services/mobilecli/MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 import { DeviceDescriptor } from '@shared/models';
-import { Telemetry } from './utils/Telemetry';
+import { Telemetry } from './services/telemetry/Telemetry';
 
 interface Message {
 	command: string;

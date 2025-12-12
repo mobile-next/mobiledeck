@@ -191,7 +191,7 @@ function DeviceViewPage() {
 	};
 
 	const requestDeviceInfo = async (deviceId: string) => {
-		const result = await getMobilecliClient().getDeviceInfo(deviceId);
+		const result = await getMobilecliClient().it(deviceId).getDeviceInfo();
 		console.log('mobiledeck: device info', result);
 		if (result && result.device) {
 			// TODO: get device info should not call a setter
@@ -216,7 +216,7 @@ function DeviceViewPage() {
 		try {
 			console.log('mobiledeck: booting device', deviceId);
 			setIsBooting(true);
-			await getMobilecliClient().bootDevice(deviceId);
+			await getMobilecliClient().it(deviceId).boot();
 			console.log('mobiledeck: device_boot called successfully');
 		} catch (error) {
 			console.error('mobiledeck: error booting device:', error);
@@ -235,7 +235,7 @@ function DeviceViewPage() {
 		// poll every 1 second to check if device is available
 		bootPollIntervalRef.current = setInterval(async () => {
 			try {
-				const result = await getMobilecliClient().listDevices(true);
+				const result = await getMobilecliClient().listDevices();
 				const device = result.devices.find(d => d.id === deviceId);
 
 				if (device && device.state === 'online') {
@@ -296,7 +296,7 @@ function DeviceViewPage() {
 
 	const handleTap = async (x: number, y: number) => {
 		if (selectedDevice) {
-			await getMobilecliClient().tap(selectedDevice.id, x, y);
+			await getMobilecliClient().it(selectedDevice.id).tap(x, y);
 		}
 	};
 
@@ -338,7 +338,7 @@ function DeviceViewPage() {
 		}
 
 		if (selectedDevice) {
-			await getMobilecliClient().gesture(selectedDevice.id, actions);
+			await getMobilecliClient().it(selectedDevice.id).gesture(actions);
 		}
 	};
 
@@ -358,7 +358,7 @@ function DeviceViewPage() {
 		pendingKeys.current = "";
 		try {
 			if (selectedDevice) {
-				await getMobilecliClient().inputText(selectedDevice.id, keys, 3000);
+				await getMobilecliClient().it(selectedDevice.id).inputText(keys, 3000);
 			}
 		} catch (error) {
 			console.error('mobiledeck: error flushing keys:', error);
@@ -404,7 +404,7 @@ function DeviceViewPage() {
 
 	const pressButton = async (button: ButtonType) => {
 		if (selectedDevice) {
-			await getMobilecliClient().pressButton(selectedDevice.id, button);
+			await getMobilecliClient().it(selectedDevice.id).pressButton(button);
 		}
 	};
 
@@ -447,7 +447,7 @@ function DeviceViewPage() {
 		}
 
 		try {
-			const response = await getMobilecliClient().takeScreenshot(selectedDevice.id);
+			const response = await getMobilecliClient().it(selectedDevice.id).takeScreenshot();
 			const DATA_IMAGE_PNG = "data:image/png;base64,";
 
 			if (response.data && response.data.startsWith(DATA_IMAGE_PNG)) {
