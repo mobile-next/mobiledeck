@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as os from 'node:os';
 import { PostHog } from 'posthog-node';
-import { ExtensionUtils } from './ExtensionUtils';
+import { ExtensionUtils } from '../../utils/ExtensionUtils';
 
 export class Telemetry {
 	private static client: PostHog;

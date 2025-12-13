@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import { ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { Logger } from './utils/Logger';
-import { PortManager } from './managers/PortManager';
-import { Telemetry } from './utils/Telemetry';
-import { sleep } from './utils/TimerUtils';
+import { Logger } from '../../services/logger/Logger';
+import { PortManager } from '../../managers/PortManager';
+import { Telemetry } from '../telemetry/Telemetry';
+import { sleep } from '../../utils/TimerUtils';
 
 const DEFAULT_SERVER_PORT = 12000;
 const SERVER_STARTUP_TIMEOUT_MS = 10000; // 10 seconds

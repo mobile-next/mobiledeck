@@ -7,58 +7,74 @@ import {
 	ScreenCaptureFormat,
 } from './models';
 
-export class MobilecliClient {
+export interface DeviceClientApi {
+	getDeviceInfo(): Promise<DeviceInfoResponse>;
+	boot(): Promise<void>;
+	reboot(): Promise<void>;
+	shutdown(): Promise<void>;
+	tap(x: number, y: number): Promise<void>;
+	gesture(actions: Array<{ type: string; duration?: number; x?: number; y?: number; button?: number }>): Promise<void>;
+	inputText(text: string, timeoutMs?: number): Promise<void>;
+	pressButton(button: ButtonType): Promise<void>;
+	takeScreenshot(): Promise<ScreenshotResponse>;
+	screenCaptureStart(format: ScreenCaptureFormat, scale?: number): Promise<Response>;
+}
 
-	constructor(private readonly jsonRpcClient: JsonRpcClient) { }
+class DeviceClient implements DeviceClientApi {
+	constructor(
+		private readonly jsonRpcClient: JsonRpcClient,
+		private readonly deviceId: string
+	) {}
 
-	// device management
-	async getDeviceInfo(deviceId: string): Promise<DeviceInfoResponse> {
-		return this.jsonRpcClient.sendJsonRpcRequest<DeviceInfoResponse>('device_info', { deviceId });
+	private request<T = void>(
+		method: string,
+		params?: Record<string, any>,
+		timeoutMs?: number
+	): Promise<T> {
+		const combinedParams = { deviceId: this.deviceId, ...(params || {}) };
+		return this.jsonRpcClient.sendJsonRpcRequest<T>(method, combinedParams, timeoutMs);
 	}
 
-	async listDevices(includeOffline: boolean = false): Promise<ListDevicesResponse> {
-		return this.jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', { includeOffline });
+	async getDeviceInfo(): Promise<DeviceInfoResponse> {
+		return this.request<DeviceInfoResponse>('device_info');
 	}
 
-	async bootDevice(deviceId: string): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('device_boot', { deviceId });
+	async boot(): Promise<void> {
+		return this.request('device_boot');
 	}
 
-	async rebootDevice(deviceId: string): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('device_reboot', { deviceId });
+	async reboot(): Promise<void> {
+		return this.request('device_reboot');
 	}
 
-	async shutdownDevice(deviceId: string): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('device_shutdown', { deviceId });
+	async shutdown(): Promise<void> {
+		return this.request('device_shutdown');
 	}
 
-	// input/output operations
-	async tap(deviceId: string, x: number, y: number): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('io_tap', { x, y, deviceId });
+	async tap(x: number, y: number): Promise<void> {
+		return this.request('io_tap', { x, y });
 	}
 
-	async gesture(deviceId: string, actions: Array<{ type: string; duration?: number; x?: number; y?: number; button?: number }>): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('io_gesture', { deviceId, actions });
+	async gesture(actions: Array<{ type: string; duration?: number; x?: number; y?: number; button?: number }>): Promise<void> {
+		return this.request('io_gesture', { actions });
 	}
 
-	async inputText(deviceId: string, text: string, timeoutMs?: number): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('io_text', { text, deviceId }, timeoutMs);
+	async inputText(text: string, timeoutMs?: number): Promise<void> {
+		return this.request('io_text', { text }, timeoutMs);
 	}
 
-	async pressButton(deviceId: string, button: ButtonType): Promise<void> {
-		return this.jsonRpcClient.sendJsonRpcRequest('io_button', { deviceId, button });
+	async pressButton(button: ButtonType): Promise<void> {
+		return this.request('io_button', { button });
 	}
 
-	// screenshot
-	async takeScreenshot(deviceId: string): Promise<ScreenshotResponse> {
-		return this.jsonRpcClient.sendJsonRpcRequest<ScreenshotResponse>('screenshot', { deviceId });
+	async takeScreenshot(): Promise<ScreenshotResponse> {
+		return this.request<ScreenshotResponse>('screenshot');
 	}
 
-	// screencapture
-	async screenCaptureStart(deviceId: string, format: ScreenCaptureFormat = 'mjpeg', scale?: number): Promise<Response> {
+	async screenCaptureStart(format: ScreenCaptureFormat, scale?: number): Promise<Response> {
 		const params: Record<string, unknown> = {
-			format: format,
-			deviceId: deviceId
+			format,
+			deviceId: this.deviceId
 		};
 
 		if (scale !== undefined) {
@@ -83,5 +99,19 @@ export class MobilecliClient {
 		}
 
 		return response;
+	}
+}
+
+export class MobilecliClient {
+
+	constructor(private readonly jsonRpcClient: JsonRpcClient) { }
+
+	it(deviceId: string): DeviceClientApi {
+		return new DeviceClient(this.jsonRpcClient, deviceId);
+	}
+
+	// device management for listing devices (not device-specific)
+	async listDevices(includeOffline: boolean = false): Promise<ListDevicesResponse> {
+		return this.jsonRpcClient.sendJsonRpcRequest<ListDevicesResponse>('devices', { includeOffline });
 	}
 }
