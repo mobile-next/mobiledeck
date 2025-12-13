@@ -7,7 +7,20 @@ import {
 	ScreenCaptureFormat,
 } from './models';
 
-class DeviceClient {
+export interface DeviceClientApi {
+	getDeviceInfo(): Promise<DeviceInfoResponse>;
+	boot(): Promise<void>;
+	reboot(): Promise<void>;
+	shutdown(): Promise<void>;
+	tap(x: number, y: number): Promise<void>;
+	gesture(actions: Array<{ type: string; duration?: number; x?: number; y?: number; button?: number }>): Promise<void>;
+	inputText(text: string, timeoutMs?: number): Promise<void>;
+	pressButton(button: ButtonType): Promise<void>;
+	takeScreenshot(): Promise<ScreenshotResponse>;
+	screenCaptureStart(format: ScreenCaptureFormat, scale?: number): Promise<Response>;
+}
+
+class DeviceClient implements DeviceClientApi {
 	constructor(
 		private readonly jsonRpcClient: JsonRpcClient,
 		private readonly deviceId: string
@@ -93,7 +106,7 @@ export class MobilecliClient {
 
 	constructor(private readonly jsonRpcClient: JsonRpcClient) { }
 
-	it(deviceId: string): DeviceClient {
+	it(deviceId: string): DeviceClientApi {
 		return new DeviceClient(this.jsonRpcClient, deviceId);
 	}
 

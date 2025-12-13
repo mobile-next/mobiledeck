@@ -7,29 +7,10 @@ import { SidebarViewProvider } from './SidebarViewProvider';
 import { Telemetry } from './services/telemetry/Telemetry';
 import { Logger } from './utils/Logger';
 import { AuthenticationManager } from './services/auth/AuthenticationManager';
+import { DevicePanelManager } from './managers/DevicePanelManager';
 
 const SIDEBAR_VIEW_ID = 'mobiledeckDevices';
 const FEEDBACK_FORM_URL = "https://forms.gle/eFb9opGjCCxCyX4s9";
-
-class DevicePanelManager {
-	private devicePanels: Map<string, vscode.WebviewPanel> = new Map();
-
-	public get(deviceId: string): vscode.WebviewPanel | undefined {
-		return this.devicePanels.get(deviceId);
-	}
-
-	public set(deviceId: string, panel: vscode.WebviewPanel) {
-		this.devicePanels.set(deviceId, panel);
-	}
-
-	public delete(deviceId: string) {
-		this.devicePanels.delete(deviceId);
-	}
-
-	public ids(): Array<string> {
-		return Array.from(this.devicePanels.keys());
-	}
-}
 
 class MobiledeckExtension {
 	private cliServer: MobileCliServer | null = null;
