@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as crypto from 'node:crypto';
 import { DeviceDescriptor } from '@shared/models';
-import { DeviceViewProvider } from './DeviceViewProvider';
+import { DeviceViewProvider } from './providers/DeviceViewProvider';
 import { MobileCliServer } from './services/mobilecli/MobileCliServer';
-import { SidebarViewProvider } from './SidebarViewProvider';
+import { SidebarViewProvider } from './providers/SidebarViewProvider';
 import { Telemetry } from './services/telemetry/Telemetry';
 import { Logger } from './services/logger/Logger';
 import { AuthenticationManager } from './services/auth/AuthenticationManager';
