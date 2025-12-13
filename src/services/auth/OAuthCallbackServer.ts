@@ -3,7 +3,7 @@ import * as crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
 import { OAUTH_CONFIG } from '../../config/oauth';
-import { Logger } from '../../utils/Logger';
+import { Logger } from '../../services/logger/Logger';
 
 export interface OAuthTokens {
 	access_token: string;

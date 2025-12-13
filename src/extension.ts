@@ -5,7 +5,7 @@ import { DeviceViewProvider } from './DeviceViewProvider';
 import { MobileCliServer } from './services/mobilecli/MobileCliServer';
 import { SidebarViewProvider } from './SidebarViewProvider';
 import { Telemetry } from './services/telemetry/Telemetry';
-import { Logger } from './utils/Logger';
+import { Logger } from './services/logger/Logger';
 import { AuthenticationManager } from './services/auth/AuthenticationManager';
 import { DevicePanelManager } from './managers/DevicePanelManager';
 

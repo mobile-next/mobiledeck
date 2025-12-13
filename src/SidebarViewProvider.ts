@@ -4,7 +4,7 @@ import { HtmlUtils } from './utils/HtmlUtils';
 import { OAuthCallbackServer, OAuthTokens, OAuthStateParams } from './services/auth/OAuthCallbackServer';
 import { OAUTH_CONFIG } from './config/oauth';
 import { Telemetry } from './services/telemetry/Telemetry';
-import { Logger } from './utils/Logger';
+import { Logger } from './services/logger/Logger';
 import { ExtensionUtils } from './utils/ExtensionUtils';
 import { AuthenticationManager } from './services/auth/AuthenticationManager';
 

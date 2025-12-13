@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { OAuthTokens } from './OAuthCallbackServer';
-import { Logger } from '../../utils/Logger';
+import { Logger } from '../../services/logger/Logger';
 
 export class AuthenticationManager {
 

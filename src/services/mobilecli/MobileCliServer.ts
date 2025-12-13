@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ChildProcess, execFileSync, spawn } from 'node:child_process';
-import { Logger } from '../../utils/Logger';
+import { Logger } from '../../services/logger/Logger';
 import { PortManager } from '../../managers/PortManager';
 import { Telemetry } from '../telemetry/Telemetry';
 import { sleep } from '../../utils/TimerUtils';

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Logger } from './utils/Logger';
+import { Logger } from './services/logger/Logger';
 import { MobileCliServer } from './services/mobilecli/MobileCliServer';
 import { HtmlUtils } from './utils/HtmlUtils';
 import { DeviceDescriptor } from '@shared/models';
