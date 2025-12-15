@@ -1,6 +1,6 @@
 import React from 'react';
 import vscode from '../vscode';
-import { GoogleIcon, AzureIcon, GitHubIcon } from '../CustomIcons';
+import { GoogleIcon, GitHubIcon } from '../CustomIcons';
 
 // styles for the login page
 const styles = {
@@ -25,6 +25,7 @@ const styles = {
 	} as React.CSSProperties,
 	headerContainer: {
 		display: 'flex',
+		flexDirection: 'column' as const,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginBottom: '12px',
@@ -55,9 +56,10 @@ const styles = {
 		backgroundClip: 'text',
 	} as React.CSSProperties,
 	subtitle: {
-		textAlign: 'justify' as const,
+		textAlign: 'center' as const,
 		color: '#888',
 		fontSize: '15px',
+		width: '100%',
 		marginBottom: '48px',
 		lineHeight: '1.6',
 	} as React.CSSProperties,
@@ -73,6 +75,13 @@ const styles = {
 		margin: '32px 0',
 		color: '#555',
 		fontSize: '13px',
+	} as React.CSSProperties,
+	smallDivider: {
+		display: 'flex',
+		alignItems: 'center',
+		margin: '16px 0',
+		color: '#555',
+		fontSize: '12px',
 	} as React.CSSProperties,
 	dividerLine: {
 		flex: 1,
@@ -115,20 +124,12 @@ function LoginPage() {
 		vscode.postMessage({
 			command: 'skipLogin'
 		});
-	};
+	};	
 
 	const onGoogleLogin = () => {
-		// post message to extension to open external browser
 		vscode.postMessage({
 			command: 'openOAuthLogin',
 			provider: 'Google'
-		});
-	};
-
-	const onAzureLogin = () => {
-		vscode.postMessage({
-			command: 'openOAuthLogin',
-			provider: 'AzureAD'
 		});
 	};
 
@@ -136,6 +137,12 @@ function LoginPage() {
 		vscode.postMessage({
 			command: 'openOAuthLogin',
 			provider: 'GitHub'
+		});
+	};
+
+	const onEmailLogin = () => {
+		vscode.postMessage({
+			command: 'openEmailLogin',
 		});
 	};
 
@@ -154,7 +161,8 @@ function LoginPage() {
 				</div>
 
 				<p style={styles.subtitle}>
-					See your iOS & Android simulators and real devices, then connect with a click — without leaving the editor.
+					See your iOS & Android simulators and real devices, <br />
+					then connect with a click — without leaving the editor.
 				</p>
 
 				<div style={styles.card}>
@@ -181,16 +189,25 @@ function LoginPage() {
 							Continue with Google
 						</button>
 
-						{/* <button style={styles.oauthBtn} onClick={onAzureLogin}>
-							<AzureIcon />
-							Continue with Azure
-						</button> */}
-
 						<button style={styles.oauthBtn} onClick={onGitHubLogin}>
 							<GitHubIcon />
 							Continue with GitHub
 						</button>
 					</div>
+
+					<div style={styles.smallDivider}>
+						<div style={styles.dividerLine}></div>
+						<span style={styles.dividerSpan}>or</span>
+						<div style={styles.dividerLine}></div>
+					</div>
+
+					<button style={styles.oauthBtn} onClick={onEmailLogin}>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={styles.oauthBtnSvg}>
+							<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+							<polyline points="22,6 12,13 2,6"></polyline>
+						</svg>
+						Continue with Email
+					</button>				
 
 					{/*
 					<div style={styles.divider}>

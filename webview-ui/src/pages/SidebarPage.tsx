@@ -174,6 +174,10 @@ function SidebarPage({
 			command: 'onInitialized'
 		});
 
+		// if running outside vscode (local dev of webview-ui), then automatically set port
+		if (vscode.isMockApi) {
+			setServerPort(12000);
+		}
 		/*
 		toast({
 			variant: "destructive",

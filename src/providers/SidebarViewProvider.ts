@@ -88,6 +88,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					});
 					break;
 
+				case 'openEmailLogin':
+					this.logger.log('email login requested from webview');
+					await this.handleEmailLogin(webviewView);
+					break;
+
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					this.telemetry.sendEvent('login_clicked', {
@@ -129,6 +134,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private async storeTokens(tokens: OAuthTokens, email: string) {
 		const manager = new AuthenticationManager();
 		await manager.storeTokens(this.context, tokens, email);
+	}
+
+	private async handleEmailLogin(webviewView: vscode.WebviewView): Promise<void> {
+		this.logger.log('email login requested from webview');
+		vscode.window.showErrorMessage('Email login is not implemented yet');
 	}
 
 	private async handleOAuthLogin(provider: string, webviewView: vscode.WebviewView): Promise<void> {
@@ -277,26 +287,25 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	// switch the webview to device list
-	private async switchToDeviceList(): Promise<void> {
+	private setHtml(page: string) {
 		if (!this.webviewView) {
 			this.logger.log('webview not available');
 			return;
 		}
 
+		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, page);
+	}
+
+	// switch the webview to device list
+	private switchToDeviceList() {
+		this.setHtml('sidebar');
 		this.logger.log('switching to device list view');
-		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'sidebar');
 	}
 
 	// public method to show login page (called from extension when signing out)
-	public showLoginPage(): void {
-		if (!this.webviewView) {
-			this.logger.log('webview not available');
-			return;
-		}
-
+	public showLoginPage() {
+		this.setHtml('login');
 		this.logger.log('showing login page');
-		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'login');
 	}
 
 	// public method to refresh devices (called from extension when refresh command is triggered)
