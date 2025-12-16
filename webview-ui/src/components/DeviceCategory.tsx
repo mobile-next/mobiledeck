@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { Flex, Separator, Text, Box } from '@radix-ui/themes';
 
 interface DeviceCategoryProps {
 	label: string;
@@ -9,25 +10,36 @@ interface DeviceCategoryProps {
 }
 
 function DeviceCategory({ label, isCollapsible = false, isExpanded = true, onToggle }: DeviceCategoryProps) {
-	const containerClasses = isCollapsible
-		? "flex items-center gap-2 my-3 cursor-pointer hover:bg-[#2d2d2d] rounded px-1 py-1 select-none"
-		: "flex items-center gap-2 my-3";
-
 	return (
-		<div className={containerClasses} onClick={isCollapsible ? onToggle : undefined}>
-			<hr className="flex-1 border-[#3e3e3e]" />
-			<span className="text-xs text-[#858585] px-2">{label}</span>
+		<Flex
+			align="center"
+			gap="2"
+			my="3"
+			onClick={isCollapsible ? onToggle : undefined}
+			px={isCollapsible ? "1" : undefined}
+			py={isCollapsible ? "1" : undefined}
+			style={{
+				cursor: isCollapsible ? 'pointer' : 'default',
+				userSelect: 'none',
+				borderRadius: isCollapsible ? 'var(--radius-2)' : undefined
+			}}
+			className={isCollapsible ? "hover-bg-gray-3 transition-colors" : undefined}
+		>
+			<Separator size="4" style={{ flex: 1, backgroundColor: 'var(--gray-6)' }} />
+			<Box px="2">
+				<Text size="1" color="gray">{label}</Text>
+			</Box>
 			{isCollapsible && (
-				<div className="flex-shrink-0 ml-1">
+				<Box ml="1">
 					{isExpanded ? (
-						<ChevronDown className="h-3 w-3 text-[#858585]" />
+						<ChevronDown size={12} color="var(--gray-11)" />
 					) : (
-						<ChevronRight className="h-3 w-3 text-[#858585]" />
+						<ChevronRight size={12} color="var(--gray-11)" />
 					)}
-				</div>
+				</Box>
 			)}
-			<hr className="flex-1 border-[#3e3e3e]" />
-		</div>
+			<Separator size="4" style={{ flex: 1, backgroundColor: 'var(--gray-6)' }} />
+		</Flex>
 	);
 }
 

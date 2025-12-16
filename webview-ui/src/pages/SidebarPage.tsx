@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight } from "lucide-react";
-import * as Separator from '@radix-ui/react-separator';
-import { Table } from '@radix-ui/themes';
+import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { Box, Flex, Text, Heading, Table, Separator, Link, IconButton } from '@radix-ui/themes';
 import vscode from '../vscode';
 import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
@@ -12,7 +11,6 @@ import DeviceRow from '../components/DeviceRow';
 import { MessageRouter } from '../MessageRouter';
 import { Toaster } from '../components/ui/toaster';
 import { useToast } from '../components/ui/use-toast';
-import { X } from 'lucide-react';
 
 // message type definitions
 interface ConfigureMessage {
@@ -311,41 +309,66 @@ function SidebarPage({
 		};
 
 		return (
-			<div className="px-3 py-4">
-			<div className="mt-4 p-3 bg-[#252526] border border-[#3e3e3e] rounded-md relative">
-				<button
+			<Box px="3" py="4">
+			<Box
+				mt="4"
+				p="3"
+				style={{
+					backgroundColor: 'var(--gray-2)',
+					border: '1px solid var(--gray-6)',
+					borderRadius: 'var(--radius-3)',
+					position: 'relative'
+				}}
+			>
+				<IconButton
+					size="1"
+					variant="ghost"
+					color="gray"
 					onClick={handleClose}
-					className="absolute top-2 right-2 p-1 hover:bg-[#3e3e3e] rounded transition-colors"
 					aria-label="Close banner"
+					style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)' }}
 				>
-					<X className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
-				</button>
-				<div className="flex flex-col gap-2 pr-6">
-					<div className="text-lg font-semibold mb-2">Connected Agents</div>
-					<div className="text-xs text-[#858585] mb-2" style={{ lineHeight: '1.5' }}>
+					<X size={16} />
+				</IconButton>
+				<Flex direction="column" gap="2" pr="6">
+					<Heading size="4" weight="medium" mb="2">
+						Connected Agents
+					</Heading>
+					<Text size="1" color="gray" mb="2" style={{ lineHeight: 1.5 }}>
 						These agents are installed on your computer. Click Configure to automatically set up the Mobile Deck MCP server and allow the agent to control connected devices.
-					</div>
+					</Text>
 					<Table.Root size="2">
 						<Table.Body>
 							{agentStatuses.map((agent) => {
-								const color = agent.isConfigured ? '#22c55e' : '#9ca3af';
 								return (
-									<Table.Row key={agent.name} className="group">
-										<Table.RowHeaderCell className="pr-8">
-											<div className="flex items-center gap-2">
-												<span
-													className="inline-block h-3 w-3 rounded-full"
-													style={{ backgroundColor: color, borderRadius: '50%' }}
+									<Table.Row key={agent.name}>
+										<Table.RowHeaderCell>
+											<Flex align="center" gap="2" pr="8">
+												<Box
+													style={{
+														width: '12px',
+														height: '12px',
+														borderRadius: '50%',
+														backgroundColor: agent.isConfigured ? 'var(--green-9)' : 'var(--gray-9)'
+													}}
 												/>
-												<span className="text-sm font-medium text-[#cccccc]">{agent.name}</span>
-											</div>
+												<Text size="2" weight="medium">
+													{agent.name}
+												</Text>
+											</Flex>
 										</Table.RowHeaderCell>
-										<Table.Cell justify="end" className="text-right">
+										<Table.Cell justify="end">
 											{!agent.isConfigured ? (
-												<a href="#" onClick={() => onConfigureAgent(agent.name)} className='text-xs text-[#858585] hover:text-[#cccccc]'>Configure &rarr;</a>
+												<Link
+													size="1"
+													color="gray"
+													href="#"
+													onClick={(e) => { e.preventDefault(); onConfigureAgent(agent.name); }}
+												>
+													Configure &rarr;
+												</Link>
 											) : (
-												// empty link just to have the same height
-												<a href="#" onClick={() => {}} className='text-xs'>&nbsp;</a>
+												<Text size="1" color="gray">Ready</Text>
 											)}
 										</Table.Cell>
 									</Table.Row>
@@ -353,23 +376,33 @@ function SidebarPage({
 							})}
 							</Table.Body>
 						</Table.Root>
-					</div>
-				</div>
-			</div>
+					</Flex>
+				</Box>
+			</Box>
 		);
 	};
 
 
 	return (
-		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
+		<Flex direction="column" height="100vh" style={{ backgroundColor: 'var(--gray-1)', color: 'var(--gray-12)' }}>
 			<Toaster />
 			{/* device list */}
-			<div className="flex-1 overflow-y-auto">
+			<Box flexGrow="1" style={{ overflowY: 'auto' }}>
 				{/* local devices section */}
-				<div className="px-4 py-2">
-					<div
-						className="flex items-center gap-2 text-sm text-[#cccccc] mb-2 cursor-pointer hover:bg-[#2d2d2d] rounded px-1 py-1 select-none"
+				<Box px="4" py="2">
+					<Flex
+						align="center"
+						gap="2"
+						mb="2"
+						px="1"
+						py="1"
 						onClick={() => setIsLocalDevicesExpanded(!isLocalDevicesExpanded)}
+						style={{
+							cursor: 'pointer',
+							borderRadius: 'var(--radius-2)',
+							userSelect: 'none',
+						}}
+						className="hover-bg-gray-3 transition-colors"
 					>
 						{isLocalDevicesExpanded ? (
 							<ChevronDown className="h-4 w-4 flex-shrink-0" />
@@ -379,17 +412,19 @@ function SidebarPage({
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
 							<path d="M11 2H5a1 1 0 00-1 1v10a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1zM8 12.5a.5.5 0 110-1 .5.5 0 010 1z" />
 						</svg>
-						<span className="font-medium">Local devices:</span>
-						<span className="text-[#858585]">{devices.length} device{devices.length !== 1 ? 's' : ''}</span>
-					</div>
+						<Text size="2" weight="medium">Local devices:</Text>
+						<Text size="2" color="gray">{devices.length} device{devices.length !== 1 ? 's' : ''}</Text>
+					</Flex>
 
 					{/* device items */}
 					{isLocalDevicesExpanded && (
-						<div className="ml-6">
+						<Box ml="6">
 							{devices.length === 0 ? (
-								<div className="text-xs text-[#858585] py-2">
-									{(!hasInitiallyLoaded && isRefreshing) ? 'Loading devices...' : 'No devices found'}
-								</div>
+								<Box py="2">
+									<Text size="1" color="gray">
+										{(!hasInitiallyLoaded && isRefreshing) ? 'Loading devices...' : 'No devices found'}
+									</Text>
+								</Box>
 							) : (
 								<>
 									{/* available devices section (includes both connected and non-connected) */}
@@ -437,16 +472,16 @@ function SidebarPage({
 									)}
 								</>
 							)}
-						</div>
+						</Box>
 					)}
-				</div>
-			</div>
+				</Box>
+			</Box>
 
 			{/* getting started banner - always visible after initial load */}
 			{/* {hasInitiallyLoaded && !gettingStartedDismissed && <GettingStartedBanner />} */}
 
 			<RenderAgentStatus />
-		</div>
+		</Flex>
 	);
 }
 
