@@ -1,11 +1,19 @@
 import React from "react";
+import { Flex, Heading, Text } from '@radix-ui/themes';
 
 function ErrorPage() {
 	return (
-		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc] p-4">
-			<h1 className="text-xl mb-4 text-red-500">Error</h1>
-			<p>Unknown page requested.</p>
-		</div>
+		<Flex
+			direction="column"
+			height="100vh"
+			p="4"
+			style={{ backgroundColor: 'var(--gray-1)', color: 'var(--gray-12)' }}
+		>
+			<Heading size="6" mb="4" style={{ color: 'var(--red-9)' }}>
+				Error
+			</Heading>
+			<Text size="2">Unknown page requested.</Text>
+		</Flex>
 	);
 }
 
