@@ -144,7 +144,16 @@ function SidebarPage({
 		}
 
 		if (message.agentStatuses) {
-			setAgentStatuses(message.agentStatuses.filter(a => a.isInstalled));
+			const sortedAgents = message.agentStatuses
+				.filter(a => a.isInstalled)
+				.sort((a, b) => {
+					// configured agents first
+					if (a.isConfigured && !b.isConfigured) return -1;
+					if (!a.isConfigured && b.isConfigured) return 1;
+					// then sort by name
+					return a.name.localeCompare(b.name);
+				});
+			setAgentStatuses(sortedAgents);
 		}
 	};
 
@@ -328,12 +337,12 @@ function SidebarPage({
 													className="inline-block h-3 w-3 rounded-full"
 													style={{ backgroundColor: color, borderRadius: '50%' }}
 												/>
-												<span className="text-sm font-medium text-[#111827]">{agent.name}</span>
+												<span className="text-sm font-medium text-[#cccccc]">{agent.name}</span>
 											</div>
 										</Table.RowHeaderCell>
 										<Table.Cell justify="end" className="text-right">
 											{!agent.isConfigured ? (
-												<a href="#" onClick={() => onConfigureAgent(agent.name)} className='text-xs text-[#00ff88]'>Configure &rarr;</a>
+												<a href="#" onClick={() => onConfigureAgent(agent.name)} className='text-xs text-[#858585] hover:text-[#cccccc]'>Configure &rarr;</a>
 											) : (
 												// empty link just to have the same height
 												<a href="#" onClick={() => {}} className='text-xs'>&nbsp;</a>

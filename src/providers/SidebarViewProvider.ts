@@ -10,6 +10,7 @@ import { AuthenticationManager } from '../services/auth/AuthenticationManager';
 import * as os from 'node:os';
 import { CursorAgent } from '../services/mcp-integrations/cursor-agent';
 import { ClaudeAgent } from '../services/mcp-integrations/claude-code-agent';
+import { ClaudeDesktopAgent } from '../services/mcp-integrations/claude-desktop-agent';
 import { CodexAgent } from '../services/mcp-integrations/codex-agent';
 import { AntigravityAgent } from '../services/mcp-integrations/antigravity-agent';
 import { VSCodeCopilotAgent } from '../services/mcp-integrations/vs-copilot-agent';
@@ -142,6 +143,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		const agents = [
 			{ name: 'Cursor', instance: new CursorAgent(homeDir) },
 			{ name: 'Claude Code', instance: new ClaudeAgent(homeDir, currentPath) },
+			{ name: 'Claude Desktop', instance: new ClaudeDesktopAgent(homeDir) },
 			{ name: 'Codex', instance: new CodexAgent(homeDir) },
 			{ name: 'Antigravity', instance: new AntigravityAgent(homeDir) },
 			{ name: 'VSCode Copilot', instance: new VSCodeCopilotAgent(homeDir) },
