@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronRight } from "lucide-react";
+import * as Separator from '@radix-ui/react-separator';
+import { Table } from '@radix-ui/themes';
 import vscode from '../vscode';
 import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
@@ -10,6 +12,7 @@ import DeviceRow from '../components/DeviceRow';
 import { MessageRouter } from '../MessageRouter';
 import { Toaster } from '../components/ui/toaster';
 import { useToast } from '../components/ui/use-toast';
+import { X } from 'lucide-react';
 
 // message type definitions
 interface ConfigureMessage {
@@ -17,6 +20,7 @@ interface ConfigureMessage {
 	serverPort?: number;
 	email?: string;
 	gettingStartedDismissed?: boolean;
+	agentStatuses?: AgentStatus[];
 }
 
 interface RefreshDevicesMessage {
@@ -33,6 +37,12 @@ interface ShowToastMessage {
 	variant: 'default' | 'destructive';
 	title: string;
 	message: string;
+}
+
+interface AgentStatus {
+	name: string;
+	isInstalled: boolean;
+	isConfigured: boolean;
 }
 
 type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage;
@@ -55,6 +65,7 @@ function SidebarPage({
 	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
 	const [operatingDeviceIds, setOperatingDeviceIds] = useState<Set<string>>(new Set());
 	const [gettingStartedDismissed, setGettingStartedDismissed] = useState<boolean>(false);
+	const [agentStatuses, setAgentStatuses] = useState<AgentStatus[]>([]);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
@@ -131,6 +142,10 @@ function SidebarPage({
 			console.log('sidebar: gettingStartedDismissed:', message.gettingStartedDismissed);
 			setGettingStartedDismissed(message.gettingStartedDismissed);
 		}
+
+		if (message.agentStatuses) {
+			setAgentStatuses(message.agentStatuses.filter(a => a.isInstalled));
+		}
 	};
 
 	const handleRefreshDevices = (message: RefreshDevicesMessage) => {
@@ -177,6 +192,12 @@ function SidebarPage({
 		// if running outside vscode (local dev of webview-ui), then automatically set port
 		if (vscode.isMockApi) {
 			setServerPort(12000);
+			setAgentStatuses([
+				{ name: 'Codex', isInstalled: true, isConfigured: true },
+				{ name: 'Cursor', isInstalled: true, isConfigured: true },
+				{ name: 'Gemini', isInstalled: true, isConfigured: false },
+				{ name: 'VSCode Copilot', isInstalled: true, isConfigured: false },
+			]);
 		}
 		/*
 		toast({
@@ -269,6 +290,66 @@ function SidebarPage({
 		}
 	};
 
+	const RenderAgentStatus = () => {
+		if (agentStatuses.length === 0) {
+			return null;
+		}
+
+		const handleClose = () => {
+		};
+
+		const onConfigureAgent = (agentName: string) => {
+		};
+
+		return (
+			<div className="px-3 py-4">
+			<div className="mt-4 p-3 bg-[#252526] border border-[#3e3e3e] rounded-md relative">
+				<button
+					onClick={handleClose}
+					className="absolute top-2 right-2 p-1 hover:bg-[#3e3e3e] rounded transition-colors"
+					aria-label="Close banner"
+				>
+					<X className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
+				</button>
+				<div className="flex flex-col gap-2 pr-6">
+					<div className="text-lg font-semibold mb-2">Connected Agents</div>
+					<div className="text-xs text-[#858585] mb-2" style={{ lineHeight: '1.5' }}>
+						These agents are installed on your computer. Click Configure to automatically set up the Mobile Deck MCP server and allow the agent to control connected devices.
+					</div>
+					<Table.Root size="2">
+						<Table.Body>
+							{agentStatuses.map((agent) => {
+								const color = agent.isConfigured ? '#22c55e' : '#9ca3af';
+								return (
+									<Table.Row key={agent.name} className="group">
+										<Table.RowHeaderCell className="pr-8">
+											<div className="flex items-center gap-2">
+												<span
+													className="inline-block h-3 w-3 rounded-full"
+													style={{ backgroundColor: color, borderRadius: '50%' }}
+												/>
+												<span className="text-sm font-medium text-[#111827]">{agent.name}</span>
+											</div>
+										</Table.RowHeaderCell>
+										<Table.Cell justify="end" className="text-right">
+											{!agent.isConfigured ? (
+												<a href="#" onClick={() => onConfigureAgent(agent.name)} className='text-xs text-[#00ff88]'>Configure &rarr;</a>
+											) : (
+												// empty link just to have the same height
+												<a href="#" onClick={() => {}} className='text-xs'>&nbsp;</a>
+											)}
+										</Table.Cell>
+									</Table.Row>
+								);
+							})}
+							</Table.Body>
+						</Table.Root>
+					</div>
+				</div>
+			</div>
+		);
+	};
+
 
 	return (
 		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
@@ -353,7 +434,9 @@ function SidebarPage({
 			</div>
 
 			{/* getting started banner - always visible after initial load */}
-			{hasInitiallyLoaded && !gettingStartedDismissed && <GettingStartedBanner />}
+			{/* {hasInitiallyLoaded && !gettingStartedDismissed && <GettingStartedBanner />} */}
+
+			<RenderAgentStatus />
 		</div>
 	);
 }

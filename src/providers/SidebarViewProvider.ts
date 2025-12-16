@@ -7,6 +7,13 @@ import { Telemetry } from '../services/telemetry/Telemetry';
 import { Logger } from '../services/logger/Logger';
 import { ExtensionUtils } from '../utils/ExtensionUtils';
 import { AuthenticationManager } from '../services/auth/AuthenticationManager';
+import * as os from 'node:os';
+import { CursorAgent } from '../services/mcp-integrations/cursor-agent';
+import { ClaudeAgent } from '../services/mcp-integrations/claude-code-agent';
+import { CodexAgent } from '../services/mcp-integrations/codex-agent';
+import { AntigravityAgent } from '../services/mcp-integrations/antigravity-agent';
+import { VSCodeCopilotAgent } from '../services/mcp-integrations/vs-copilot-agent';
+import { GeminiAgent } from '../services/mcp-integrations/gemini-agent';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -57,6 +64,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 						serverPort: this.cliServer.getJsonRpcServerPort(),
 						email: email || '',
 						gettingStartedDismissed: gettingStartedDismissed,
+						agentStatuses: this.getAgentStatuses(),
 					});
 					break;
 
@@ -123,6 +131,31 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
 					break;
+			}
+		});
+	}
+
+	private getAgentStatuses() {
+		const homeDir = os.homedir();
+		const currentPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+
+		const agents = [
+			{ name: 'Cursor', instance: new CursorAgent(homeDir) },
+			{ name: 'Claude Code', instance: new ClaudeAgent(homeDir, currentPath) },
+			{ name: 'Codex', instance: new CodexAgent(homeDir) },
+			{ name: 'Antigravity', instance: new AntigravityAgent(homeDir) },
+			{ name: 'VSCode Copilot', instance: new VSCodeCopilotAgent(homeDir) },
+			{ name: 'Gemini', instance: new GeminiAgent(homeDir, currentPath) },
+		];
+
+		return agents.map(({ name, instance }) => {
+			try {
+				const isInstalled = instance.isAgentInstalled();
+				const isConfigured = isInstalled ? instance.isMcpConfigured() : false;
+				return { name, isInstalled, isConfigured };
+			} catch (e) {
+				this.logger.log(`error checking agent status for ${name}: ${e}`);
+				return { name, isInstalled: false, isConfigured: false };
 			}
 		});
 	}
