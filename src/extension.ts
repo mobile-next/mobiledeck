@@ -264,6 +264,20 @@ class MobiledeckExtension {
 	public async deactivate() {
 		this.logger.log('Mobiledeck extension deactivated');
 
+		// dispose all webview panels before stopping the server
+		const deviceIds = this.devicePanelManager.ids();
+		deviceIds.forEach(deviceId => {
+			const panel = this.devicePanelManager.get(deviceId);
+			if (panel) {
+				panel.dispose();
+			}
+		});
+		
+		// clear the manager state after disposal
+		deviceIds.forEach(deviceId => {
+			this.devicePanelManager.delete(deviceId);
+		});
+
 		await this.telemetry.sendEvent('panel_deactivated');
 		await this.telemetry.flush();
 
