@@ -341,10 +341,10 @@ function SidebarPage({
 				</IconButton>
 				<Flex direction="column" gap="2" pr="6">
 					<Heading size="4" weight="medium" mb="2">
-						Connected Agents
+						Connected AI Agents
 					</Heading>
-					<Text size="1" color="gray" mb="2" style={{ lineHeight: 1.5 }}>
-						These agents are installed on your computer. Click Configure to automatically set up the Mobile Deck MCP server and allow the agent to control connected devices.
+					<Text size="1" color="gray" mb="2" style={{ lineHeight: 1.5, textAlign: 'justify' }}>
+						These agents are installed on your computer. Click <strong>Configure</strong> to automatically set up the <em>Mobile Deck MCP</em> server and allow the agent to control connected devices.
 					</Text>
 					<Table.Root size="2">
 						<Table.Body>
@@ -361,7 +361,7 @@ function SidebarPage({
 														backgroundColor: agent.isConfigured ? 'var(--green-9)' : 'var(--gray-9)'
 													}}
 												/>
-												<Text size="2" weight="medium">
+												<Text size="2" weight="medium" wrap="nowrap">
 													{agent.name}
 												</Text>
 											</Flex>
