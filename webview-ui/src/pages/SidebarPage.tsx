@@ -147,21 +147,12 @@ function SidebarPage({
 		}
 
 		if (message.agentStatuses) {
+			// note: we used to be sorting by installed first, but it moves
+			// items around when you click on "Configure..." and is just messy
 			const sortedAgents = message.agentStatuses
 				.filter(a => a.isInstalled)
-				.sort((a, b) => {
-					// configured agents first
-					if (a.isConfigured && !b.isConfigured) {
-						return -1;
-					}
-
-					if (!a.isConfigured && b.isConfigured) {
-						return 1;
-					}
-
-					// then sort by name
-					return a.name.localeCompare(b.name);
-				});
+				.sort((a, b) => a.name.localeCompare(b.name)
+			);
 
 			setAgentStatuses(sortedAgents);
 		}
