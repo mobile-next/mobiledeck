@@ -181,6 +181,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			agent.configureMcp();
 			this.logger.log(`MCP configuration completed for agent: ${agentName}`);
 
+			// Send telemetry event for successful configuration
+			this.telemetry.sendEvent('agent_mcp_configured', {
+				agentName: agentName
+			});
+
 			// Send updated agent statuses back to webview
 			webviewView.webview.postMessage({
 				command: 'configure',

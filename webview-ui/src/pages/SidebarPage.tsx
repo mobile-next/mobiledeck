@@ -69,6 +69,7 @@ function SidebarPage({
 	const [operatingDeviceIds, setOperatingDeviceIds] = useState<Set<string>>(new Set());
 	const [gettingStartedDismissed, setGettingStartedDismissed] = useState<boolean>(false);
 	const [agentStatuses, setAgentStatuses] = useState<AgentStatus[]>([]);
+	const [isAgentStatusVisible, setIsAgentStatusVisible] = useState<boolean>(true);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
@@ -301,11 +302,12 @@ function SidebarPage({
 	};
 
 	const RenderAgentStatus = () => {
-		if (agentStatuses.length === 0) {
+		if (agentStatuses.length === 0 || !isAgentStatusVisible) {
 			return null;
 		}
 
 		const handleClose = () => {
+			setIsAgentStatusVisible(false);
 		};
 
 		const onConfigureAgent = (agentName: string) => {
@@ -333,7 +335,7 @@ function SidebarPage({
 					color="gray"
 					onClick={handleClose}
 					aria-label="Close banner"
-					style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)' }}
+					style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', cursor: 'pointer' }}
 				>
 					<X size={16} />
 				</IconButton>
