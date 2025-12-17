@@ -163,7 +163,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		await manager.storeTokens(this.context, tokens, email);
 	}
 
-	private async handleEmailLogin(webviewView: vscode.WebviewView): Promise<void> {
+	private async handleEmailLogin(_webviewView: vscode.WebviewView): Promise<void> {
 		this.logger.log('email login requested from webview');
 		vscode.window.showErrorMessage('Email login is not implemented yet');
 	}

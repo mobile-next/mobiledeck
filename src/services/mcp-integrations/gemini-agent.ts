@@ -41,7 +41,7 @@ export class GeminiAgent implements Agent {
 			const fileContent = fs.readFileSync(this.settingsPath, 'utf-8');
 			const config = JSON.parse(fileContent);
 			return config.mcpServers && config.mcpServers[this.mobileMcpKey] !== undefined;
-		} catch (e) {
+		} catch {
 			return false;
 		}
 	}

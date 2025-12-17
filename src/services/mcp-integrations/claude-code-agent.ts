@@ -40,14 +40,14 @@ export class ClaudeAgent implements Agent {
 		try {
 			const fileContent = fs.readFileSync(this.claudeConfigPath, 'utf-8');
 			const config = JSON.parse(fileContent);
-			
+
 			if (!config.projects || !config.projects[this.currentPath]) {
 				return false;
 			}
 
 			const project = config.projects[this.currentPath];
 			return project.mcpServers && project.mcpServers[this.mobileMcpKey] !== undefined;
-		} catch (e) {
+		} catch {
 			return false;
 		}
 	}
@@ -80,7 +80,7 @@ export class ClaudeAgent implements Agent {
 		}
 
 		const project = config.projects[this.currentPath];
-		
+
 		if (!project.mcpServers) {
 			project.mcpServers = {};
 		}

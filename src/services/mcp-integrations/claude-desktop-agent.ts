@@ -41,7 +41,7 @@ export class ClaudeDesktopAgent implements Agent {
 			const config = JSON.parse(fileContent);
 
 			return config.mcpServers && config.mcpServers[this.mobileMcpKey] !== undefined;
-		} catch (e) {
+		} catch {
 			return false;
 		}
 	}

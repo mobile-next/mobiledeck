@@ -39,7 +39,7 @@ export class CursorAgent implements Agent {
 			const fileContent = fs.readFileSync(this.mcpConfigPath, 'utf-8');
 			const config = JSON.parse(fileContent);
 			return config.mcpServers && config.mcpServers[this.mobileMcpKey] !== undefined;
-		} catch (e) {
+		} catch {
 			return false;
 		}
 	}
@@ -51,7 +51,7 @@ export class CursorAgent implements Agent {
 			try {
 				const fileContent = fs.readFileSync(this.mcpConfigPath, 'utf-8');
 				config = JSON.parse(fileContent);
-			} catch (e) {
+			} catch {
 				config = {};
 			}
 		}
