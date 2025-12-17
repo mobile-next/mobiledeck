@@ -15,6 +15,7 @@ import { CodexAgent } from '../services/mcp-integrations/codex-agent';
 import { AntigravityAgent } from '../services/mcp-integrations/antigravity-agent';
 import { VSCodeCopilotAgent } from '../services/mcp-integrations/vs-copilot-agent';
 import { GeminiAgent } from '../services/mcp-integrations/gemini-agent';
+import { AgentFactory } from '../services/mcp-integrations/AgentFactory';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -129,6 +130,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					}
 					break;
 
+				case 'configureAgentMcp':
+					this.logger.log(`configure agent MCP requested for: ${message.agentName}`);
+					await this.handleConfigureAgentMcp(message.agentName, webviewView);
+					break;
+
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
 					break;
@@ -174,6 +180,36 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private async handleEmailLogin(webviewView: vscode.WebviewView): Promise<void> {
 		this.logger.log('email login requested from webview');
 		vscode.window.showErrorMessage('Email login is not implemented yet');
+	}
+
+	private async handleConfigureAgentMcp(agentName: string, webviewView: vscode.WebviewView): Promise<void> {
+		try {
+			const homeDir = os.homedir();
+			const currentPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+
+			// Get the agent instance using the factory
+			const agent = AgentFactory.createAgent(agentName, homeDir, currentPath);
+
+			// Configure the MCP for this agent
+			this.logger.log(`configuring MCP for agent: ${agentName}`);
+			agent.configureMcp();
+			this.logger.log(`MCP configuration completed for agent: ${agentName}`);
+
+			// Small delay to ensure file system operations are flushed
+			await new Promise(resolve => setTimeout(resolve, 100));
+
+			// Send updated agent statuses back to webview
+			webviewView.webview.postMessage({
+				command: 'configure',
+				agentStatuses: this.getAgentStatuses()
+			});
+
+			// Show success message
+			vscode.window.showInformationMessage(`Mobile MCP configured successfully for ${agentName}`);
+		} catch (error) {
+			this.logger.log(`error configuring agent MCP for ${agentName}: ${error instanceof Error ? error.message : String(error)}`);
+			vscode.window.showErrorMessage(`Failed to configure Mobile MCP for ${agentName}: ${error instanceof Error ? error.message : String(error)}`);
+		}
 	}
 
 	private async handleOAuthLogin(provider: string, webviewView: vscode.WebviewView): Promise<void> {

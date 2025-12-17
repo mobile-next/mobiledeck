@@ -37,13 +37,18 @@ interface ShowToastMessage {
 	message: string;
 }
 
+interface ConfigureAgentMcpMessage {
+	command: 'configureAgentMcp';
+	agentName: string;
+}
+
 interface AgentStatus {
 	name: string;
 	isInstalled: boolean;
 	isConfigured: boolean;
 }
 
-type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage;
+type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage | ConfigureAgentMcpMessage;
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
@@ -306,6 +311,10 @@ function SidebarPage({
 		};
 
 		const onConfigureAgent = (agentName: string) => {
+			vscode.postMessage({
+				command: 'configureAgentMcp',
+				agentName: agentName
+			});
 		};
 
 		return (
