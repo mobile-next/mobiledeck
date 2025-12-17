@@ -90,4 +90,8 @@ export class ClaudeAgent implements Agent {
 			fs.writeFileSync(this.claudeConfigPath, JSON.stringify(config, null, 2));
 		}
 	}
+
+	isRestartRequired(): boolean {
+		return false;
+	}
 }

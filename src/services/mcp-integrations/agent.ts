@@ -16,4 +16,10 @@ export interface Agent {
 	 * Creates the file and directory structure if needed
 	 */
 	configureMcp(): void;
+
+	/**
+	 * Checks if the agent requires a restart after MCP configuration
+	 * @returns true if the agent needs to be restarted
+	 */
+	isRestartRequired(): boolean;
 }

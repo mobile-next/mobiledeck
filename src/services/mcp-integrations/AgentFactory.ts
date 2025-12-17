@@ -4,10 +4,22 @@ import { ClaudeAgent } from './claude-code-agent';
 import { ClaudeDesktopAgent } from './claude-desktop-agent';
 import { CodexAgent } from './codex-agent';
 import { AntigravityAgent } from './antigravity-agent';
-import { VSCodeCopilotAgent } from './vs-copilot-agent';
 import { GeminiAgent } from './gemini-agent';
 
 export class AgentFactory {
+	private static readonly AGENT_KEYS = [
+		'Cursor',
+		'Claude Code',
+		'Claude Desktop',
+		'Codex',
+		'Antigravity',
+		'Gemini'
+	];
+
+	static getAllKeys(): string[] {
+		return [...this.AGENT_KEYS];
+	}
+
 	static createAgent(agentName: string, homeDir: string, currentPath: string): Agent {
 		switch (agentName) {
 			case 'Cursor':
@@ -20,8 +32,6 @@ export class AgentFactory {
 				return new CodexAgent(homeDir);
 			case 'Antigravity':
 				return new AntigravityAgent(homeDir);
-			case 'VSCode Copilot':
-				return new VSCodeCopilotAgent(homeDir);
 			case 'Gemini':
 				return new GeminiAgent(homeDir, currentPath);
 			default:

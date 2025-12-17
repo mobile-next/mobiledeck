@@ -62,14 +62,18 @@ export class CursorAgent implements Agent {
 
 		if (!config.mcpServers[this.mobileMcpKey]) {
 			config.mcpServers[this.mobileMcpKey] = this.mobileMcpValue;
-			
+
 			// Ensure the directory exists before writing
 			const configDir = path.dirname(this.mcpConfigPath);
 			if (!fs.existsSync(configDir)) {
 				fs.mkdirSync(configDir, { recursive: true });
 			}
-			
+
 			fs.writeFileSync(this.mcpConfigPath, JSON.stringify(config, null, 2));
 		}
+	}
+
+	isRestartRequired(): boolean {
+		return false;
 	}
 }

@@ -82,4 +82,8 @@ export class AntigravityAgent implements Agent {
 			fs.writeFileSync(this.mcpConfigPath, JSON.stringify(config, null, 2));
 		}
 	}
+
+	isRestartRequired(): boolean {
+		return false;
+	}
 }

@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { execSync } from 'node:child_process';
 import { Agent } from "./agent";
 
 interface ClaudeMcpServerConfig {
@@ -66,6 +67,23 @@ export class ClaudeDesktopAgent implements Agent {
 		if (!config.mcpServers[this.mobileMcpKey]) {
 			config.mcpServers[this.mobileMcpKey] = this.mobileMcpValue;
 			fs.writeFileSync(this.claudeConfigPath, JSON.stringify(config, null, 2));
+		}
+	}
+
+	isRestartRequired(): boolean {
+		if (process.platform !== 'darwin') {
+			// TODO: implement for windows/linux
+			return true;
+		}
+
+		try {
+			return execSync('/bin/ps -o command')
+				.toString()
+				.split('\n')
+				.includes('/Applications/Claude.app/Contents/MacOS/Claude');
+		} catch (e) {
+			console.error('Failed to check running processes:', e);
+			return true;
 		}
 	}
 }

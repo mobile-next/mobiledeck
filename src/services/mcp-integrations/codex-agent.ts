@@ -63,4 +63,8 @@ export class CodexAgent implements Agent {
 		const updated = content + section;
 		fs.writeFileSync(this.configPath, updated);
 	}
+
+	isRestartRequired(): boolean {
+		return false;
+	}
 }

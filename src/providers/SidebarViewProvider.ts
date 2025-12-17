@@ -8,13 +8,6 @@ import { Logger } from '../services/logger/Logger';
 import { ExtensionUtils } from '../utils/ExtensionUtils';
 import { AuthenticationManager } from '../services/auth/AuthenticationManager';
 import * as os from 'node:os';
-import { CursorAgent } from '../services/mcp-integrations/cursor-agent';
-import { ClaudeAgent } from '../services/mcp-integrations/claude-code-agent';
-import { ClaudeDesktopAgent } from '../services/mcp-integrations/claude-desktop-agent';
-import { CodexAgent } from '../services/mcp-integrations/codex-agent';
-import { AntigravityAgent } from '../services/mcp-integrations/antigravity-agent';
-import { VSCodeCopilotAgent } from '../services/mcp-integrations/vs-copilot-agent';
-import { GeminiAgent } from '../services/mcp-integrations/gemini-agent';
 import { AgentFactory } from '../services/mcp-integrations/AgentFactory';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
@@ -146,18 +139,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		const homeDir = os.homedir();
 		const currentPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
 
-		const agents = [
-			{ name: 'Cursor', instance: new CursorAgent(homeDir) },
-			{ name: 'Claude Code', instance: new ClaudeAgent(homeDir, currentPath) },
-			{ name: 'Claude Desktop', instance: new ClaudeDesktopAgent(homeDir) },
-			{ name: 'Codex', instance: new CodexAgent(homeDir) },
-			{ name: 'Antigravity', instance: new AntigravityAgent(homeDir) },
-			{ name: 'VSCode Copilot', instance: new VSCodeCopilotAgent(homeDir) },
-			{ name: 'Gemini', instance: new GeminiAgent(homeDir, currentPath) },
-		];
+		const agentKeys = AgentFactory.getAllKeys();
 
-		return agents.map(({ name, instance }) => {
+		return agentKeys.map((name) => {
 			try {
+				const instance = AgentFactory.createAgent(name, homeDir, currentPath);
 				const isInstalled = instance.isAgentInstalled();
 				const isConfigured = isInstalled ? instance.isMcpConfigured() : false;
 				return { name, isInstalled, isConfigured };
@@ -194,9 +180,6 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			this.logger.log(`configuring MCP for agent: ${agentName}`);
 			agent.configureMcp();
 			this.logger.log(`MCP configuration completed for agent: ${agentName}`);
-
-			// Small delay to ensure file system operations are flushed
-			await new Promise(resolve => setTimeout(resolve, 100));
 
 			// Send updated agent statuses back to webview
 			webviewView.webview.postMessage({

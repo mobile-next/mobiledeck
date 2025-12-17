@@ -80,4 +80,8 @@ export class GeminiAgent implements Agent {
 
 		fs.writeFileSync(this.settingsPath, JSON.stringify(config, null, 2));
 	}
+
+	isRestartRequired(): boolean {
+		return false;
+	}
 }

@@ -28,7 +28,7 @@ function LoginPage() {
 		vscode.postMessage({
 			command: 'skipLogin'
 		});
-	};	
+	};
 
 	const onGoogleLogin = () => {
 		vscode.postMessage({
@@ -96,6 +96,7 @@ function LoginPage() {
 					</Box>
 					<Heading
 						size="9"
+						align="center"
 						style={{
 							...customStyles.gradientHeading,
 							margin: 0,
@@ -207,7 +208,7 @@ function LoginPage() {
 							<polyline points="22,6 12,13 2,6"></polyline>
 						</svg>
 						Continue with Email
-					</Button>				
+					</Button>
 
 					{/*
 					<div style={styles.divider}>
