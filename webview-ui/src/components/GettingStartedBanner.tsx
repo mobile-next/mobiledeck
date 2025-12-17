@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { Box, Flex, Text, Button, IconButton } from '@radix-ui/themes';
 import vscode from '../vscode';
 
 function GettingStartedBanner() {
@@ -16,31 +17,52 @@ function GettingStartedBanner() {
 	};
 
 	return (
-		<div className="px-3 py-4">
-			<div className="mt-4 p-3 bg-[#252526] border border-[#3e3e3e] rounded-md relative">
-				<button
+		<Box px="3" py="4">
+			<Box
+				mt="4"
+				p="3"
+				style={{
+					backgroundColor: 'var(--gray-2)',
+					border: '1px solid var(--gray-6)',
+					borderRadius: 'var(--radius-3)',
+					position: 'relative'
+				}}
+			>
+				<IconButton
+					size="1"
+					variant="ghost"
+					color="gray"
 					onClick={handleClose}
-					className="absolute top-2 right-2 p-1 hover:bg-[#3e3e3e] rounded transition-colors"
 					aria-label="Close banner"
+					style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)' }}
 				>
-					<X className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
-				</button>
-				<div className="flex flex-col gap-2 pr-6">
-					<p className="text-sm text-[#cccccc]">
+					<X size={16} />
+				</IconButton>
+				<Flex direction="column" gap="2" pr="6">
+					<Text size="2">
 						Can't find the device you were looking for?
-					</p>
-					<p className="text-xs text-[#858585]">
+					</Text>
+					<Text size="1" color="gray">
 						No worries, here is our getting started guide. You can start with a simulator or emulator within minutes.
-					</p>
-					<button
+					</Text>
+					<Button
+						size="2"
+						variant="soft"
+						mt="1"
 						onClick={handleGettingStartedClick}
-						className="mt-1 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:border-[#00ff88] hover:bg-[#2a2a2a] text-[#888] hover:text-[#00ff88] text-sm transition-all w-fit"
+						style={{
+							width: 'fit-content',
+							background: '#1a1a1a',
+							border: '1px solid #2a2a2a',
+							color: '#888',
+						}}
+						className="hover-accent-button"
 					>
 						Read our wiki 🚀
-					</button>
-				</div>
-			</div>
-		</div>
+					</Button>
+				</Flex>
+			</Box>
+		</Box>
 	);
 }
 
