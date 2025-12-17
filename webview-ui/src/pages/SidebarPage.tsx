@@ -151,11 +151,18 @@ function SidebarPage({
 				.filter(a => a.isInstalled)
 				.sort((a, b) => {
 					// configured agents first
-					if (a.isConfigured && !b.isConfigured) return -1;
-					if (!a.isConfigured && b.isConfigured) return 1;
+					if (a.isConfigured && !b.isConfigured) {
+						return -1;
+					}
+
+					if (!a.isConfigured && b.isConfigured) {
+						return 1;
+					}
+
 					// then sort by name
 					return a.name.localeCompare(b.name);
 				});
+
 			setAgentStatuses(sortedAgents);
 		}
 	};
