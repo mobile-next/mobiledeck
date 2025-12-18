@@ -297,11 +297,6 @@ class MobiledeckExtension {
 		return '';
 	}
 
-	private async onStartSimulator() {
-		this.logger.log('mobiledeck.startSimulator command executed');
-		// TODO: Implement simulator/emulator start
-	}
-
 	private async onConnectToAIAgent() {
 		this.logger.log('mobiledeck.connectToAIAgent command executed');
 
@@ -375,7 +370,6 @@ class MobiledeckExtension {
 
 		// command palette commands
 		this.registerCommand(context, 'mobiledeck.selectDevice', () => this.onSelectDevice());
-		this.registerCommand(context, 'mobiledeck.startSimulator', () => this.onStartSimulator());
 		this.registerCommand(context, 'mobiledeck.connectToAIAgent', () => this.onConnectToAIAgent());
 
 		this.telemetry.sendEvent('panel_activated', {

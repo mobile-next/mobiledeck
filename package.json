@@ -74,11 +74,6 @@
         "icon": "$(device-mobile)"
       },
       {
-        "command": "mobiledeck.startSimulator",
-        "title": "Mobile Deck: Start Simulator/Emulator",
-        "icon": "$(play)"
-      },
-      {
         "command": "mobiledeck.connectToAIAgent",
         "title": "Mobile Deck: Connect to AI Agent",
         "icon": "$(plug)"
