@@ -67,6 +67,21 @@
         "command": "mobiledeck.signOut",
         "title": "Sign Out from Mobile Deck",
         "enablement": "mobiledeck.isAuthenticated"
+      },
+      {
+        "command": "mobiledeck.selectDevice",
+        "title": "Mobile Deck: Select Device",
+        "icon": "$(device-mobile)"
+      },
+      {
+        "command": "mobiledeck.startSimulator",
+        "title": "Mobile Deck: Start Simulator/Emulator",
+        "icon": "$(play)"
+      },
+      {
+        "command": "mobiledeck.connectToAIAgent",
+        "title": "Mobile Deck: Connect to AI Agent",
+        "icon": "$(plug)"
       }
     ],
     "menus": {

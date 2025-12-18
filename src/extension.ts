@@ -8,6 +8,8 @@ import { Telemetry } from './services/telemetry/Telemetry';
 import { Logger } from './services/logger/Logger';
 import { AuthenticationManager } from './services/auth/AuthenticationManager';
 import { DevicePanelManager } from './managers/DevicePanelManager';
+import { JsonRpcClient } from '@shared/JsonRpcClient';
+import { MobilecliClient } from '@shared/MobilecliClient';
 
 const SIDEBAR_VIEW_ID = 'mobiledeckDevices';
 const FEEDBACK_FORM_URL = "https://forms.gle/eFb9opGjCCxCyX4s9";
@@ -190,6 +192,121 @@ class MobiledeckExtension {
 		}
 	}
 
+	private async onSelectDevice() {
+		this.logger.log('mobiledeck.selectDevice command executed');
+
+		if (!this.cliServer) {
+			vscode.window.showErrorMessage('Mobile CLI server is not running');
+			return;
+		}
+
+		try {
+			// step 1: ask for platform
+			const platformChoice = await vscode.window.showQuickPick(
+				[
+					{ label: 'iOS', value: 'ios' },
+					{ label: 'Android', value: 'android' }
+				],
+				{
+					placeHolder: 'Select a platform'
+				}
+			);
+
+			if (!platformChoice) {
+				return;
+			}
+
+			// step 2: fetch devices for selected platform
+			const serverPort = this.cliServer.getJsonRpcServerPort();
+			const jsonRpcClient = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+			const mobilecliClient = new MobilecliClient(jsonRpcClient);
+
+			const response = await mobilecliClient.listDevices(true);
+			const allDevices = response.devices;
+
+			// filter by platform
+			const platformDevices = allDevices.filter(
+				device => device.platform === platformChoice.value
+			);
+
+			if (platformDevices.length === 0) {
+				vscode.window.showInformationMessage(`No ${platformChoice.label} devices found`);
+				return;
+			}
+
+			// sort devices: online first, then offline, alphabetically within each group
+			const sortedDevices = this.sortDevices(platformDevices);
+
+			// create QuickPick items
+			const quickPickItems = sortedDevices.map(device => {
+				const onlineIndicator = device.state === 'online' ? '🟢 ' : '';
+				const versionLabel = device.version ? ` (${device.version})` : '';
+				const label = `${onlineIndicator}${device.name}${versionLabel}`;
+
+				return {
+					label: label,
+					description: device.id,
+					device: device
+				};
+			});
+
+			// step 3: show device list
+			const selected = await vscode.window.showQuickPick(quickPickItems, {
+				placeHolder: `Select a ${platformChoice.label} device`
+			});
+
+			if (selected && this.context) {
+				this.telemetry.sendEvent('device_selected_from_command_palette', {
+					DeviceType: selected.device.type,
+					DevicePlatform: selected.device.platform,
+					DeviceState: selected.device.state || 'unknown'
+				});
+
+				// open device panel
+				this.onOpenDevicePanel(this.context, selected.device);
+			}
+		} catch (error) {
+			this.logger.log(`Error fetching devices: ${error}`);
+			vscode.window.showErrorMessage('Failed to fetch devices');
+		}
+	}
+
+	private sortDevices(devices: DeviceDescriptor[]): DeviceDescriptor[] {
+		return devices.sort((a, b) => {
+			// online devices come first
+			const aOnline = a.state === 'online' ? 0 : 1;
+			const bOnline = b.state === 'online' ? 0 : 1;
+
+			if (aOnline !== bOnline) {
+				return aOnline - bOnline;
+			}
+
+			// within same state, sort alphabetically by name
+			return a.name.localeCompare(b.name);
+		});
+	}
+
+	private getDeviceTypeLabel(device: DeviceDescriptor): string {
+		if (device.type === 'simulator') {
+			return 'Simulator';
+		} else if (device.type === 'emulator') {
+			return 'Emulator';
+		} else if (device.type === 'real') {
+			return 'Real Device';
+		}
+		return '';
+	}
+
+	private async onStartSimulator() {
+		this.logger.log('mobiledeck.startSimulator command executed');
+		// TODO: Implement simulator/emulator start
+	}
+
+	private async onConnectToAIAgent() {
+		this.logger.log('mobiledeck.connectToAIAgent command executed');
+		// TODO: Implement AI agent connection
+	}
+
 	public async activate(context: vscode.ExtensionContext) {
 		this.logger.log('Mobiledeck extension is being activated');
 
@@ -243,6 +360,11 @@ class MobiledeckExtension {
 		this.registerCommand(context, 'mobiledeck.connect', (device) => this.onConnect(context, device));
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
 		this.registerCommand(context, 'mobiledeck.closeDevicePanel', (deviceId) => this.onCloseDevicePanel(context, deviceId));
+
+		// command palette commands
+		this.registerCommand(context, 'mobiledeck.selectDevice', () => this.onSelectDevice());
+		this.registerCommand(context, 'mobiledeck.startSimulator', () => this.onStartSimulator());
+		this.registerCommand(context, 'mobiledeck.connectToAIAgent', () => this.onConnectToAIAgent());
 
 		this.telemetry.sendEvent('panel_activated', {
 			IsLoggedIn: !!email
