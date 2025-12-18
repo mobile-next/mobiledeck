@@ -97,14 +97,16 @@ class MobiledeckExtension {
 		}
 	}
 
-	private async startCliServer(context: vscode.ExtensionContext) {
+	private createCliServer(context: vscode.ExtensionContext) {
 		this.cliServer = new MobileCliServer(
 			context,
 			this.telemetry,
 			(exitCode) => this.onCliServerExit(exitCode)
 		);
+	}
 
-		await this.cliServer.launchMobilecliServer()
+	private async startCliServer(context: vscode.ExtensionContext) {
+		await this.cliServer!.launchMobilecliServer()
 			.catch(error => {
 				this.logger.log('failed to launch mobilecli server: ' + error.message);
 				this.telemetry.sendEvent('mobilecli_server_start_failed', {
@@ -286,19 +288,7 @@ class MobiledeckExtension {
 		});
 	}
 
-	private getDeviceTypeLabel(device: DeviceDescriptor): string {
-		if (device.type === 'simulator') {
-			return 'Simulator';
-		} else if (device.type === 'emulator') {
-			return 'Emulator';
-		} else if (device.type === 'real') {
-			return 'Real Device';
-		}
-		return '';
-	}
-
 	private async onConnectToAIAgent() {
-		this.logger.log('mobiledeck.connectToAIAgent command executed');
 
 		// make the Mobile Deck sidebar visible
 		await vscode.commands.executeCommand('mobiledeckDevices.focus');
@@ -315,7 +305,7 @@ class MobiledeckExtension {
 	}
 
 	public async activate(context: vscode.ExtensionContext) {
-		this.logger.log('Mobiledeck extension is being activated');
+		this.logger.log('Extension is being activated');
 
 		// store context for later use
 		this.context = context;
@@ -329,19 +319,22 @@ class MobiledeckExtension {
 
 		this.telemetry = new Telemetry(distinctId);
 
-		await this.startCliServer(context);
+		// create a cli server instance, so we always have one
+		this.createCliServer(context);
 
-		if (!this.cliServer) {
-			throw new Error('failed to initialize cli server');
-		}
+		// try starting it in the background, so activate finishes quickly
+		this.startCliServer(context).catch((error) => {
+			this.logger.log('failed to start cli server: ' + error.message);
+		});
 
 		// register the sidebar webview provider
 		this.sidebarProvider = new SidebarViewProvider(
 			context,
-			this.cliServer,
+			this.cliServer!,
 			this.telemetry,
 			(devices) => this.broadcastDevicesToPanels(devices)
 		);
+
 		context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW_ID, this.sidebarProvider, {
 				webviewOptions: {
@@ -376,7 +369,7 @@ class MobiledeckExtension {
 			IsLoggedIn: !!email
 		});
 
-		this.logger.log('Mobiledeck extension activated successfully');
+		this.logger.log('Extension activated successfully');
 	}
 
 	private async updateAuthenticationContext(context: vscode.ExtensionContext) {
@@ -404,7 +397,7 @@ class MobiledeckExtension {
 				panel.dispose();
 			}
 		});
-		
+
 		// clear the manager state after disposal
 		deviceIds.forEach(deviceId => {
 			this.devicePanelManager.delete(deviceId);
