@@ -19,6 +19,7 @@ interface ConfigureMessage {
 	email?: string;
 	gettingStartedDismissed?: boolean;
 	agentStatuses?: AgentStatus[];
+	agentStatusVisible?: boolean;
 }
 
 interface RefreshDevicesMessage {
@@ -156,6 +157,11 @@ function SidebarPage({
 			);
 
 			setAgentStatuses(sortedAgents);
+		}
+
+		if (message.agentStatusVisible !== undefined) {
+			console.log('sidebar: agentStatusVisible:', message.agentStatusVisible);
+			setIsAgentStatusVisible(message.agentStatusVisible);
 		}
 	};
 

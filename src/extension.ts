@@ -239,7 +239,7 @@ class MobiledeckExtension {
 
 			// create QuickPick items
 			const quickPickItems = sortedDevices.map(device => {
-				const onlineIndicator = device.state === 'online' ? '🟢 ' : '';
+				const onlineIndicator = device.state === 'online' ? '$(circle-filled) ' : '';
 				const versionLabel = device.version ? ` (${device.version})` : '';
 				const label = `${onlineIndicator}${device.name}${versionLabel}`;
 
@@ -304,7 +304,19 @@ class MobiledeckExtension {
 
 	private async onConnectToAIAgent() {
 		this.logger.log('mobiledeck.connectToAIAgent command executed');
-		// TODO: Implement AI agent connection
+
+		// make the Mobile Deck sidebar visible
+		await vscode.commands.executeCommand('mobiledeckDevices.focus');
+
+		// send configure message to show agent status
+		if (this.sidebarProvider) {
+			this.sidebarProvider.sendMessage({
+				command: 'configure',
+				agentStatusVisible: true
+			});
+		}
+
+		this.telemetry.sendEvent('connect_to_ai_agent_clicked');
 	}
 
 	public async activate(context: vscode.ExtensionContext) {
