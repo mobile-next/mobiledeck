@@ -1,0 +1,28 @@
+/* Hover states using Radix theme tokens */
+.hover-bg-gray-3:hover {
+  background-color: var(--gray-3);
+}
+
+.hover-bg-gray-6:hover {
+  background-color: var(--gray-6);
+}
+
+.hover-color-gray-12:hover {
+  color: var(--gray-12);
+}
+
+/* Transition utilities */
+.transition-colors {
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+/* Accent button hover */
+.hover-accent-button {
+  transition: all 150ms ease;
+}
+
+.hover-accent-button:hover {
+  background-color: #2a2a2a !important;
+  border-color: #00ff88 !important;
+  color: #00ff88 !important;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { Box, Flex, Text, Heading, Table, Separator, Link, IconButton } from '@radix-ui/themes';
 import vscode from '../vscode';
 import { JsonRpcClient } from '@shared/JsonRpcClient';
 import { MobilecliClient } from '@shared/MobilecliClient';
@@ -17,6 +18,7 @@ interface ConfigureMessage {
 	serverPort?: number;
 	email?: string;
 	gettingStartedDismissed?: boolean;
+	agentStatuses?: AgentStatus[];
 }
 
 interface RefreshDevicesMessage {
@@ -35,7 +37,18 @@ interface ShowToastMessage {
 	message: string;
 }
 
-type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage;
+interface ConfigureAgentMcpMessage {
+	command: 'configureAgentMcp';
+	agentName: string;
+}
+
+interface AgentStatus {
+	name: string;
+	isInstalled: boolean;
+	isConfigured: boolean;
+}
+
+type SidebarMessage = ConfigureMessage | RefreshDevicesMessage | UpdateConnectedDevicesMessage | ShowToastMessage | ConfigureAgentMcpMessage;
 
 interface SidebarPageProps {
 	onDeviceClicked?: (device: DeviceDescriptor) => void;
@@ -55,6 +68,8 @@ function SidebarPage({
 	const [connectedDeviceIds, setConnectedDeviceIds] = useState<string[]>([]);
 	const [operatingDeviceIds, setOperatingDeviceIds] = useState<Set<string>>(new Set());
 	const [gettingStartedDismissed, setGettingStartedDismissed] = useState<boolean>(false);
+	const [agentStatuses, setAgentStatuses] = useState<AgentStatus[]>([]);
+	const [isAgentStatusVisible, setIsAgentStatusVisible] = useState<boolean>(true);
 
 	const jsonRpcClientRef = useRef<JsonRpcClient>(new JsonRpcClient(`http://localhost:${serverPort}/rpc`));
 	const mobilecliClientRef = useRef<MobilecliClient>(new MobilecliClient(jsonRpcClientRef.current));
@@ -131,6 +146,17 @@ function SidebarPage({
 			console.log('sidebar: gettingStartedDismissed:', message.gettingStartedDismissed);
 			setGettingStartedDismissed(message.gettingStartedDismissed);
 		}
+
+		if (message.agentStatuses) {
+			// note: we used to be sorting by installed first, but it moves
+			// items around when you click on "Configure..." and is just messy
+			const sortedAgents = message.agentStatuses
+				.filter(a => a.isInstalled)
+				.sort((a, b) => a.name.localeCompare(b.name)
+			);
+
+			setAgentStatuses(sortedAgents);
+		}
 	};
 
 	const handleRefreshDevices = (message: RefreshDevicesMessage) => {
@@ -174,6 +200,16 @@ function SidebarPage({
 			command: 'onInitialized'
 		});
 
+		// if running outside vscode (local dev of webview-ui), then automatically set port
+		if (vscode.isMockApi) {
+			setServerPort(12000);
+			setAgentStatuses([
+				{ name: 'Codex', isInstalled: true, isConfigured: true },
+				{ name: 'Cursor', isInstalled: true, isConfigured: true },
+				{ name: 'Gemini', isInstalled: true, isConfigured: false },
+				{ name: 'VSCode Copilot', isInstalled: true, isConfigured: false },
+			]);
+		}
 		/*
 		toast({
 			variant: "destructive",
@@ -265,17 +301,117 @@ function SidebarPage({
 		}
 	};
 
+	const RenderAgentStatus = () => {
+		if (agentStatuses.length === 0 || !isAgentStatusVisible) {
+			return null;
+		}
+
+		const handleClose = () => {
+			setIsAgentStatusVisible(false);
+		};
+
+		const onConfigureAgent = (agentName: string) => {
+			vscode.postMessage({
+				command: 'configureAgentMcp',
+				agentName: agentName
+			});
+		};
+
+		return (
+			<Box px="3" py="4">
+			<Box
+				mt="4"
+				p="3"
+				style={{
+					backgroundColor: 'var(--gray-2)',
+					border: '1px solid var(--gray-6)',
+					borderRadius: 'var(--radius-3)',
+					position: 'relative'
+				}}
+			>
+				<IconButton
+					size="1"
+					variant="ghost"
+					color="gray"
+					onClick={handleClose}
+					aria-label="Close banner"
+					style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', cursor: 'pointer' }}
+				>
+					<X size={16} />
+				</IconButton>
+				<Flex direction="column" gap="2" pr="6">
+					<Heading size="4" weight="medium" mb="2">
+						Connected AI Agents
+					</Heading>
+					<Text size="1" color="gray" mb="2" style={{ lineHeight: 1.5, textAlign: 'justify' }}>
+						These agents are installed on your computer. Click <strong>Configure</strong> to automatically set up the <em>Mobile Deck MCP</em> server and allow the agent to control connected devices.
+					</Text>
+					<Table.Root size="2">
+						<Table.Body>
+							{agentStatuses.map((agent) => {
+								return (
+									<Table.Row key={agent.name}>
+										<Table.RowHeaderCell>
+											<Flex align="center" gap="2" pr="8">
+												<Box
+													style={{
+														width: '12px',
+														height: '12px',
+														borderRadius: '50%',
+														backgroundColor: agent.isConfigured ? 'var(--green-9)' : 'var(--gray-9)'
+													}}
+												/>
+												<Text size="2" weight="medium" wrap="nowrap">
+													{agent.name}
+												</Text>
+											</Flex>
+										</Table.RowHeaderCell>
+										<Table.Cell justify="end">
+											{!agent.isConfigured ? (
+												<Link
+													size="1"
+													color="gray"
+													href="#"
+													onClick={(e) => { e.preventDefault(); onConfigureAgent(agent.name); }}
+												>
+													Configure &rarr;
+												</Link>
+											) : (
+												<Text size="1" color="gray">Ready</Text>
+											)}
+										</Table.Cell>
+									</Table.Row>
+								);
+							})}
+							</Table.Body>
+						</Table.Root>
+					</Flex>
+				</Box>
+			</Box>
+		);
+	};
+
 
 	return (
-		<div className="flex flex-col h-screen bg-[#1e1e1e] text-[#cccccc]">
+		<Flex direction="column" height="100vh" style={{ backgroundColor: 'var(--gray-1)', color: 'var(--gray-12)' }}>
 			<Toaster />
 			{/* device list */}
-			<div className="flex-1 overflow-y-auto">
+			<Box flexGrow="1" style={{ overflowY: 'auto' }}>
 				{/* local devices section */}
-				<div className="px-4 py-2">
-					<div
-						className="flex items-center gap-2 text-sm text-[#cccccc] mb-2 cursor-pointer hover:bg-[#2d2d2d] rounded px-1 py-1 select-none"
+				<Box px="4" py="2">
+					<Flex
+						align="center"
+						gap="2"
+						mb="2"
+						px="1"
+						py="1"
 						onClick={() => setIsLocalDevicesExpanded(!isLocalDevicesExpanded)}
+						style={{
+							cursor: 'pointer',
+							borderRadius: 'var(--radius-2)',
+							userSelect: 'none',
+						}}
+						className="hover-bg-gray-3 transition-colors"
 					>
 						{isLocalDevicesExpanded ? (
 							<ChevronDown className="h-4 w-4 flex-shrink-0" />
@@ -285,17 +421,19 @@ function SidebarPage({
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
 							<path d="M11 2H5a1 1 0 00-1 1v10a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1zM8 12.5a.5.5 0 110-1 .5.5 0 010 1z" />
 						</svg>
-						<span className="font-medium">Local devices:</span>
-						<span className="text-[#858585]">{devices.length} device{devices.length !== 1 ? 's' : ''}</span>
-					</div>
+						<Text size="2" weight="medium">Local devices:</Text>
+						<Text size="2" color="gray">{devices.length} device{devices.length !== 1 ? 's' : ''}</Text>
+					</Flex>
 
 					{/* device items */}
 					{isLocalDevicesExpanded && (
-						<div className="ml-6">
+						<Box ml="6">
 							{devices.length === 0 ? (
-								<div className="text-xs text-[#858585] py-2">
-									{(!hasInitiallyLoaded && isRefreshing) ? 'Loading devices...' : 'No devices found'}
-								</div>
+								<Box py="2">
+									<Text size="1" color="gray">
+										{(!hasInitiallyLoaded && isRefreshing) ? 'Loading devices...' : 'No devices found'}
+									</Text>
+								</Box>
 							) : (
 								<>
 									{/* available devices section (includes both connected and non-connected) */}
@@ -343,14 +481,16 @@ function SidebarPage({
 									)}
 								</>
 							)}
-						</div>
+						</Box>
 					)}
-				</div>
-			</div>
+				</Box>
+			</Box>
 
 			{/* getting started banner - always visible after initial load */}
-			{hasInitiallyLoaded && !gettingStartedDismissed && <GettingStartedBanner />}
-		</div>
+			{/* {hasInitiallyLoaded && !gettingStartedDismissed && <GettingStartedBanner />} */}
+
+			<RenderAgentStatus />
+		</Flex>
 	);
 }
 

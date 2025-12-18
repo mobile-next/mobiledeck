@@ -5,6 +5,8 @@ declare function acquireVsCodeApi(): any;
 const vscode = typeof acquireVsCodeApi === 'function'
 	? acquireVsCodeApi()
 	: {
+		isMockApi: true,
+		
 		// mock for standalone development
 		postMessage: (message: any) => {
 			console.log('mobiledeck: mock postMessage', message);

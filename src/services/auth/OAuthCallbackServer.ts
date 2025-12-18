@@ -99,6 +99,9 @@ export class OAuthCallbackServer {
 			// remove parameters so it's human readable
 			const urlWithoutParams = window.location.origin + window.location.pathname;
 			window.history.replaceState({}, document.title, urlWithoutParams);
+
+			// try to automatically open vscode
+			window.location.href = "https://vscode.dev/redirect?url=vscode://";
 		</script>
 	</body>
 	</html>

@@ -1,5 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Theme } from '@radix-ui/themes';
+import '@radix-ui/themes/styles.css';
+import './styles/radix-overrides.css';
 import LoginPage from './pages/LoginPage';
 import ErrorPage from './pages/ErrorPage';
 import SidebarPage from './pages/SidebarPage';
@@ -37,6 +40,8 @@ switch (page) {
 
 root.render(
 	<React.StrictMode>
-		<PageComponent />
+		<Theme appearance="dark" accentColor="gray" grayColor="gray" radius="medium">
+			<PageComponent />
+		</Theme>
 	</React.StrictMode>
 );

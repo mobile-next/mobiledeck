@@ -219,7 +219,11 @@ class MobiledeckExtension {
 			(devices) => this.broadcastDevicesToPanels(devices)
 		);
 		context.subscriptions.push(
-			vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW_ID, this.sidebarProvider)
+			vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW_ID, this.sidebarProvider, {
+				webviewOptions: {
+					retainContextWhenHidden: true,
+				},
+			})
 		);
 
 		// set initial authentication context

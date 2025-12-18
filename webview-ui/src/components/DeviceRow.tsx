@@ -1,5 +1,6 @@
 import React from 'react';
 import { MoreVertical, Play, Loader2, RotateCw, Power } from "lucide-react";
+import { Flex, Text, Box } from '@radix-ui/themes';
 import { AndroidIcon, IosIcon } from '../CustomIcons';
 import { DeviceDescriptor, DevicePlatform, DeviceType } from '@shared/models';
 import {
@@ -35,71 +36,89 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 	};
 
 	return (
-		<div
-			className={`flex items-center gap-2 py-1.5 px-2 hover:bg-[#2d2d2d] rounded group ${isOperating ? 'cursor-default' : 'cursor-pointer'}`}
+		<Flex
+			align="center"
+			gap="2"
+			py="1"
+			px="2"
 			onClick={handleRowClick}
+			style={{
+				cursor: isOperating ? 'default' : 'pointer',
+				borderRadius: 'var(--radius-2)'
+			}}
+			className="hover-bg-gray-3 transition-colors"
 		>
 			{/* device icon */}
-			<div className="flex-shrink-0">
+			<Box flexShrink="0">
 				{device.platform === DevicePlatform.ANDROID ? <AndroidIcon /> : <IosIcon />}
-			</div>
+			</Box>
 
 			{/* device name and type */}
-			<div className="flex-1 min-w-0 flex flex-col" style={{textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "clip"}}>
-				<span className="text-sm text-white">
+			<Flex direction="column" flexGrow="1" style={{minWidth: 0, textOverflow: "ellipsis", whiteSpace: "nowrap", overflow: "clip"}}>
+				<Text size="2" style={{color: 'white'}}>
 					{device.name}
-				</span>
-				<span className="text-xs text-[#858585]">
+				</Text>
+				<Text size="1" color="gray">
 					{device.platform === DevicePlatform.IOS ? 'iOS' : 'Android'}
 					{device.version && ` ${device.version}`}
 					{' • '}
 					{device.type === DeviceType.EMULATOR && 'Emulator'}
 					{device.type === DeviceType.SIMULATOR && 'Simulator'}
 					{device.type === DeviceType.REAL && 'Real Device'}
-				</span>
-			</div>
+				</Text>
+			</Flex>
 
 			{/* action buttons */}
-			<div className="flex items-center gap-1">
+			<Flex align="center" gap="1">
 				{isOperating ? (
-					<div className="p-1">
-						<Loader2 className="h-4 w-4 text-[#858585] animate-spin" />
-					</div>
+					<Box p="1">
+						<Loader2 size={16} color="var(--gray-11)" className="animate-spin" />
+					</Box>
 				) : (
 					<>
 						{/* connect button - shown for all available and offline devices */}
 						{onConnect && (
-							<button
+							<Box
 								onClick={(e) => handleButtonClick(e, () => onConnect(device))}
-								className="p-1 hover:bg-[#3e3e3e] rounded transition-colors cursor-pointer"
+								p="1"
+								style={{
+									cursor: 'pointer',
+									borderRadius: 'var(--radius-2)'
+								}}
+								className="hover-bg-gray-6 transition-colors"
 								title="Connect"
 							>
-								<Play className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
-							</button>
+								<Play size={16} color="var(--gray-11)" />
+							</Box>
 						)}
 
 						{/* kebab menu for reboot/shutdown - shown for connected/available devices */}
 						{isAvailable && (onReboot || onShutdown) && (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<button
+									<Box
 										onClick={(e) => e.stopPropagation()}
-										className="p-1 hover:bg-[#3e3e3e] rounded transition-colors cursor-pointer"
+										p="1"
+										style={{
+											cursor: 'pointer',
+											borderRadius: 'var(--radius-2)'
+										}}
+										className="hover-bg-gray-6 transition-colors"
 										title="More actions"
 									>
-										<MoreVertical className="h-4 w-4 text-[#858585] hover:text-[#cccccc]" />
-									</button>
+										<MoreVertical size={16} color="var(--gray-11)" />
+									</Box>
 								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="bg-[#252526] border-[#3e3e3e]">
+								<DropdownMenuContent align="end" style={{ backgroundColor: 'var(--gray-2)', borderColor: 'var(--gray-6)' }}>
 									{onReboot && (
 										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReboot(device); }} className="cursor-pointer">
-											<RotateCw className="h-4 w-4 mr-2" />
+											<RotateCw size={16} style={{marginRight: '0.5rem'}} />
 											Reboot device
 										</DropdownMenuItem>
 									)}
 									{isEmulatorOrSimulator && onShutdown && (
 										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShutdown(device); }} className="cursor-pointer">
-											<Power className="h-4 w-4 mr-2" />
+											<Power size={16} style={{marginRight: '0.5rem'}} />
 											Shutdown device
 										</DropdownMenuItem>
 									)}
@@ -108,8 +127,8 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 						)}
 					</>
 				)}
-			</div>
-		</div>
+			</Flex>
+		</Flex>
 	);
 }
 

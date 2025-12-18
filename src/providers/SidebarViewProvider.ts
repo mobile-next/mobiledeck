@@ -7,6 +7,8 @@ import { Telemetry } from '../services/telemetry/Telemetry';
 import { Logger } from '../services/logger/Logger';
 import { ExtensionUtils } from '../utils/ExtensionUtils';
 import { AuthenticationManager } from '../services/auth/AuthenticationManager';
+import * as os from 'node:os';
+import { AgentFactory } from '../services/mcp-integrations/AgentFactory';
 
 export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private oauthServer: OAuthCallbackServer;
@@ -57,6 +59,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 						serverPort: this.cliServer.getJsonRpcServerPort(),
 						email: email || '',
 						gettingStartedDismissed: gettingStartedDismissed,
+						agentStatuses: this.getAgentStatuses(),
 					});
 					break;
 
@@ -88,6 +91,11 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					});
 					break;
 
+				case 'openEmailLogin':
+					this.logger.log('email login requested from webview');
+					await this.handleEmailLogin(webviewView);
+					break;
+
 				case 'openOAuthLogin':
 					// start oauth server and open browser with dynamic redirect uri
 					this.telemetry.sendEvent('login_clicked', {
@@ -115,9 +123,33 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 					}
 					break;
 
+				case 'configureAgentMcp':
+					this.logger.log(`configure agent MCP requested for: ${message.agentName}`);
+					await this.handleConfigureAgentMcp(message.agentName, webviewView);
+					break;
+
 				case 'alert':
 					vscode.window.showInformationMessage(message.text);
 					break;
+			}
+		});
+	}
+
+	private getAgentStatuses() {
+		const homeDir = os.homedir();
+		const currentPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+
+		const agentKeys = AgentFactory.getAllKeys();
+
+		return agentKeys.map((name) => {
+			try {
+				const instance = AgentFactory.createAgent(name, homeDir, currentPath);
+				const isInstalled = instance.isAgentInstalled();
+				const isConfigured = isInstalled ? instance.isMcpConfigured() : false;
+				return { name, isInstalled, isConfigured };
+			} catch (e) {
+				this.logger.log(`error checking agent status for ${name}: ${e}`);
+				return { name, isInstalled: false, isConfigured: false };
 			}
 		});
 	}
@@ -129,6 +161,43 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 	private async storeTokens(tokens: OAuthTokens, email: string) {
 		const manager = new AuthenticationManager();
 		await manager.storeTokens(this.context, tokens, email);
+	}
+
+	private async handleEmailLogin(_webviewView: vscode.WebviewView): Promise<void> {
+		this.logger.log('email login requested from webview');
+		vscode.window.showErrorMessage('Email login is not implemented yet');
+	}
+
+	private async handleConfigureAgentMcp(agentName: string, webviewView: vscode.WebviewView): Promise<void> {
+		try {
+			const homeDir = os.homedir();
+			const currentPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
+
+			// Get the agent instance using the factory
+			const agent = AgentFactory.createAgent(agentName, homeDir, currentPath);
+
+			// Configure the MCP for this agent
+			this.logger.log(`configuring MCP for agent: ${agentName}`);
+			agent.configureMcp();
+			this.logger.log(`MCP configuration completed for agent: ${agentName}`);
+
+			// Send telemetry event for successful configuration
+			this.telemetry.sendEvent('agent_mcp_configured', {
+				agentName: agentName
+			});
+
+			// Send updated agent statuses back to webview
+			webviewView.webview.postMessage({
+				command: 'configure',
+				agentStatuses: this.getAgentStatuses()
+			});
+
+			// Show success message
+			vscode.window.showInformationMessage(`Mobile MCP configured successfully for ${agentName}`);
+		} catch (error) {
+			this.logger.log(`error configuring agent MCP for ${agentName}: ${error instanceof Error ? error.message : String(error)}`);
+			vscode.window.showErrorMessage(`Failed to configure Mobile MCP for ${agentName}: ${error instanceof Error ? error.message : String(error)}`);
+		}
 	}
 
 	private async handleOAuthLogin(provider: string, webviewView: vscode.WebviewView): Promise<void> {
@@ -277,26 +346,25 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	// switch the webview to device list
-	private async switchToDeviceList(): Promise<void> {
+	private setHtml(page: string) {
 		if (!this.webviewView) {
 			this.logger.log('webview not available');
 			return;
 		}
 
+		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, page);
+	}
+
+	// switch the webview to device list
+	private switchToDeviceList() {
+		this.setHtml('sidebar');
 		this.logger.log('switching to device list view');
-		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'sidebar');
 	}
 
 	// public method to show login page (called from extension when signing out)
-	public showLoginPage(): void {
-		if (!this.webviewView) {
-			this.logger.log('webview not available');
-			return;
-		}
-
+	public showLoginPage() {
+		this.setHtml('login');
 		this.logger.log('showing login page');
-		this.webviewView.webview.html = this.getHtml(this.webviewView.webview, 'login');
 	}
 
 	// public method to refresh devices (called from extension when refresh command is triggered)
