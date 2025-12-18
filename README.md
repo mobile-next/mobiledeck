@@ -1,6 +1,6 @@
 # Mobile Deck - View, control and manage all your Android and iOS real devices, simulators, and emulators
 
-A Visual Studio Code extension for previewing, interacting and managing your Android/iOS devices from [Mobile Next](https://mobilenexthq.com/).
+A Visual Studio Code extension for previewing, interacting and managing your Android/iOS devices.
 
 ## 🎯 What is Mobile Deck?
 
@@ -17,7 +17,7 @@ With one-click Mobile MCP installation, you get instant device connectivity and 
 - **🚀 Hot Reload & Deploy**: Instant app updates and one-click deployment to multiple devices simultaneously
 - **🎨 Multi-Device Workspace**: View and control multiple devices side-by-side with customizable layouts and synchronized actions
 - **📸 Take screenshot**: Capture and view screenshots for debugging, and agent usage.
-- **📦 Use Mobile MCP**: [Install Mobile MCP](https://github.com/mobile-next/mobile-mcp) with a single click for mobile development and automation, debugging. Connect it to any Code Assistant and Agent.
+- **📦 Use Mobile MCP**: [Install Mobile Deck MCP](https://github.com/mobile-next/mobile-mcp) with a single click for mobile development and automation, debugging. Connect it to any Code Assistant and Agent.
 
 ## 🔜 Coming soon
 

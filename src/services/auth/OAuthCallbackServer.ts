@@ -41,7 +41,7 @@ export class OAuthCallbackServer {
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Mobile Next - OAuth Callback</title>
+		<title>Mobile Deck</title>
 		<style>
 		* {
 		margin: 0;
