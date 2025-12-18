@@ -20,9 +20,10 @@ export class CodexAgent implements Agent {
 		}
 
 		try {
-			const content = fs.readFileSync(this.configPath, 'utf-8');
-			// Simple check: does the TOML contain the [mcp_servers.mobile_mcp] section?
-			return content.includes('[mcp_servers.mobile_mcp]');
+			return fs.readFileSync(this.configPath, 'utf-8')
+				.toString()
+				.split("\n")
+				.includes('[mcp_servers.mobile_mcp]');
 		} catch {
 			return false;
 		}
@@ -52,7 +53,7 @@ export class CodexAgent implements Agent {
 			'',
 			'[mcp_servers.mobile_mcp]',
 			'command = "npx"',
-			'args = ["-y", "@mobilenext/mobile-mcp"]',
+			'args = ["-y", "@mobilenext/mobile-mcp@latest"]',
 			'',
 		].join('\n');
 
