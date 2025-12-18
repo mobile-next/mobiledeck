@@ -1,3 +1,9 @@
+## [0.0.23](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.22) (2025-12-10)
+
+- General: updated mobilecli to 0.0.48 (see [mobilecli releases](https://github.com/mobile-next/mobilecli/releases))
+- General: support detection and configuration of Mobile Deck MCP among common AI Agents
+- General: automatically go back to vscode after authentication
+
 ## [0.0.22](https://github.com/mobile-next/mobiledeck/releases/tag/0.0.22) (2025-12-10)
 
 - General: updated mobilecli to 0.0.47 (see [mobilecli releases](https://github.com/mobile-next/mobilecli/releases))
