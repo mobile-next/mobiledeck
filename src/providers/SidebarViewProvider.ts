@@ -428,4 +428,14 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
 			});
 		}
 	}
+
+	// public method to send generic message to webview
+	public sendMessage(message: any): void {
+		if (!this.webviewView) {
+			this.logger.log('webview not available');
+			return;
+		}
+
+		this.webviewView.webview.postMessage(message);
+	}
 }

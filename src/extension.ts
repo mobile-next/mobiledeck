@@ -8,6 +8,8 @@ import { Telemetry } from './services/telemetry/Telemetry';
 import { Logger } from './services/logger/Logger';
 import { AuthenticationManager } from './services/auth/AuthenticationManager';
 import { DevicePanelManager } from './managers/DevicePanelManager';
+import { JsonRpcClient } from '@shared/JsonRpcClient';
+import { MobilecliClient } from '@shared/MobilecliClient';
 
 const SIDEBAR_VIEW_ID = 'mobiledeckDevices';
 const FEEDBACK_FORM_URL = "https://forms.gle/eFb9opGjCCxCyX4s9";
@@ -95,14 +97,16 @@ class MobiledeckExtension {
 		}
 	}
 
-	private async startCliServer(context: vscode.ExtensionContext) {
+	private createCliServer(context: vscode.ExtensionContext) {
 		this.cliServer = new MobileCliServer(
 			context,
 			this.telemetry,
 			(exitCode) => this.onCliServerExit(exitCode)
 		);
+	}
 
-		await this.cliServer.launchMobilecliServer()
+	private async startCliServer(_context: vscode.ExtensionContext) {
+		await this.cliServer!.launchMobilecliServer()
 			.catch(error => {
 				this.logger.log('failed to launch mobilecli server: ' + error.message);
 				this.telemetry.sendEvent('mobilecli_server_start_failed', {
@@ -190,8 +194,118 @@ class MobiledeckExtension {
 		}
 	}
 
+	private async onSelectDevice() {
+		this.logger.log('mobiledeck.selectDevice command executed');
+
+		if (!this.cliServer) {
+			vscode.window.showErrorMessage('Mobile CLI server is not running');
+			return;
+		}
+
+		try {
+			// step 1: ask for platform
+			const platformChoice = await vscode.window.showQuickPick(
+				[
+					{ label: 'iOS', value: 'ios' },
+					{ label: 'Android', value: 'android' }
+				],
+				{
+					placeHolder: 'Select a platform'
+				}
+			);
+
+			if (!platformChoice) {
+				return;
+			}
+
+			// step 2: fetch devices for selected platform
+			const serverPort = this.cliServer.getJsonRpcServerPort();
+			const jsonRpcClient = new JsonRpcClient(`http://localhost:${serverPort}/rpc`);
+			const mobilecliClient = new MobilecliClient(jsonRpcClient);
+
+			const response = await mobilecliClient.listDevices(true);
+			const allDevices = response.devices;
+
+			// filter by platform
+			const platformDevices = allDevices.filter(
+				device => device.platform === platformChoice.value
+			);
+
+			if (platformDevices.length === 0) {
+				vscode.window.showInformationMessage(`No ${platformChoice.label} devices found`);
+				return;
+			}
+
+			// sort devices: online first, then offline, alphabetically within each group
+			const sortedDevices = this.sortDevices(platformDevices);
+
+			// create QuickPick items
+			const quickPickItems = sortedDevices.map(device => {
+				const onlineIndicator = device.state === 'online' ? '$(circle-filled) ' : '';
+				const versionLabel = device.version ? ` (${device.version})` : '';
+				const label = `${onlineIndicator}${device.name}${versionLabel}`;
+
+				return {
+					label: label,
+					description: device.id,
+					device: device
+				};
+			});
+
+			// step 3: show device list
+			const selected = await vscode.window.showQuickPick(quickPickItems, {
+				placeHolder: `Select a ${platformChoice.label} device`
+			});
+
+			if (selected && this.context) {
+				this.telemetry.sendEvent('device_selected_from_command_palette', {
+					DeviceType: selected.device.type,
+					DevicePlatform: selected.device.platform,
+					DeviceState: selected.device.state || 'unknown'
+				});
+
+				// open device panel
+				this.onOpenDevicePanel(this.context, selected.device);
+			}
+		} catch (error) {
+			this.logger.log(`Error fetching devices: ${error}`);
+			vscode.window.showErrorMessage('Failed to fetch devices');
+		}
+	}
+
+	private sortDevices(devices: DeviceDescriptor[]): DeviceDescriptor[] {
+		return devices.sort((a, b) => {
+			// online devices come first
+			const aOnline = a.state === 'online' ? 0 : 1;
+			const bOnline = b.state === 'online' ? 0 : 1;
+
+			if (aOnline !== bOnline) {
+				return aOnline - bOnline;
+			}
+
+			// within same state, sort alphabetically by name
+			return a.name.localeCompare(b.name);
+		});
+	}
+
+	private async onConnectToAIAgent() {
+
+		// make the Mobile Deck sidebar visible
+		await vscode.commands.executeCommand('mobiledeckDevices.focus');
+
+		// send configure message to show agent status
+		if (this.sidebarProvider) {
+			this.sidebarProvider.sendMessage({
+				command: 'configure',
+				agentStatusVisible: true
+			});
+		}
+
+		this.telemetry.sendEvent('connect_to_ai_agent_clicked');
+	}
+
 	public async activate(context: vscode.ExtensionContext) {
-		this.logger.log('Mobiledeck extension is being activated');
+		this.logger.log('Extension is being activated');
 
 		// store context for later use
 		this.context = context;
@@ -205,19 +319,22 @@ class MobiledeckExtension {
 
 		this.telemetry = new Telemetry(distinctId);
 
-		await this.startCliServer(context);
+		// create a cli server instance, so we always have one
+		this.createCliServer(context);
 
-		if (!this.cliServer) {
-			throw new Error('failed to initialize cli server');
-		}
+		// try starting it in the background, so activate finishes quickly
+		this.startCliServer(context).catch((error) => {
+			this.logger.log('failed to start cli server: ' + error.message);
+		});
 
 		// register the sidebar webview provider
 		this.sidebarProvider = new SidebarViewProvider(
 			context,
-			this.cliServer,
+			this.cliServer!,
 			this.telemetry,
 			(devices) => this.broadcastDevicesToPanels(devices)
 		);
+
 		context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW_ID, this.sidebarProvider, {
 				webviewOptions: {
@@ -244,11 +361,15 @@ class MobiledeckExtension {
 		this.registerCommand(context, 'mobiledeck.openDevicePanel', (device) => this.onOpenDevicePanel(context, device));
 		this.registerCommand(context, 'mobiledeck.closeDevicePanel', (deviceId) => this.onCloseDevicePanel(context, deviceId));
 
+		// command palette commands
+		this.registerCommand(context, 'mobiledeck.selectDevice', () => this.onSelectDevice());
+		this.registerCommand(context, 'mobiledeck.connectToAIAgent', () => this.onConnectToAIAgent());
+
 		this.telemetry.sendEvent('panel_activated', {
 			IsLoggedIn: !!email
 		});
 
-		this.logger.log('Mobiledeck extension activated successfully');
+		this.logger.log('Extension activated successfully');
 	}
 
 	private async updateAuthenticationContext(context: vscode.ExtensionContext) {
@@ -276,7 +397,7 @@ class MobiledeckExtension {
 				panel.dispose();
 			}
 		});
-		
+
 		// clear the manager state after disposal
 		deviceIds.forEach(deviceId => {
 			this.devicePanelManager.delete(deviceId);

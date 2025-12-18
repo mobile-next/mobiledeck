@@ -109,15 +109,15 @@ function DeviceRow({ device, onClick, isConnected, onReboot, onShutdown, onConne
 										<MoreVertical size={16} color="var(--gray-11)" />
 									</Box>
 								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" style={{ backgroundColor: 'var(--gray-2)', borderColor: 'var(--gray-6)' }}>
+								<DropdownMenuContent align="end" style={{ backgroundColor: '#1a1a1a', borderColor: '#2a2a2a', color: '#e0e0e0' }}>
 									{onReboot && (
-										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReboot(device); }} className="cursor-pointer">
+										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReboot(device); }} className="cursor-pointer" style={{ color: '#e0e0e0' }}>
 											<RotateCw size={16} style={{marginRight: '0.5rem'}} />
 											Reboot device
 										</DropdownMenuItem>
 									)}
 									{isEmulatorOrSimulator && onShutdown && (
-										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShutdown(device); }} className="cursor-pointer">
+										<DropdownMenuItem onClick={(e) => { e.stopPropagation(); onShutdown(device); }} className="cursor-pointer" style={{ color: '#e0e0e0' }}>
 											<Power size={16} style={{marginRight: '0.5rem'}} />
 											Shutdown device
 										</DropdownMenuItem>

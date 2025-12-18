@@ -41,7 +41,7 @@ export class OAuthCallbackServer {
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Mobile Next - OAuth Callback</title>
+		<title>Mobile Deck</title>
 		<style>
 		* {
 		margin: 0;
@@ -90,7 +90,7 @@ export class OAuthCallbackServer {
 	<body>
 		<div class="container">
 			<img src="https://avatars.githubusercontent.com/u/205340688?s=400&u=b8da2bfdcf8330248aeaaa2a3ecc1e2bdd27de6f&v=4" alt="" class="logo">
-			<h1>Mobile Next</h1>
+			<h1>Mobile Deck</h1>
 			<p>You are now logged in.</p>
 			<p>You can close this tab and go back to Visual Studio Code.</p>
 		</div>

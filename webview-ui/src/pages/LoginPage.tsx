@@ -58,10 +58,11 @@ function LoginPage() {
 				color: '#e0e0e0',
 				minHeight: '100vh',
 				width: '100%',
-				height: '100vh',
-				position: 'fixed',
-				top: 0,
-				left: 0,
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'center',
+				overflow: 'auto',
+				padding: '20px 0',
 			}}
 		>
 			<Box
@@ -69,18 +70,15 @@ function LoginPage() {
 				style={{
 					width: '100%',
 					maxWidth: '500px',
-					padding: '20px',
-					marginTop: '1em',
-					marginLeft: 'auto',
-					marginRight: 'auto',
+					padding: '0 20px',
 				}}
 			>
-				<Flex direction="column" align="center" justify="center" mb="3" gap="4">
+				<Flex direction="column" align="center" justify="center" mb="5" gap="3">
 					<Box
 						style={{
-							width: '48px',
-							height: '48px',
-							borderRadius: '8px',
+							width: '56px',
+							height: '56px',
+							borderRadius: '12px',
 							display: 'flex',
 							alignItems: 'center',
 							justifyContent: 'center',
@@ -100,6 +98,7 @@ function LoginPage() {
 						style={{
 							...customStyles.gradientHeading,
 							margin: 0,
+							fontSize: '2.5rem',
 						}}
 					>
 						Mobile Deck
@@ -111,13 +110,13 @@ function LoginPage() {
 					size="3"
 					mb="6"
 					style={{
-						color: '#888',
+						color: '#999',
 						width: '100%',
-						lineHeight: '1.6',
+						lineHeight: '1.7',
 						display: 'block',
 					}}
 				>
-					See your iOS & Android simulators and real devices, <br />
+					See your iOS & Android simulators and real devices,
 					then connect with a click — without leaving the editor.
 				</Text>
 
@@ -125,21 +124,23 @@ function LoginPage() {
 					style={{
 						background: '#1a1a1a',
 						border: '1px solid #2a2a2a',
-						borderRadius: '12px',
-						padding: '24px',
+						borderRadius: '16px',
+						padding: '32px 28px',
 					}}
 				>
 
-					<Text style={{ color: "white" }}>
+					<Text style={{ color: "white", fontSize: "15px", fontWeight: 500 }}>
 						Step 1 · Sign in to get your devices
 					</Text>
 
 					<ul
 						style={{
-							color: "gray",
-							marginTop: "8px",
-							marginBottom: "24px",
-							lineHeight: "1.6em",
+							color: "#888",
+							marginTop: "12px",
+							marginBottom: "28px",
+							lineHeight: "1.8em",
+							paddingLeft: "8px",
+							fontSize: "13px",
 						}}
 					>
 						<li>
@@ -162,6 +163,9 @@ function LoginPage() {
 								border: '1px solid #3a3a3a',
 								color: '#e0e0e0',
 								cursor: 'pointer',
+								padding: '12px 16px',
+								height: 'auto',
+								fontSize: '14px',
 							}}
 							onClick={onGoogleLogin}
 						>
@@ -177,6 +181,9 @@ function LoginPage() {
 								border: '1px solid #3a3a3a',
 								color: '#e0e0e0',
 								cursor: 'pointer',
+								padding: '12px 16px',
+								height: 'auto',
+								fontSize: '14px',
 							}}
 							onClick={onGitHubLogin}
 						>
@@ -200,6 +207,9 @@ function LoginPage() {
 							border: '1px solid #3a3a3a',
 							color: '#e0e0e0',
 							cursor: 'pointer',
+							padding: '12px 16px',
+							height: 'auto',
+							fontSize: '14px',
 						}}
 						onClick={onEmailLogin}
 					>
