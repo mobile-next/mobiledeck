@@ -373,6 +373,7 @@ function SidebarPage({
 													color="gray"
 													href="#"
 													onClick={(e) => { e.preventDefault(); onConfigureAgent(agent.name); }}
+													wrap="nowrap"
 												>
 													Configure &rarr;
 												</Link>
