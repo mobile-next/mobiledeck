@@ -105,7 +105,7 @@ class MobiledeckExtension {
 		);
 	}
 
-	private async startCliServer(context: vscode.ExtensionContext) {
+	private async startCliServer(_context: vscode.ExtensionContext) {
 		await this.cliServer!.launchMobilecliServer()
 			.catch(error => {
 				this.logger.log('failed to launch mobilecli server: ' + error.message);
